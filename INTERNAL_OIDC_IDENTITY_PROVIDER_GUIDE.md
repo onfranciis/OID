@@ -13,6 +13,7 @@ The platform is intentionally narrow:
 - It is built as a monolith first, with clean internal boundaries.
 - It is implemented with NestJS and TypeScript.
 - It uses TypeORM for database entities, repositories, and migrations.
+- It uses PostgreSQL as the durable SQL database.
 - It is built on Better Auth for authentication and OAuth/OIDC provider
   machinery.
 - It does not support social login, SAML, SCIM, external IdP federation, client credentials, device flow, or fine-grained authorization.
@@ -1794,9 +1795,9 @@ For MVP, document this limitation clearly for client app owners.
 
 ## 16. Storage Boundaries
 
-### 16.1 Durable SQL State
+### 16.1 Durable PostgreSQL State
 
-Store in SQL:
+Store in PostgreSQL:
 
 - Users.
 - Credentials.
@@ -1810,12 +1811,13 @@ Store in SQL:
 - Provider sessions, if using durable sessions.
 - Audit events, or audit event metadata.
 
-SQL is appropriate where:
+PostgreSQL is appropriate where:
 
 - Referential integrity matters.
 - Auditing matters.
 - State must survive restarts.
 - Operators need reliable queries.
+- Transactions and row-level locking protect protocol invariants.
 
 ### 16.2 Ephemeral TTL State
 
@@ -1836,9 +1838,9 @@ Ephemeral state is appropriate where:
 
 For simplicity:
 
-- Use SQL for durable state.
-- Use SQL or Redis for authorization codes.
-- Use SQL for sessions at first.
+- Use PostgreSQL for durable state.
+- Use PostgreSQL or Redis for authorization codes.
+- Use PostgreSQL for sessions at first.
 - Use Redis later for rate limiting and high-volume TTL state.
 
 The first version should optimize for correctness and auditability over maximum
@@ -1864,13 +1866,47 @@ Refresh token rotation and authorization code consumption should use atomic
 database behavior. The implementation must prevent two concurrent requests from
 successfully consuming the same code or refresh token.
 
+### 16.5 PostgreSQL Implementation Rules
+
+PostgreSQL is the production database for Internal ID.
+
+Recommended PostgreSQL posture:
+
+- Use `TIMESTAMPTZ` for timestamps.
+- Use `TEXT` for externally stable identifiers unless UUIDs are chosen
+  consistently across the system.
+- Use `JSONB` for structured metadata such as audit metadata and private client
+  metadata, while keeping query-critical fields as first-class columns.
+- Use unique constraints for normalized emails, client IDs, redirect URI
+  registrations, token hashes, code hashes, signing key IDs, and session hashes.
+- Use partial indexes where useful for active sessions, active refresh tokens,
+  unconsumed authorization codes, and non-retired signing keys.
+- Use transactions with row locks for one-time-use state transitions.
+- Use `ON DELETE` behavior deliberately; identity and audit records should not
+  disappear accidentally through cascading deletes.
+- Use connection pooling appropriate for NestJS deployment size.
+
+Security-sensitive flows should rely on PostgreSQL atomicity:
+
+- Authorization code consumption should update exactly one unconsumed,
+  unexpired row.
+- Refresh token rotation should lock the current token row before revoking it
+  and creating the next token.
+- User deactivation should revoke sessions and refresh tokens in the same
+  transaction where practical.
+- Client disabling should prevent new authorization and token exchange
+  immediately after commit.
+
 ---
 
 ## 17. Database Schema Blueprint
 
 This section is the conceptual schema blueprint. The implementation should
-translate it into TypeORM entities and migrations for the chosen SQL database.
-Types can be adapted to the database driver.
+translate it into TypeORM entities and PostgreSQL migrations.
+
+The SQL examples use generic `TIMESTAMP` for readability. In PostgreSQL
+migrations, prefer `TIMESTAMPTZ` for stored event, session, token, and audit
+timestamps.
 
 ### 17.1 users
 
@@ -2611,7 +2647,7 @@ The provider should be deployed as a highly available internal service.
 Minimum production posture:
 
 - Multiple app instances.
-- Shared SQL database.
+- Shared PostgreSQL database.
 - Shared session or token state.
 - Centralized logs.
 - Metrics and alerts.
@@ -2708,6 +2744,7 @@ Build:
 - NestJS module structure.
 - TypeORM configuration.
 - TypeORM data source.
+- PostgreSQL database configuration.
 - Initial TypeORM migrations.
 - Better Auth configuration.
 - NestJS Better Auth integration module.
@@ -2725,7 +2762,7 @@ Build:
 
 Acceptance criteria:
 
-- Better Auth starts with the chosen SQL database.
+- Better Auth starts with PostgreSQL.
 - Better Auth OAuth/OIDC tables are created or mapped.
 - TypeORM migrations can create and roll back the initial schema.
 - TypeORM synchronization is disabled outside local experiments.
