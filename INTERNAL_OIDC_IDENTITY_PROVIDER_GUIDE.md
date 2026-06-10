@@ -12,6 +12,7 @@ The platform is intentionally narrow:
 - It does not decide application-specific permissions.
 - It is built as a monolith first, with clean internal boundaries.
 - It is implemented with NestJS and TypeScript.
+- It uses TypeORM for database entities, repositories, and migrations.
 - It is built on Better Auth for authentication and OAuth/OIDC provider
   machinery.
 - It does not support social login, SAML, SCIM, external IdP federation, client credentials, device flow, or fine-grained authorization.
@@ -339,6 +340,9 @@ src/
 ├── app.module.ts
 ├── config/
 ├── database/
+│   ├── data-source.ts
+│   ├── migrations/
+│   └── typeorm.module.ts
 ├── identity/
 ├── authentication/
 ├── oidc/
@@ -374,6 +378,32 @@ Internal ID code should not spread Better Auth calls throughout every module.
 Instead, domain services should depend on small local interfaces for sessions,
 users, clients, tokens, and OAuth/OIDC operations. This keeps Better Auth
 replaceable if the provider boundary ever needs to move lower-level.
+
+TypeORM should be the persistence layer for Internal ID-owned state.
+
+Recommended TypeORM posture:
+
+- Define entities inside the module that owns the domain concept.
+- Keep migrations checked into source control.
+- Disable automatic schema synchronization outside local experiments.
+- Use explicit transactions for token exchange, refresh token rotation,
+  session revocation, user deactivation, and client updates.
+- Put cross-module query logic behind services or repositories instead of
+  leaking raw query builder usage across the app.
+- Prefer database constraints for uniqueness, foreign keys, and one-time-use
+  invariants where possible.
+
+Better Auth-managed tables must be handled deliberately:
+
+- If Better Auth owns a table, document that ownership and do not duplicate the
+  same data in a competing TypeORM entity.
+- If Internal ID needs stronger domain semantics around Better Auth data, expose
+  it through an adapter service rather than direct table access from unrelated
+  modules.
+- If Better Auth-generated migrations are used, review and commit them like any
+  other production migration.
+- If TypeORM migrations create Better Auth-compatible tables manually, keep that
+  mapping documented near the Better Auth integration module.
 
 ### 3.4 Better Auth Substrate
 
@@ -1814,12 +1844,33 @@ For simplicity:
 The first version should optimize for correctness and auditability over maximum
 throughput.
 
+### 16.4 TypeORM Persistence Rules
+
+TypeORM is the persistence implementation for the NestJS application.
+
+Rules:
+
+- Migrations are the source of truth for production schema changes.
+- Entity decorators should match committed migrations.
+- `synchronize` must be disabled in production.
+- Security-sensitive state changes must happen inside database transactions.
+- Token and code lookup columns must have supporting indexes.
+- Unique constraints should enforce non-reassignable identifiers and exact
+  client URI registrations.
+- Raw SQL is allowed for complex locking or atomic update behavior, but should
+  be isolated and tested.
+
+Refresh token rotation and authorization code consumption should use atomic
+database behavior. The implementation must prevent two concurrent requests from
+successfully consuming the same code or refresh token.
+
 ---
 
 ## 17. Database Schema Blueprint
 
-This section is intentionally technology-neutral. Types can be adapted to the
-chosen database.
+This section is the conceptual schema blueprint. The implementation should
+translate it into TypeORM entities and migrations for the chosen SQL database.
+Types can be adapted to the database driver.
 
 ### 17.1 users
 
@@ -2655,12 +2706,15 @@ Build:
 
 - NestJS TypeScript project skeleton.
 - NestJS module structure.
+- TypeORM configuration.
+- TypeORM data source.
+- Initial TypeORM migrations.
 - Better Auth configuration.
 - NestJS Better Auth integration module.
 - Better Auth database adapter and migrations.
 - Better Auth OAuth Provider plugin configuration.
 - Better Auth JWT plugin configuration.
-- Database migrations.
+- TypeORM entity definitions.
 - User model.
 - Credential model.
 - Group model.
@@ -2673,6 +2727,8 @@ Acceptance criteria:
 
 - Better Auth starts with the chosen SQL database.
 - Better Auth OAuth/OIDC tables are created or mapped.
+- TypeORM migrations can create and roll back the initial schema.
+- TypeORM synchronization is disabled outside local experiments.
 - An admin can create users.
 - An admin can create clients.
 - Redirect URIs are persisted and exact-match validated.
