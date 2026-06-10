@@ -325,7 +325,56 @@ The monolith talks to:
 - An ephemeral store for short-lived protocol state.
 - A logging or event pipeline for audit and operational telemetry.
 
-### 3.3 Hostnames
+### 3.3 Better Auth Substrate
+
+Internal ID should be built on top of Better Auth.
+
+Better Auth provides the lower-level authentication and OAuth/OIDC provider
+machinery. Internal ID provides the product and security boundary around it:
+
+- Internal user lifecycle rules.
+- Internal group and profile model.
+- Internal client approval workflow.
+- Claim release policy.
+- Audit event policy.
+- Operational controls.
+- Protocol restrictions required by this guide.
+
+Recommended Better Auth posture:
+
+- Use the OAuth Provider plugin with OIDC compatibility.
+- Use the JWT plugin for asymmetric JWT signing and JWKS support.
+- Use server-rendered Internal ID pages for login, consent or app disclosure,
+  and admin workflows.
+- Disable or block any Better Auth endpoint or grant that is outside the
+  Internal ID contract.
+- Keep dynamic client registration disabled unless explicitly introduced later.
+- Configure all internal clients through the Internal ID admin surface or
+  deployment-time seed data.
+
+The Better Auth configuration must enforce the Internal ID protocol surface:
+
+| Capability | Internal ID Requirement |
+| --- | --- |
+| Response types | Only `code`. |
+| Grant types | Only `authorization_code` and controlled `refresh_token`. |
+| Client credentials grant | Disabled or rejected. |
+| Password grant | Disabled or rejected. |
+| Device flow | Disabled or rejected. |
+| Dynamic client registration | Disabled for MVP. |
+| PKCE | Required, `S256` only. |
+| Redirect URIs | Exact registered URI matching only. |
+| Refresh tokens | Opaque, hashed, rotated, auditable. |
+| Claims | Identity facts only; no app permissions. |
+
+If Better Auth supports a broader OAuth capability by default, Internal ID must
+configure it off, wrap it, or add explicit guard middleware. A feature being
+available in Better Auth does not make it part of Internal ID.
+
+Internal ID should add conformance tests around every disabled capability so
+that framework upgrades cannot silently widen the provider.
+
+### 3.4 Hostnames
 
 Recommended:
 
@@ -1949,6 +1998,13 @@ CREATE TABLE audit_events (
 
 ## 18. HTTP Endpoint Reference
 
+This section describes the public Internal ID contract.
+
+When Better Auth is used underneath, the concrete route paths may be provided by
+Better Auth directly, mounted under an auth route, or adapted through thin
+Internal ID route wrappers. Regardless of implementation path, clients should see
+the endpoint behavior and discovery metadata described here.
+
 ### 18.1 Discovery
 
 ```http
@@ -2548,6 +2604,10 @@ The MVP should prove:
 Build:
 
 - Project skeleton.
+- Better Auth configuration.
+- Better Auth database adapter and migrations.
+- Better Auth OAuth Provider plugin configuration.
+- Better Auth JWT plugin configuration.
 - Database migrations.
 - User model.
 - Credential model.
@@ -2559,16 +2619,21 @@ Build:
 
 Acceptance criteria:
 
+- Better Auth starts with the chosen SQL database.
+- Better Auth OAuth/OIDC tables are created or mapped.
 - An admin can create users.
 - An admin can create clients.
 - Redirect URIs are persisted and exact-match validated.
 - Audit events are written for admin changes.
+- Dynamic client registration is disabled.
+- Unsupported grants and response types are rejected.
 
 ### 23.3 Phase 2: Authentication
 
 Build:
 
 - Login page.
+- Better Auth email/password sign-in integration.
 - Password verification.
 - Provider session cookie.
 - Session persistence.
@@ -2583,6 +2648,7 @@ Acceptance criteria:
 - Login creates a secure provider session.
 - Logout clears provider session.
 - Failed logins are audited.
+- Better Auth session behavior is wrapped by Internal ID lifecycle checks.
 
 ### 23.4 Phase 3: OIDC Discovery and Authorization
 
@@ -2590,6 +2656,7 @@ Build:
 
 - Discovery endpoint.
 - Authorization endpoint.
+- Better Auth OAuth Provider route mounting or route wrappers.
 - PKCE validation.
 - Authorization code issuance.
 - Authorization code storage.
@@ -2601,7 +2668,9 @@ Acceptance criteria:
 - Invalid redirect URI is rejected.
 - Missing `openid` scope is rejected.
 - Missing PKCE is rejected.
+- `code_challenge_method=plain` is rejected.
 - Codes expire and are one-time-use.
+- `response_type=token`, `id_token`, and hybrid flows are rejected.
 
 ### 23.5 Phase 4: Token Issuance
 
@@ -2609,6 +2678,7 @@ Build:
 
 - Signing key management.
 - JWKS endpoint.
+- Better Auth JWT plugin integration.
 - Token endpoint authorization code exchange.
 - ID token signing.
 - Access token signing.
@@ -2622,6 +2692,7 @@ Acceptance criteria:
 - ID token contains expected claims.
 - UserInfo returns allowed claims.
 - Consumed authorization code cannot be reused.
+- `password`, `client_credentials`, and device grants are rejected.
 
 ### 23.6 Phase 5: Refresh Tokens
 
