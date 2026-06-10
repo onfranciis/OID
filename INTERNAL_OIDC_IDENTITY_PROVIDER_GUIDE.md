@@ -11,6 +11,9 @@ The platform is intentionally narrow:
 - It authenticates users and emits identity claims.
 - It does not decide application-specific permissions.
 - It is built as a monolith first, with clean internal boundaries.
+- It is implemented with NestJS and TypeScript.
+- It is built on Better Auth for authentication and OAuth/OIDC provider
+  machinery.
 - It does not support social login, SAML, SCIM, external IdP federation, client credentials, device flow, or fine-grained authorization.
 
 The core principle:
@@ -325,7 +328,54 @@ The monolith talks to:
 - An ephemeral store for short-lived protocol state.
 - A logging or event pipeline for audit and operational telemetry.
 
-### 3.3 Better Auth Substrate
+### 3.3 NestJS Implementation Shape
+
+Internal ID should be implemented as a NestJS TypeScript application.
+
+Recommended module layout:
+
+```text
+src/
+├── app.module.ts
+├── config/
+├── database/
+├── identity/
+├── authentication/
+├── oidc/
+├── clients/
+├── tokens/
+├── admin/
+├── audit/
+└── better-auth/
+```
+
+NestJS should provide:
+
+- Module boundaries for the Internal ID domains.
+- Dependency injection for services, repositories, policies, and adapters.
+- Controllers for Internal ID-owned pages and wrapper endpoints.
+- Guards for admin access, recent authentication, lifecycle checks, and protocol
+  restrictions.
+- Interceptors or middleware for request IDs, audit context, and security
+  headers.
+- Background jobs for cleanup, key lifecycle tasks, and stale-secret warnings.
+
+Better Auth should be isolated behind a local NestJS integration module:
+
+```text
+better-auth/
+├── better-auth.module.ts
+├── better-auth.config.ts
+├── better-auth.adapter.ts
+└── better-auth.guard.ts
+```
+
+Internal ID code should not spread Better Auth calls throughout every module.
+Instead, domain services should depend on small local interfaces for sessions,
+users, clients, tokens, and OAuth/OIDC operations. This keeps Better Auth
+replaceable if the provider boundary ever needs to move lower-level.
+
+### 3.4 Better Auth Substrate
 
 Internal ID should be built on top of Better Auth.
 
@@ -374,7 +424,7 @@ available in Better Auth does not make it part of Internal ID.
 Internal ID should add conformance tests around every disabled capability so
 that framework upgrades cannot silently widen the provider.
 
-### 3.4 Hostnames
+### 3.5 Hostnames
 
 Recommended:
 
@@ -2603,8 +2653,10 @@ The MVP should prove:
 
 Build:
 
-- Project skeleton.
+- NestJS TypeScript project skeleton.
+- NestJS module structure.
 - Better Auth configuration.
+- NestJS Better Auth integration module.
 - Better Auth database adapter and migrations.
 - Better Auth OAuth Provider plugin configuration.
 - Better Auth JWT plugin configuration.
