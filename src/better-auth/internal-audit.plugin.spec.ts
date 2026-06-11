@@ -9,7 +9,9 @@ import {
 
 describe('createInternalAuditPlugin', () => {
   it('records successful session creation as a login audit event', async () => {
-    const recordAuditEvent = vi.fn(() => Promise.resolve('evt_test'));
+    const recordAuditEvent = vi.fn<
+      (input: AuditEventRecordInput) => Promise<string>
+    >(() => Promise.resolve('evt_test'));
     const plugin: InternalAuditPlugin = createInternalAuditPlugin({
       recordAuditEvent,
     });
@@ -30,8 +32,7 @@ describe('createInternalAuditPlugin', () => {
 
     expect(recordAuditEvent).toHaveBeenCalledTimes(1);
 
-    const firstCall = recordAuditEvent.mock.calls[0];
-    const auditEvent = firstCall?.[0] as AuditEventRecordInput | undefined;
+    const auditEvent = recordAuditEvent.mock.calls[0]?.[0];
 
     expect(auditEvent).toMatchObject({
       eventType: 'user.login.succeeded',

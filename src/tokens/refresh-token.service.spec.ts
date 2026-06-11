@@ -16,7 +16,7 @@ describe('RefreshTokenService', () => {
           savedEntities.push(entity as OidcRefreshTokenEntity);
           return Promise.resolve(entity);
         },
-      }),
+      }) as never,
       {
         record: auditRecord,
       } as never,
@@ -63,7 +63,7 @@ describe('RefreshTokenService', () => {
 
           return Promise.resolve(entity);
         },
-      }),
+      }) as never,
       {
         record: auditRecord,
       } as never,
@@ -113,7 +113,7 @@ describe('RefreshTokenService', () => {
         findOne: () => Promise.resolve(replayedToken),
         find: () => Promise.resolve(familyMembers),
         save: (entity) => Promise.resolve(entity),
-      }),
+      }) as never,
       {
         record: auditRecord,
       } as never,
@@ -153,7 +153,7 @@ describe('RefreshTokenService', () => {
       {} as never,
       createDataSourceStub({
         findOne: () => Promise.resolve(expiredToken),
-      }),
+      }) as never,
       {
         record: vi.fn(() => Promise.resolve('evt_123')),
       } as never,

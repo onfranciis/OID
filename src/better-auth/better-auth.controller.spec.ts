@@ -11,14 +11,38 @@ import {
 import { AuditService } from '../audit/audit.service';
 import { AuditSeverity } from '../database/entities/audit-event.entity';
 import { RefreshTokenService } from '../tokens/refresh-token.service';
+import type {
+  IssueRefreshTokenResult,
+  ResolveRefreshGrantResult,
+} from '../tokens/refresh-token.types';
 import { BetterAuthController } from './better-auth.controller';
 import { BetterAuthService } from './better-auth.service';
 import { UserInfoPolicyService } from './userinfo-policy.service';
 
+type DispatchFn = (
+  req: unknown,
+  overrides?: { body?: Record<string, unknown> },
+) => Promise<Response>;
+
+type AuthorizeRequest = Parameters<BetterAuthController['authorize']>[0];
+type AuthorizeResponse = Parameters<BetterAuthController['authorize']>[1];
+type RegisterRequest = Parameters<BetterAuthController['blockRegister']>[0];
+type TokenRequest = Parameters<BetterAuthController['token']>[0];
+type TokenResponse = Parameters<BetterAuthController['token']>[1];
+type UserInfoRequest = Parameters<BetterAuthController['userInfo']>[0];
+type UserInfoResponse = Parameters<BetterAuthController['userInfo']>[1];
+
+type ExpressResponseStub = {
+  statusCode: number;
+  status: (code: number) => ExpressResponseStub;
+  setHeader: ReturnType<typeof vi.fn>;
+  send: ReturnType<typeof vi.fn>;
+};
+
 describe('BetterAuthController', () => {
   let controller: BetterAuthController;
-  const handle = vi.fn(() => Promise.resolve());
-  const dispatch = vi.fn(() =>
+  const handle = vi.fn<() => Promise<void>>(() => Promise.resolve());
+  const dispatch = vi.fn<DispatchFn>(() =>
     Promise.resolve(
       new Response(
         JSON.stringify({
@@ -36,9 +60,15 @@ describe('BetterAuthController', () => {
       ),
     ),
   );
-  const record = vi.fn(() => Promise.resolve('evt_test'));
-  const issueTokenForClient = vi.fn(() => Promise.resolve(null));
-  const resolveRefreshGrant = vi.fn(() =>
+  const record = vi.fn<(input: unknown) => Promise<string>>(() =>
+    Promise.resolve('evt_test'),
+  );
+  const issueTokenForClient = vi.fn<
+    (input: unknown) => Promise<IssueRefreshTokenResult | null>
+  >(() => Promise.resolve(null));
+  const resolveRefreshGrant = vi.fn<
+    (refreshToken: string) => Promise<ResolveRefreshGrantResult>
+  >(() =>
     Promise.resolve({
       upstreamRefreshToken: 'upstream-refresh-token',
       token: {
@@ -50,7 +80,9 @@ describe('BetterAuthController', () => {
       },
     }),
   );
-  const rotateToken = vi.fn(() =>
+  const rotateToken = vi.fn<
+    (input: unknown) => Promise<IssueRefreshTokenResult>
+  >(() =>
     Promise.resolve({
       refreshToken: 'wrapped-refresh-token',
       tokenId: 'rtk_next',
@@ -59,7 +91,12 @@ describe('BetterAuthController', () => {
       absoluteExpiresAt: new Date('2026-06-11T01:00:00.000Z'),
     }),
   );
-  const filterUserInfoClaims = vi.fn((_, payload) => Promise.resolve(payload));
+  const filterUserInfoClaims = vi.fn<
+    (
+      authorizationHeader: string | undefined,
+      payload: Record<string, unknown>,
+    ) => Promise<Record<string, unknown>>
+  >((_, payload) => Promise.resolve(payload));
 
   beforeAll(async () => {
     const moduleRef: TestingModule = await Test.createTestingModule({
@@ -115,7 +152,7 @@ describe('BetterAuthController', () => {
   it('passes supported authorize requests through to Better Auth', async () => {
     await expect(
       controller.authorize(
-        {
+        toAuthorizeRequest({
           query: {
             response_type: 'code',
             state: 'opaque-state',
@@ -124,8 +161,8 @@ describe('BetterAuthController', () => {
           },
           ip: '127.0.0.1',
           get: vi.fn(() => 'test-agent'),
-        } as never,
-        { statusCode: 302 } as never,
+        }),
+        toAuthorizeResponse({ statusCode: 302 }),
       ),
     ).resolves.toBeUndefined();
 
@@ -141,7 +178,7 @@ describe('BetterAuthController', () => {
   it('rejects unsupported authorize response types at the controller boundary', async () => {
     await expect(
       controller.authorize(
-        {
+        toAuthorizeRequest({
           query: {
             response_type: 'token',
             state: 'opaque-state',
@@ -150,8 +187,8 @@ describe('BetterAuthController', () => {
           },
           ip: '127.0.0.1',
           get: vi.fn(() => 'test-agent'),
-        } as never,
-        {} as never,
+        }),
+        toAuthorizeResponse({}),
       ),
     ).rejects.toThrow(/response_type=code/);
 
@@ -167,7 +204,7 @@ describe('BetterAuthController', () => {
   it('rejects plain PKCE at the controller boundary', async () => {
     await expect(
       controller.authorize(
-        {
+        toAuthorizeRequest({
           query: {
             response_type: 'code',
             state: 'opaque-state',
@@ -176,28 +213,28 @@ describe('BetterAuthController', () => {
           },
           ip: '127.0.0.1',
           get: vi.fn(() => 'test-agent'),
-        } as never,
-        {} as never,
+        }),
+        toAuthorizeResponse({}),
       ),
     ).rejects.toThrow(/S256/);
 
     expect(handle).not.toHaveBeenCalled();
   });
 
-  it('passes supported token grants through to Better Auth', async () => {
+  it('passes authorization_code grants through the wrapped token bridge when no refresh token is returned', async () => {
     const response = createExpressResponseStub();
 
     await expect(
       controller.token(
-        {
+        toTokenRequest({
           body: {
             grant_type: 'authorization_code',
             client_id: 'internal-id-client',
           },
           ip: '127.0.0.1',
           get: vi.fn(() => 'test-agent'),
-        } as never,
-        response,
+        }),
+        toTokenResponse(response),
       ),
     ).resolves.toBeUndefined();
 
@@ -249,15 +286,15 @@ describe('BetterAuthController', () => {
 
     await expect(
       controller.token(
-        {
+        toTokenRequest({
           body: {
             grant_type: 'authorization_code',
             client_id: 'internal-id-client',
           },
           ip: '127.0.0.1',
           get: vi.fn(() => 'test-agent'),
-        } as never,
-        response,
+        }),
+        toTokenResponse(response),
       ),
     ).resolves.toBeUndefined();
 
@@ -307,7 +344,7 @@ describe('BetterAuthController', () => {
 
     await expect(
       controller.token(
-        {
+        toTokenRequest({
           body: {
             grant_type: 'refresh_token',
             client_id: 'internal-id-client',
@@ -321,17 +358,15 @@ describe('BetterAuthController', () => {
           method: 'POST',
           originalUrl: '/api/auth/oauth2/token',
           url: '/api/auth/oauth2/token',
-        } as never,
-        response,
+        }),
+        toTokenResponse(response),
       ),
     ).resolves.toBeUndefined();
 
     expect(resolveRefreshGrant).toHaveBeenCalledWith('wrapped-refresh-token');
     expect(dispatch).toHaveBeenCalledTimes(1);
     const secondDispatchCall = dispatch.mock.calls[0];
-    const dispatchOverrides = secondDispatchCall?.[1] as
-      | { body?: Record<string, unknown> }
-      | undefined;
+    const dispatchOverrides = secondDispatchCall?.[1];
     expect(dispatchOverrides?.body).toMatchObject({
       refresh_token: 'upstream-refresh-token',
     });
@@ -354,14 +389,14 @@ describe('BetterAuthController', () => {
   it('rejects unsupported token grants at the controller boundary', async () => {
     await expect(
       controller.token(
-        {
+        toTokenRequest({
           body: {
             grant_type: 'client_credentials',
           },
           ip: '127.0.0.1',
           get: vi.fn(() => 'test-agent'),
-        } as never,
-        {} as never,
+        }),
+        toTokenResponse({}),
       ),
     ).rejects.toThrow(/authorization_code and refresh_token/);
 
@@ -377,11 +412,13 @@ describe('BetterAuthController', () => {
 
   it('blocks dynamic registration routes before Better Auth sees them', async () => {
     await expect(
-      controller.blockRegister({
-        body: {},
-        ip: '127.0.0.1',
-        get: vi.fn(() => 'test-agent'),
-      } as never),
+      controller.blockRegister(
+        toRegisterRequest({
+          body: {},
+          ip: '127.0.0.1',
+          get: vi.fn(() => 'test-agent'),
+        }),
+      ),
     ).rejects.toThrow(/Dynamic client registration/);
 
     expect(handle).not.toHaveBeenCalled();
@@ -418,15 +455,15 @@ describe('BetterAuthController', () => {
 
     await expect(
       controller.userInfo(
-        {
+        toUserInfoRequest({
           headers: {
             authorization: 'Bearer opaque-access-token',
           },
           method: 'GET',
           originalUrl: '/api/auth/oauth2/userinfo',
           url: '/api/auth/oauth2/userinfo',
-        } as never,
-        response,
+        }),
+        toUserInfoResponse(response),
       ),
     ).resolves.toBeUndefined();
 
@@ -465,15 +502,15 @@ describe('BetterAuthController', () => {
 
     await expect(
       controller.userInfo(
-        {
+        toUserInfoRequest({
           headers: {
             authorization: 'Bearer invalid-token',
           },
           method: 'GET',
           originalUrl: '/api/auth/oauth2/userinfo',
           url: '/api/auth/oauth2/userinfo',
-        } as never,
-        response,
+        }),
+        toUserInfoResponse(response),
       ),
     ).resolves.toBeUndefined();
 
@@ -509,13 +546,13 @@ describe('BetterAuthController', () => {
 
     await expect(
       controller.userInfo(
-        {
+        toUserInfoRequest({
           headers: {},
           method: 'GET',
           originalUrl: '/api/auth/oauth2/userinfo',
           url: '/api/auth/oauth2/userinfo',
-        } as never,
-        response,
+        }),
+        toUserInfoResponse(response),
       ),
     ).resolves.toBeUndefined();
 
@@ -534,7 +571,7 @@ describe('BetterAuthController', () => {
   });
 });
 
-function createExpressResponseStub() {
+function createExpressResponseStub(): ExpressResponseStub {
   return {
     statusCode: 200,
     status(code: number) {
@@ -543,7 +580,35 @@ function createExpressResponseStub() {
     },
     setHeader: vi.fn(),
     send: vi.fn(),
-  } as never;
+  };
+}
+
+function toAuthorizeRequest(value: unknown): AuthorizeRequest {
+  return value as AuthorizeRequest;
+}
+
+function toAuthorizeResponse(value: unknown): AuthorizeResponse {
+  return value as AuthorizeResponse;
+}
+
+function toRegisterRequest(value: unknown): RegisterRequest {
+  return value as RegisterRequest;
+}
+
+function toTokenRequest(value: unknown): TokenRequest {
+  return value as TokenRequest;
+}
+
+function toTokenResponse(value: unknown): TokenResponse {
+  return value as TokenResponse;
+}
+
+function toUserInfoRequest(value: unknown): UserInfoRequest {
+  return value as UserInfoRequest;
+}
+
+function toUserInfoResponse(value: unknown): UserInfoResponse {
+  return value as UserInfoResponse;
 }
 
 function buildIdToken(subject: string): string {
