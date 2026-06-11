@@ -45,6 +45,33 @@ export function configuration(): AppEnvironment {
         'development-only-better-auth-secret-change-me',
       loginPath: process.env.BETTER_AUTH_LOGIN_PATH ?? '/login',
     },
+    authentication: {
+      csrfCookieName:
+        process.env.AUTHENTICATION_CSRF_COOKIE_NAME ?? 'internal_id_login_csrf',
+      providerSessionCookieName:
+        process.env.AUTHENTICATION_PROVIDER_SESSION_COOKIE_NAME ??
+        'internal_id_provider_session',
+      providerSessionIdleTtlSeconds: parseNumber(
+        process.env.AUTHENTICATION_PROVIDER_SESSION_IDLE_TTL_SECONDS,
+        43200,
+      ),
+      providerSessionAbsoluteTtlSeconds: parseNumber(
+        process.env.AUTHENTICATION_PROVIDER_SESSION_ABSOLUTE_TTL_SECONDS,
+        604800,
+      ),
+      loginRateLimitWindowSeconds: parseNumber(
+        process.env.AUTHENTICATION_LOGIN_RATE_LIMIT_WINDOW_SECONDS,
+        600,
+      ),
+      loginRateLimitIpMaxAttempts: parseNumber(
+        process.env.AUTHENTICATION_LOGIN_RATE_LIMIT_IP_MAX_ATTEMPTS,
+        10,
+      ),
+      loginRateLimitAccountMaxAttempts: parseNumber(
+        process.env.AUTHENTICATION_LOGIN_RATE_LIMIT_ACCOUNT_MAX_ATTEMPTS,
+        5,
+      ),
+    },
     bootstrap: {
       adminEmail: process.env.BOOTSTRAP_ADMIN_EMAIL ?? 'admin@company.com',
       adminDisplayName:
@@ -53,6 +80,7 @@ export function configuration(): AppEnvironment {
       adminFamilyName:
         process.env.BOOTSTRAP_ADMIN_FAMILY_NAME ?? 'Administrator',
       adminUsername: process.env.BOOTSTRAP_ADMIN_USERNAME ?? 'internal.admin',
+      adminPassword: process.env.BOOTSTRAP_ADMIN_PASSWORD ?? null,
       adminGroupSlug:
         process.env.BOOTSTRAP_ADMIN_GROUP_SLUG ?? 'internal-id-admins',
       adminGroupName:

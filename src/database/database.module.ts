@@ -31,6 +31,29 @@ import { createTypeOrmOptions } from './typeorm.config';
             secret: configService.getOrThrow<string>('betterAuth.secret'),
             loginPath: configService.getOrThrow<string>('betterAuth.loginPath'),
           },
+          authentication: {
+            csrfCookieName: configService.getOrThrow<string>(
+              'authentication.csrfCookieName',
+            ),
+            providerSessionCookieName: configService.getOrThrow<string>(
+              'authentication.providerSessionCookieName',
+            ),
+            providerSessionIdleTtlSeconds: configService.getOrThrow<number>(
+              'authentication.providerSessionIdleTtlSeconds',
+            ),
+            providerSessionAbsoluteTtlSeconds: configService.getOrThrow<number>(
+              'authentication.providerSessionAbsoluteTtlSeconds',
+            ),
+            loginRateLimitWindowSeconds: configService.getOrThrow<number>(
+              'authentication.loginRateLimitWindowSeconds',
+            ),
+            loginRateLimitIpMaxAttempts: configService.getOrThrow<number>(
+              'authentication.loginRateLimitIpMaxAttempts',
+            ),
+            loginRateLimitAccountMaxAttempts: configService.getOrThrow<number>(
+              'authentication.loginRateLimitAccountMaxAttempts',
+            ),
+          },
           bootstrap: {
             adminEmail: configService.getOrThrow<string>(
               'bootstrap.adminEmail',
@@ -44,6 +67,8 @@ import { createTypeOrmOptions } from './typeorm.config';
               configService.get<string>('bootstrap.adminFamilyName') ?? null,
             adminUsername:
               configService.get<string>('bootstrap.adminUsername') ?? null,
+            adminPassword:
+              configService.get<string>('bootstrap.adminPassword') ?? null,
             adminGroupSlug: configService.getOrThrow<string>(
               'bootstrap.adminGroupSlug',
             ),

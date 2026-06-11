@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
+import { urlencoded } from 'express';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -8,6 +9,7 @@ async function bootstrap() {
   });
 
   app.enableShutdownHooks();
+  app.use(urlencoded({ extended: false }));
 
   const configService = app.get(ConfigService);
   const port = configService.get<number>('app.port') ?? 3000;

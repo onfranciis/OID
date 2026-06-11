@@ -42,5 +42,13 @@ export function validateEnvironment(
     throw new Error('BETTER_AUTH_SECRET must be a string when provided.');
   }
 
+  if (
+    config.BOOTSTRAP_ADMIN_PASSWORD !== undefined &&
+    config.BOOTSTRAP_ADMIN_PASSWORD !== null &&
+    typeof config.BOOTSTRAP_ADMIN_PASSWORD !== 'string'
+  ) {
+    throw new Error('BOOTSTRAP_ADMIN_PASSWORD must be a string when provided.');
+  }
+
   return config;
 }

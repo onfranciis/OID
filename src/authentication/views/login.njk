@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Internal ID Login</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #11211c;
+        --muted: #5d7068;
+        --paper: #f7f2e8;
+        --panel: rgba(255, 255, 255, 0.78);
+        --line: rgba(17, 33, 28, 0.12);
+        --accent: #0f766e;
+        --accent-strong: #115e59;
+        --danger: #b42318;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at top left, rgba(15, 118, 110, 0.28), transparent 34%),
+          radial-gradient(circle at bottom right, rgba(180, 35, 24, 0.15), transparent 26%),
+          linear-gradient(145deg, #efe7d7 0%, #f7f2e8 48%, #ece2cf 100%);
+        display: grid;
+        place-items: center;
+        padding: 24px;
+      }
+
+      main {
+        width: min(100%, 440px);
+        background: var(--panel);
+        backdrop-filter: blur(16px);
+        border: 1px solid var(--line);
+        border-radius: 28px;
+        padding: 32px;
+        box-shadow: 0 24px 80px rgba(17, 33, 28, 0.14);
+      }
+
+      .eyebrow {
+        margin: 0 0 12px;
+        font-size: 0.78rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      h1 {
+        margin: 0 0 10px;
+        font-size: clamp(2rem, 5vw, 2.7rem);
+        line-height: 0.95;
+      }
+
+      .lede {
+        margin: 0 0 24px;
+        color: var(--muted);
+      }
+
+      form {
+        display: grid;
+        gap: 16px;
+      }
+
+      label {
+        display: grid;
+        gap: 8px;
+        font-size: 0.95rem;
+      }
+
+      input {
+        width: 100%;
+        border-radius: 14px;
+        border: 1px solid var(--line);
+        padding: 14px 16px;
+        font: inherit;
+        background: rgba(255, 255, 255, 0.92);
+      }
+
+      input:focus {
+        outline: 2px solid rgba(15, 118, 110, 0.25);
+        border-color: rgba(15, 118, 110, 0.5);
+      }
+
+      button {
+        border: 0;
+        border-radius: 999px;
+        padding: 14px 18px;
+        font: inherit;
+        font-weight: 700;
+        color: #fff;
+        background: linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%);
+        cursor: pointer;
+      }
+
+      .error {
+        margin: 0 0 20px;
+        padding: 12px 14px;
+        border-radius: 14px;
+        background: rgba(180, 35, 24, 0.08);
+        color: var(--danger);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p class="eyebrow">Internal Identity</p>
+      <h1>Sign in to continue</h1>
+      <p class="lede">Use your Internal ID email and password. This page is hosted by the identity provider.</p>
+      {% if errorMessage %}
+      <p class="error">{{ errorMessage }}</p>
+      {% endif %}
+      <form method="post" action="/login" novalidate>
+        <input type="hidden" name="csrfToken" value="{{ csrfToken }}" />
+        <input type="hidden" name="returnTo" value="{{ returnTo or '/' }}" />
+        <label>
+          Email
+          <input type="email" name="email" autocomplete="username" value="{{ email or '' }}" required />
+        </label>
+        <label>
+          Password
+          <input type="password" name="password" autocomplete="current-password" required />
+        </label>
+        <button type="submit">Continue</button>
+      </form>
+    </main>
+  </body>
+</html>
