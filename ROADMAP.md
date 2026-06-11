@@ -165,7 +165,112 @@ Use these labels when updating task status.
 | 10 | Operations And Deployment | Not Started | Local and production-like deployment paths exist with backups, logging, metrics, and cleanup jobs. |
 | 11 | Client Integration Readiness | Not Started | A sample internal client can complete the full Authorization Code + PKCE flow. |
 
-## 10. Phase 0: Project Setup Decisions
+## 10. Execution Plan
+
+This section turns the roadmap into a working sequence. The intent is to keep
+the team on one critical path, reduce early rework, and make phase completion
+observable from the repo.
+
+### 10.1 Execution Principles
+
+- Finish phase gates in order unless an explicit dependency exception is noted.
+- Prefer thin vertical slices over broad parallel implementation.
+- Treat Better Auth feasibility as an early blocker, not a late integration task.
+- Commit migrations only after ownership boundaries are written down.
+- Do not build admin or OIDC controllers on top of ambiguous client/token models.
+- Each milestone must leave the repo in a runnable, testable state.
+
+### 10.2 Milestone Sequence
+
+| Milestone | Covers | Target Outcome | Blocking Inputs | Required Repo Artifacts |
+| --- | --- | --- | --- | --- |
+| M0 | Phase 0 | Remaining stack and repo decisions are locked. | Architecture guide, Better Auth docs review | Updated roadmap decisions, Node/package manager files |
+| M1 | Phase 1 | NestJS app boots locally with config, logging, DB wiring, and test commands. | M0 | Nest scaffold, env validation, TypeORM config, health check |
+| M2 | Phase 2 | Initial schema exists as reviewed migrations with rollback. | M0, M1 | Entities, migrations, ownership document, seed plan |
+| M3 | Phase 3 | Better Auth can be constrained to Internal ID rules. | M0, M1, M2 | Better Auth spike module, findings doc, failing/passing protocol checks |
+| M4 | Phase 4 | Users can log in and receive secure provider sessions. | M1, M2, M3 | Login/logout flow, session storage, auth audit events |
+| M5 | Phase 5 | Admin bootstrap path exists for users, groups, and clients. | M2, M4 | Initial admin bootstrap, admin SSR pages/controllers, audit trail |
+| M6 | Phase 6 | Authorization endpoint contract works for code + PKCE only. | M3, M4, M5 | Discovery route, authorize flow, negative tests |
+| M7 | Phase 7 | Token exchange, JWKS, and UserInfo work with signed ID tokens. | M3, M6 | Signing keys, token exchange, claim release, JWKS |
+| M8 | Phase 8 | Refresh rotation, replay detection, and revocation are transactional. | M7 | Refresh token model, rotation logic, revocation endpoints |
+| M9 | Phase 9 | Security hardening and protocol abuse protections are in place. | M4, M6, M7, M8 | Rate limits, CSRF/XSS protections, audit coverage, negative suites |
+| M10 | Phase 10 | Local and production-like operations path is documented and runnable. | M1-M9 | Docker/dev infra, CI, observability, cleanup jobs |
+| M11 | Phase 11 | Sample internal client completes end-to-end login flow. | M6-M10 | Sample client app/config, integration guide, final e2e suite |
+
+### 10.3 Critical Path
+
+```text
+M0 -> M1 -> M2 -> M3 -> M4 -> M5 -> M6 -> M7 -> M8 -> M9 -> M10 -> M11
+```
+
+Parallel work is allowed only when it does not weaken this chain. Examples:
+
+- SSR template evaluation can happen during M0 while package manager decisions are being finalized.
+- Logging and request-context work can proceed in parallel inside M1.
+- Seed strategy drafting can start during M2 before all entities are finished.
+- Security test case authoring can begin during M6 and expand through M9.
+
+### 10.4 Milestone Exit Evidence
+
+Each milestone is only `Done` when the repo contains all of the following:
+
+- Code or configuration implementing the milestone scope.
+- Automated checks relevant to the milestone.
+- Updated roadmap status rows.
+- Updated source-of-truth file table when new entrypoints are introduced.
+- Short implementation notes where a non-obvious Better Auth or OIDC constraint was discovered.
+
+### 10.5 Immediate Working Queue
+
+These are the next ten executable tasks in dependency order. An agent should
+work from this queue before pulling lower-priority tasks from later phases.
+
+| Order | Task ID | Why It Comes Next | Expected Output |
+| --- | --- | --- | --- |
+| 1 | P0-01 | Needed before lockfiles, scripts, and docs diverge. | Package manager decision in repo docs |
+| 2 | P0-02 | Needed before scaffolding and CI config. | Node version file |
+| 3 | P0-03 | Needed before Nest scaffold defaults are accepted blindly. | Test runner decision and scripts strategy |
+| 4 | P0-04 | Better Auth compatibility affects Nest bootstrap. | Express or Fastify decision |
+| 5 | P0-05 | Login/admin rendering choice affects app wiring. | Template engine decision |
+| 6 | P0-06 | Local DB approach affects onboarding and scripts. | Dev database strategy |
+| 7 | P0-08 | Table ownership must be known before migrations. | Ownership notes in roadmap or companion doc |
+| 8 | P0-09 | Route ownership affects controller/module boundaries. | Better Auth route mounting decision |
+| 9 | P1-01 | Scaffolding can begin once the above decisions are locked. | Bootable NestJS app |
+| 10 | P1-03 | Config validation should land immediately after scaffold. | Startup-safe env validation |
+
+### 10.6 Decision Log For Phase 0
+
+Use this table to lock the remaining setup decisions before scaffolding.
+
+| Decision | Status | Chosen Value | Notes |
+| --- | --- | --- | --- |
+| Package manager | Pending |  |  |
+| Node.js version | Pending |  |  |
+| Test runner | Pending |  |  |
+| NestJS adapter | Pending |  |  |
+| Template engine | Pending |  |  |
+| Local dev database strategy | Pending |  |  |
+| Stable ID format | Pending |  |  |
+| Better Auth table ownership | Pending |  |  |
+| Better Auth route mounting strategy | Pending |  |  |
+| Redis timing | Pending |  |  |
+
+### 10.7 Definition Of Done For The First Buildable Slice
+
+The first meaningful buildable slice is M3, not M1.
+
+M1 proves only that the application skeleton is alive. M3 is the first point at
+which the repo has enough structure to validate whether Internal ID is viable on
+top of Better Auth without architectural backtracking.
+
+The team should therefore optimize the first implementation wave around:
+
+- Locking setup decisions fast.
+- Scaffolding once.
+- Writing reviewed migrations once.
+- Running the Better Auth spike before deeper feature work.
+
+## 11. Phase 0: Project Setup Decisions
 
 Objective: lock the remaining implementation conventions before scaffolding.
 
@@ -191,7 +296,7 @@ Objective: lock the remaining implementation conventions before scaffolding.
 - Better Auth feasibility questions are captured before coding around them.
 - No app-specific authorization is introduced.
 
-## 11. Phase 1: NestJS Foundation
+## 12. Phase 1: NestJS Foundation
 
 Objective: create a clean modular monolith skeleton.
 
@@ -243,7 +348,7 @@ src/
 - No domain logic is implemented directly in `main.ts`.
 - The app has repeatable lint, test, and migration commands.
 
-## 12. Phase 2: Data Model And Migrations
+## 13. Phase 2: Data Model And Migrations
 
 Objective: create the durable PostgreSQL foundation.
 
@@ -305,7 +410,7 @@ Before creating migrations, decide and document ownership:
 - No duplicate source of truth exists for users, credentials, clients, or tokens.
 - The schema supports auditability and revocation.
 
-## 13. Phase 3: Better Auth Integration Spike
+## 14. Phase 3: Better Auth Integration Spike
 
 Objective: prove Better Auth can be used without widening Internal ID scope.
 
@@ -342,7 +447,7 @@ Objective: prove Better Auth can be used without widening Internal ID scope.
 - Any Better Auth limitation is documented with a workaround or explicit risk.
 - The project can move forward without violating the scope boundary.
 
-## 14. Phase 4: Authentication And Sessions
+## 15. Phase 4: Authentication And Sessions
 
 Objective: users can authenticate through provider-owned SSR pages.
 
@@ -381,7 +486,7 @@ Objective: users can authenticate through provider-owned SSR pages.
 - Provider session semantics are clear and secure.
 - Login and logout are audited.
 
-## 15. Phase 5: Admin Bootstrap
+## 16. Phase 5: Admin Bootstrap
 
 Objective: trusted admins can manage the initial internal identity system.
 
@@ -421,7 +526,7 @@ Objective: trusted admins can manage the initial internal identity system.
 - Admin UI escapes all user-controlled data.
 - Admin can configure clients without dynamic public registration.
 
-## 16. Phase 6: OIDC Authorization
+## 17. Phase 6: OIDC Authorization
 
 Objective: implement the authorization endpoint contract.
 
@@ -482,7 +587,7 @@ code_challenge_method=S256
 - Discovery metadata does not over-advertise Better Auth capabilities.
 - All negative protocol tests pass.
 
-## 17. Phase 7: Token Issuance And JWKS
+## 18. Phase 7: Token Issuance And JWKS
 
 Objective: exchange authorization codes for signed identity tokens and short-lived access tokens.
 
@@ -542,7 +647,7 @@ GET /oauth/userinfo
 - Token endpoint does not expose unsupported OAuth grants.
 - Claim release is constrained and tested.
 
-## 18. Phase 8: Refresh Tokens And Revocation
+## 19. Phase 8: Refresh Tokens And Revocation
 
 Objective: safely support long-lived client sessions where explicitly allowed.
 
@@ -597,7 +702,7 @@ POST /oauth/revoke
 - Replay detection is audited at critical severity.
 - Revocation works for app logout, admin actions, and deactivation.
 
-## 19. Phase 9: Security Hardening
+## 20. Phase 9: Security Hardening
 
 Objective: make the provider safe enough for internal production use.
 
@@ -626,7 +731,7 @@ Objective: make the provider safe enough for internal production use.
 - Secrets are not logged.
 - Rate limits exist for login and token endpoints.
 
-## 20. Phase 10: Operations And Deployment
+## 21. Phase 10: Operations And Deployment
 
 Objective: make the system deployable, observable, and maintainable.
 
@@ -654,7 +759,7 @@ Objective: make the system deployable, observable, and maintainable.
 - Production config cannot start with insecure defaults.
 - Operators have backup, restore, cleanup, and key rotation guidance.
 
-## 21. Phase 11: Client Integration Readiness
+## 22. Phase 11: Client Integration Readiness
 
 Objective: prove an internal app can use Internal ID correctly.
 
@@ -678,7 +783,7 @@ Objective: prove an internal app can use Internal ID correctly.
 - App owners are told not to treat provider access tokens as app sessions unless
   that is an intentional architecture decision.
 
-## 22. Cross-Cutting Testing Strategy
+## 23. Cross-Cutting Testing Strategy
 
 Every phase should add tests proportional to risk.
 
@@ -712,7 +817,7 @@ Every phase should add tests proportional to risk.
 - Reused authorization code rejected.
 - Reused rotated refresh token triggers replay behavior.
 
-## 23. Audit Event Requirements
+## 24. Audit Event Requirements
 
 Audit events must be safe and useful.
 
@@ -757,7 +862,7 @@ Audit events must be safe and useful.
 - CSRF tokens.
 - Session cookie values.
 
-## 24. Claim Release Rules
+## 25. Claim Release Rules
 
 Claims must be identity facts, not app permissions.
 
@@ -791,7 +896,7 @@ current user status
 - `can_view_customer_pii`
 - Any client-specific entitlement
 
-## 25. Better Auth Guardrail Checklist
+## 26. Better Auth Guardrail Checklist
 
 Run this checklist after initial integration and after every Better Auth upgrade.
 
@@ -812,7 +917,7 @@ Run this checklist after initial integration and after every Better Auth upgrade
 | Claim release can be constrained per client. | Not Started |
 | Audit hooks are available or wrapped. | Not Started |
 
-## 26. Data And Transaction Checklist
+## 27. Data And Transaction Checklist
 
 Use this checklist before accepting token/session-related work.
 
@@ -830,7 +935,7 @@ Use this checklist before accepting token/session-related work.
 | Signing key activation/retirement is tracked. | Not Started |
 | Audit event writes are included in sensitive transactions where practical. | Not Started |
 
-## 27. Documentation Deliverables
+## 28. Documentation Deliverables
 
 | Document | Status | Purpose |
 | --- | --- | --- |
@@ -843,7 +948,7 @@ Use this checklist before accepting token/session-related work.
 | Operations runbook | Not Started | Deployment, backups, cleanup jobs, key rotation, incidents. |
 | Security test matrix | Not Started | Required conformance and negative tests. |
 
-## 28. Definition Of Done
+## 29. Definition Of Done
 
 A task is done only when:
 
@@ -857,7 +962,7 @@ A task is done only when:
 - Docs or this roadmap are updated if behavior changes.
 - The implementation does not expand Internal ID scope.
 
-## 29. First Implementation Slice
+## 30. First Implementation Slice
 
 The recommended first coding slice is:
 
@@ -872,7 +977,7 @@ The recommended first coding slice is:
 Do not start token issuance before the Better Auth integration spike has proven
 that unsupported OAuth/OIDC features can be disabled or blocked.
 
-## 30. Open Questions
+## 31. Open Questions
 
 | ID | Question | Impact | Status |
 | --- | --- | --- | --- |
@@ -887,7 +992,7 @@ that unsupported OAuth/OIDC features can be disabled or blocked.
 | Q-09 | What is the initial admin bootstrap mechanism? | Affects first deployment safety. | Open |
 | Q-10 | What are production token/session TTL values? | Affects security and UX. | Open |
 
-## 31. Risk Register
+## 32. Risk Register
 
 | Risk | Likelihood | Impact | Mitigation |
 | --- | --- | --- | --- |
@@ -902,7 +1007,7 @@ that unsupported OAuth/OIDC features can be disabled or blocked.
 | Audit logs leak secrets. | Low | High | Redaction tests and safe metadata policy. |
 | Key rotation is not operationally tested. | Medium | High | Add key rotation runbook and staging rehearsal. |
 
-## 32. Agent Working Instructions
+## 33. Agent Working Instructions
 
 When a future agent session works on this project:
 
@@ -917,7 +1022,7 @@ When a future agent session works on this project:
 9. Do not bypass Better Auth guardrails without documenting why.
 10. Do not introduce app-specific authorization into Internal ID claims.
 
-## 33. Immediate Next Step
+## 34. Immediate Next Step
 
 Start Phase 0.
 
