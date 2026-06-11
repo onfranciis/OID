@@ -17,6 +17,10 @@ local wrappers and route guards.
   PostgreSQL, JWT, and OIDC provider plugins.
 - `src/better-auth/better-auth.controller.ts` mounts Better Auth under
   `/api/auth`.
+- `src/better-auth/better-auth.guardrails.ts` blocks unsupported authorize,
+  token, and dynamic registration requests before they reach Better Auth.
+- `src/better-auth/BETTER_AUTH_OWNERSHIP.md` records the current coexistence
+  decision for Better Auth-managed versus Internal ID-owned tables.
 - `pnpm better-auth:inspect` reports Better Auth plugin IDs, exposed API
   endpoint IDs, and Better Auth-managed schema tables.
 
@@ -27,8 +31,8 @@ local wrappers and route guards.
 | P3-01 | Can Better Auth run cleanly inside NestJS? | Done | Yes. The Better Auth runtime can be created in a Nest provider and mounted through a dedicated controller. |
 | P3-02 | Can Better Auth use PostgreSQL with the chosen adapter? | Done | Yes. Better Auth full mode accepts a Kysely PostgreSQL dialect. It also expects its own schema footprint, which must be reconciled with Internal ID ownership rules. |
 | P3-03 | Can OAuth Provider expose OIDC discovery? | Done | Yes. The OIDC plugin exposes discovery metadata and allows metadata overrides. |
-| P3-04 | Can unsupported response types be rejected? | In Progress | Better Auth’s published OIDC types still admit `token`, so Internal ID should not trust plugin defaults alone. Wrapper validation remains required. |
-| P3-05 | Can unsupported grant types be rejected? | In Progress | The dynamic registration payload types still admit broad grant types. Internal ID must block registration and validate token requests locally. |
+| P3-04 | Can unsupported response types be rejected? | In Progress | Wrapper validation now rejects unsupported authorize shapes before they reach Better Auth, but broader end-to-end negative tests are still needed. |
+| P3-05 | Can unsupported grant types be rejected? | In Progress | Wrapper validation now rejects unsupported token grants and blocks dynamic registration, but broader end-to-end negative tests are still needed. |
 | P3-06 | Can PKCE be required for all clients? | Done | Yes, with caveat. `requirePKCE` can be set true, but `plain` must also be disabled explicitly. |
 | P3-07 | Can dynamic registration be disabled? | Done | Yes, configuration can disable it, but the registration surface should still be blocked at the Internal ID boundary. |
 | P3-08 | Can refresh token rotation behavior satisfy this guide? | In Progress | Better Auth exposes expiry configuration, but this spike has not yet proven family tracking, replay detection, or auditable rotation semantics. |
@@ -50,8 +54,8 @@ local wrappers and route guards.
 
 1. Run `pnpm better-auth:inspect` and capture the Better Auth-owned schema
    tables that would be introduced.
-2. Decide whether Better Auth-owned auth/session/client tables will coexist with
-   or replace parts of the current Internal ID wrapper schema.
-3. Add protocol-negative tests around discovery, authorize, token, and
-   registration behavior before adopting Better Auth endpoints as public
+2. Add end-to-end protocol-negative tests around discovery, authorize, token,
+   and registration behavior before adopting Better Auth endpoints as public
    contract routes.
+3. Prove whether Better Auth refresh/session/audit behavior is compatible with
+   Internal ID lifecycle, replay detection, and audit requirements.

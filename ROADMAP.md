@@ -31,7 +31,7 @@ Client applications decide what that user can do.
 | Roadmap | In Progress | This file defines implementation tracking. |
 | Application code | In Progress | NestJS scaffold, module boundaries, config shell, and health route now exist. |
 | Database schema | Done | Internal ID-owned entities, reviewed migrations, rollback verification, and bootstrap seed strategy now exist. |
-| Better Auth integration | In Progress | Better Auth now mounts inside NestJS and can inspect its Postgres-backed schema footprint; contract hardening and ownership reconciliation remain open. |
+| Better Auth integration | In Progress | Better Auth mounts inside NestJS, guardrails block unsupported registration/request shapes, and schema coexistence is documented; deeper protocol and audit proof remains open. |
 | Tests | In Progress | Vitest and Playwright commands are wired with initial placeholder coverage. |
 | Deployment | In Progress | Docker Compose and runtime baseline files exist; CI and production paths are not set up yet. |
 
@@ -144,6 +144,7 @@ The project is drifting if:
 | `src/better-auth/better-auth.factory.ts` | Better Auth runtime factory for PostgreSQL, JWT, and OIDC plugin wiring. |
 | `src/better-auth/better-auth.controller.ts` | NestJS mount point for Better Auth routes under `/api/auth`. |
 | `src/better-auth/BETTER_AUTH_SPIKE.md` | Phase 3 findings and unresolved Better Auth constraints. |
+| `src/better-auth/BETTER_AUTH_OWNERSHIP.md` | Current coexistence decision between Better Auth-managed and Internal ID-owned schema. |
 
 When code exists, update this table with entrypoints such as `src/app.module.ts`,
 `src/better-auth/better-auth.config.ts`, and `src/database/data-source.ts`.
