@@ -4,6 +4,7 @@ import { AuditService } from '../audit/audit.service';
 import { AuditSeverity } from '../database/entities/audit-event.entity';
 import { RefreshTokenService } from '../tokens/refresh-token.service';
 import { BetterAuthService } from './better-auth.service';
+import { UserInfoPolicyService } from './userinfo-policy.service';
 import {
   assertSupportedAuthorizationRequest,
   assertSupportedTokenRequest,
@@ -16,6 +17,7 @@ export class BetterAuthController {
     private readonly betterAuthService: BetterAuthService,
     private readonly auditService: AuditService,
     private readonly refreshTokenService: RefreshTokenService,
+    private readonly userInfoPolicyService: UserInfoPolicyService,
   ) {}
 
   @Get('oauth2/authorize')
@@ -100,6 +102,31 @@ export class BetterAuthController {
     );
 
     return blockDynamicClientRegistration();
+  }
+
+  @Get('oauth2/userinfo')
+  async userInfo(
+    @Req() req: Request,
+    @Res() res: ExpressResponse,
+  ): Promise<void> {
+    const response = await this.betterAuthService.dispatch(req);
+
+    if (!response.ok) {
+      await sendFetchResponse(res, response);
+      return;
+    }
+
+    const payload = await readJsonBody(response);
+    const filteredPayload =
+      await this.userInfoPolicyService.filterUserInfoClaims(
+        getHeaderValue(req.headers.authorization),
+        payload,
+      );
+
+    await sendFetchResponse(
+      res,
+      rebuildJsonResponse(filteredPayload, response),
+    );
   }
 
   @All()
@@ -229,6 +256,18 @@ function getBodyValue(body: unknown, key: string): string | null {
   }
 
   return getSingleValue((body as Record<string, unknown>)[key]);
+}
+
+function getHeaderValue(
+  value: string | string[] | undefined,
+): string | undefined {
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  return Array.isArray(value) && typeof value[0] === 'string'
+    ? value[0]
+    : undefined;
 }
 
 async function sendFetchResponse(

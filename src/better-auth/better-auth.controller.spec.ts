@@ -13,6 +13,7 @@ import { AuditSeverity } from '../database/entities/audit-event.entity';
 import { RefreshTokenService } from '../tokens/refresh-token.service';
 import { BetterAuthController } from './better-auth.controller';
 import { BetterAuthService } from './better-auth.service';
+import { UserInfoPolicyService } from './userinfo-policy.service';
 
 describe('BetterAuthController', () => {
   let controller: BetterAuthController;
@@ -58,6 +59,7 @@ describe('BetterAuthController', () => {
       absoluteExpiresAt: new Date('2026-06-11T01:00:00.000Z'),
     }),
   );
+  const filterUserInfoClaims = vi.fn((_, payload) => Promise.resolve(payload));
 
   beforeAll(async () => {
     const moduleRef: TestingModule = await Test.createTestingModule({
@@ -84,6 +86,12 @@ describe('BetterAuthController', () => {
             rotateToken,
           },
         },
+        {
+          provide: UserInfoPolicyService,
+          useValue: {
+            filterUserInfoClaims,
+          },
+        },
       ],
     }).compile();
 
@@ -97,6 +105,7 @@ describe('BetterAuthController', () => {
     issueTokenForClient.mockClear();
     resolveRefreshGrant.mockClear();
     rotateToken.mockClear();
+    filterUserInfoClaims.mockClear();
   });
 
   afterAll(() => {
@@ -380,6 +389,60 @@ describe('BetterAuthController', () => {
       expect.objectContaining({
         eventType: 'client.registration.blocked',
         severity: AuditSeverity.WARNING,
+      }),
+    );
+  });
+
+  it('filters the public userinfo response through Internal ID claim policy', async () => {
+    dispatch.mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          sub: 'usr_123',
+          email: 'admin@company.com',
+          groups: ['identity-admins'],
+          profile_type: 'employee',
+        }),
+        {
+          status: 200,
+          headers: {
+            'content-type': 'application/json',
+          },
+        },
+      ),
+    );
+    filterUserInfoClaims.mockResolvedValueOnce({
+      sub: 'usr_123',
+      groups: ['identity-admins'],
+    });
+    const response = createExpressResponseStub();
+
+    await expect(
+      controller.userInfo(
+        {
+          headers: {
+            authorization: 'Bearer opaque-access-token',
+          },
+          method: 'GET',
+          originalUrl: '/api/auth/oauth2/userinfo',
+          url: '/api/auth/oauth2/userinfo',
+        } as never,
+        response,
+      ),
+    ).resolves.toBeUndefined();
+
+    expect(dispatch).toHaveBeenCalledTimes(1);
+    expect(filterUserInfoClaims).toHaveBeenCalledWith(
+      'Bearer opaque-access-token',
+      expect.objectContaining({
+        sub: 'usr_123',
+        email: 'admin@company.com',
+        groups: ['identity-admins'],
+      }),
+    );
+    expect(response.send).toHaveBeenCalledWith(
+      JSON.stringify({
+        sub: 'usr_123',
+        groups: ['identity-admins'],
       }),
     );
   });
