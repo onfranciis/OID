@@ -26,7 +26,8 @@
     "migration:show": "pnpm typeorm migration:show",
     "migration:verify": "pnpm exec ts-node --transpile-only src/database/scripts/verify-migrations.ts",
     "seed:bootstrap": "pnpm exec ts-node --transpile-only src/database/scripts/bootstrap.ts",
-    "better-auth:inspect": "pnpm exec ts-node --transpile-only src/better-auth/scripts/inspect.ts"
+    "better-auth:inspect": "pnpm exec ts-node --transpile-only src/better-auth/scripts/inspect.ts",
+    "better-auth:schema": "pnpm exec ts-node --transpile-only src/better-auth/scripts/materialize-schema.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

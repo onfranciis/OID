@@ -479,12 +479,12 @@ Objective: users can authenticate through provider-owned SSR pages.
 | --- | --- | --- | --- |
 | P4-01 | Build SSR login page | Done | Page renders from `auth.company.com` app with escaped content. |
 | P4-02 | Add login CSRF protection | Done | POST login rejects missing or invalid CSRF token. |
-| P4-03 | Integrate Better Auth email/password | In Progress | Active users can authenticate. |
+| P4-03 | Integrate Better Auth email/password | Done | Active users can authenticate. |
 | P4-04 | Normalize login identifier | Done | Email lookup is case-insensitive and display casing is preserved where needed. |
 | P4-05 | Enforce lifecycle checks | Done | Pending, suspended, and deactivated users cannot login. |
 | P4-06 | Create provider session cookie | Done | Cookie is `HttpOnly`, `Secure`, `SameSite=Lax`, path-scoped, and high entropy. |
 | P4-07 | Rotate session after login | Done | Session fixation is prevented. |
-| P4-08 | Add logout | In Progress | Provider session cookie is cleared and session is revoked. |
+| P4-08 | Add logout | Done | Provider session cookie is cleared and session is revoked. |
 | P4-09 | Add login rate limiting | Done | Account and IP rate limits exist without user enumeration. |
 | P4-10 | Add generic login errors | Done | Unknown email and wrong password return same message. |
 | P4-11 | Track `auth_time` | Done | Session and ID token path can use recent authentication. |

@@ -1,6 +1,8 @@
 import type { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import type { DataSourceOptions } from 'typeorm';
 import type { AppEnvironment } from '../config/app-environment';
+import { DATABASE_ENTITIES } from './entities';
+import { DATABASE_MIGRATIONS } from './migrations';
 
 export function createTypeOrmOptions(
   appEnvironment: AppEnvironment,
@@ -11,11 +13,8 @@ export function createTypeOrmOptions(
     autoLoadEntities: true,
     synchronize: false,
     logging: appEnvironment.database.logging,
-    entities: ['dist/**/*.entity.js', 'src/**/*.entity.ts'],
-    migrations: [
-      'dist/database/migrations/*.js',
-      'src/database/migrations/*.ts',
-    ],
+    entities: [...DATABASE_ENTITIES],
+    migrations: [...DATABASE_MIGRATIONS],
     migrationsTableName: 'typeorm_migrations',
     ssl: false,
   };

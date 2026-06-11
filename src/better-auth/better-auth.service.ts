@@ -147,6 +147,51 @@ export class BetterAuthService implements OnModuleDestroy {
     );
   }
 
+  async signInWithEmail(input: {
+    email: string;
+    password: string;
+    rememberMe?: boolean;
+  }): Promise<Response> {
+    const authApi = this.runtime.auth.api as {
+      signInEmail: (context: {
+        headers: Headers;
+        body: {
+          email: string;
+          password: string;
+          rememberMe?: boolean;
+        };
+        asResponse: true;
+      }) => Promise<Response>;
+    };
+    const response = await authApi.signInEmail({
+      headers: new Headers({
+        origin: this.baseUrl,
+      }),
+      body: input,
+      asResponse: true,
+    });
+
+    return response;
+  }
+
+  async signOut(input?: { cookieHeader?: string }): Promise<Response> {
+    const authApi = this.runtime.auth.api as {
+      signOut: (context: {
+        headers: Headers;
+        asResponse: true;
+      }) => Promise<Response>;
+    };
+    const response = await authApi.signOut({
+      headers: new Headers({
+        origin: this.baseUrl,
+        ...(input?.cookieHeader ? { cookie: input.cookieHeader } : {}),
+      }),
+      asResponse: true,
+    });
+
+    return response;
+  }
+
   async onModuleDestroy(): Promise<void> {
     await this.runtime.db.destroy();
   }

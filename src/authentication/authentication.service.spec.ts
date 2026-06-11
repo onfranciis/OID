@@ -15,7 +15,7 @@ import { UserStatus } from '../database/entities/user.entity';
 
 describe('AuthenticationService', () => {
   const renderLoginPage = vi.fn<(model: unknown) => string>(() => '<html />');
-  const dispatch = vi.fn<BetterAuthService['dispatch']>(() =>
+  const signInWithEmail = vi.fn<BetterAuthService['signInWithEmail']>(() =>
     Promise.resolve(
       new Response(
         JSON.stringify({
@@ -31,6 +31,17 @@ describe('AuthenticationService', () => {
           },
         },
       ),
+    ),
+  );
+  const signOut = vi.fn<BetterAuthService['signOut']>(() =>
+    Promise.resolve(
+      new Response(null, {
+        status: 200,
+        headers: {
+          'set-cookie':
+            '__Secure-better-auth.session_token=; Max-Age=0; Path=/; HttpOnly',
+        },
+      }),
     ),
   );
   const record = vi.fn<(input: unknown) => Promise<string>>(() =>
@@ -100,7 +111,8 @@ describe('AuthenticationService', () => {
       renderLoginPage,
     } as unknown as LoginPageService,
     {
-      dispatch,
+      signInWithEmail,
+      signOut,
     } as unknown as BetterAuthService,
     {
       record,
@@ -123,7 +135,8 @@ describe('AuthenticationService', () => {
 
   beforeEach(() => {
     renderLoginPage.mockClear();
-    dispatch.mockClear();
+    signInWithEmail.mockClear();
+    signOut.mockClear();
     record.mockClear();
     assertAllowed.mockClear();
     recordFailure.mockClear();
@@ -194,7 +207,7 @@ describe('AuthenticationService', () => {
       ),
     ).rejects.toBeInstanceOf(ForbiddenException);
 
-    expect(dispatch).not.toHaveBeenCalled();
+    expect(signInWithEmail).not.toHaveBeenCalled();
     expect(record).toHaveBeenCalledWith(
       expect.objectContaining({
         eventType: 'user.login.rejected',
@@ -231,7 +244,7 @@ describe('AuthenticationService', () => {
       '127.0.0.1',
       'admin@company.com',
     );
-    expect(dispatch).toHaveBeenCalledTimes(1);
+    expect(signInWithEmail).toHaveBeenCalledTimes(1);
     expect(issue).toHaveBeenCalledWith(
       expect.objectContaining({
         userId: 'usr_123',
@@ -243,7 +256,7 @@ describe('AuthenticationService', () => {
     );
     expect(record).toHaveBeenCalledWith(
       expect.objectContaining({
-        eventType: 'user.login.succeeded',
+        eventType: 'provider.session.issued',
         severity: AuditSeverity.INFO,
       }),
     );
@@ -254,7 +267,7 @@ describe('AuthenticationService', () => {
   });
 
   it('turns Better Auth failures into a generic unauthorized response', async () => {
-    dispatch.mockResolvedValueOnce(
+    signInWithEmail.mockResolvedValueOnce(
       new Response(JSON.stringify({ code: 'INVALID_EMAIL_OR_PASSWORD' }), {
         status: 401,
       }),

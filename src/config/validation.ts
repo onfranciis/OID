@@ -43,6 +43,13 @@ export function validateEnvironment(
   }
 
   if (
+    typeof config.BETTER_AUTH_SECRET === 'string' &&
+    config.BETTER_AUTH_SECRET.length < 32
+  ) {
+    throw new Error('BETTER_AUTH_SECRET must be at least 32 characters long.');
+  }
+
+  if (
     config.BOOTSTRAP_ADMIN_PASSWORD !== undefined &&
     config.BOOTSTRAP_ADMIN_PASSWORD !== null &&
     typeof config.BOOTSTRAP_ADMIN_PASSWORD !== 'string'

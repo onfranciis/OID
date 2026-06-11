@@ -263,7 +263,7 @@ async function ensureBetterAuthCredentialUser(
       [
         'Skipping Better Auth credential bootstrap because the Better Auth',
         '`user`/`account` tables do not exist yet.',
-        'Create the Better Auth schema first, then rerun `pnpm seed:bootstrap`',
+        'Run `pnpm better-auth:schema` first, then rerun `pnpm seed:bootstrap`',
         'if you want the bootstrap admin credential account synced.',
       ].join(' '),
     );

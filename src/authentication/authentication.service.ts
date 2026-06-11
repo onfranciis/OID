@@ -121,18 +121,9 @@ export class AuthenticationService {
       throw new ForbiddenException(GENERIC_LOGIN_ERROR);
     }
 
-    const authResponse = await this.betterAuthService.dispatch({
-      method: 'POST',
-      originalUrl: '/api/auth/sign-in/email',
-      url: '/api/auth/sign-in/email',
-      headers: {
-        ...context.headers,
-        'content-type': 'application/json',
-      },
-      body: {
-        email: normalizedEmail,
-        password: submission.password,
-      },
+    const authResponse = await this.betterAuthService.signInWithEmail({
+      email: normalizedEmail,
+      password: submission.password,
     });
 
     if (!authResponse.ok) {
@@ -178,7 +169,7 @@ export class AuthenticationService {
     });
 
     await this.auditService.record({
-      eventType: 'user.login.succeeded',
+      eventType: 'provider.session.issued',
       severity: AuditSeverity.INFO,
       actorUserId: localUser.id,
       targetUserId: localUser.id,
@@ -231,11 +222,8 @@ export class AuthenticationService {
       }
     }
 
-    const betterAuthResponse = await this.betterAuthService.dispatch({
-      method: 'POST',
-      originalUrl: '/api/auth/sign-out',
-      url: '/api/auth/sign-out',
-      headers: context.headers,
+    const betterAuthResponse = await this.betterAuthService.signOut({
+      cookieHeader: buildCookieHeader(context.cookies),
     });
 
     responseHeaders.push(...getSetCookieHeaders(betterAuthResponse.headers));
@@ -350,4 +338,18 @@ function getSetCookieHeaders(headers: Headers): string[] {
     .split(/,(?=\s*[A-Za-z0-9_.-]+=)/)
     .map((value) => value.trim())
     .filter((value) => value.length > 0);
+}
+
+function buildCookieHeader(
+  cookies: Record<string, string>,
+): string | undefined {
+  const entries = Object.entries(cookies);
+
+  if (entries.length === 0) {
+    return undefined;
+  }
+
+  return entries
+    .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
+    .join('; ');
 }
