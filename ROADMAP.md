@@ -244,16 +244,24 @@ Use this table to lock the remaining setup decisions before scaffolding.
 
 | Decision | Status | Chosen Value | Notes |
 | --- | --- | --- | --- |
-| Package manager | Pending |  |  |
-| Node.js version | Pending |  |  |
-| Test runner | Pending |  |  |
-| NestJS adapter | Pending |  |  |
-| Template engine | Pending |  |  |
-| Local dev database strategy | Pending |  |  |
-| Stable ID format | Pending |  |  |
-| Better Auth table ownership | Pending |  |  |
-| Better Auth route mounting strategy | Pending |  |  |
-| Redis timing | Pending |  |  |
+| Package manager | Chosen | `pnpm` | Good fit for a TypeScript monorepo-capable backend, deterministic lockfile behavior, and fast local installs without adding unusual runtime constraints. |
+| Node.js version | Chosen | `Node.js 22 LTS` | Current long-term support baseline for a new NestJS service. Add `.nvmrc` and `engines.node` during scaffolding. |
+| Test runner | Chosen | `Vitest` for unit/integration, Playwright for e2e | Faster TypeScript-first feedback than Jest for service tests, plus browser-capable e2e coverage for SSR login and OIDC flows. |
+| NestJS adapter | Chosen | Express | Lower integration risk for Better Auth and SSR middleware than Fastify during the initial build. |
+| Template engine | Chosen | Nunjucks | SSR-friendly, explicit auto-escaping, good partial/layout support, and no React frontend requirement for provider-owned pages. |
+| Local dev database strategy | Chosen | Docker Compose PostgreSQL | Reproducible onboarding path with stable versions and no dependency on host-installed PostgreSQL. |
+| Stable ID format | Chosen | Prefixed ULIDs | Sortable IDs help admin/audit workflows; prefixes make table origin obvious in logs and exports. |
+| Better Auth table ownership | Chosen | Better Auth owns base auth/session primitives; Internal ID owns lifecycle, groups, memberships, audit, client policy, redirect policy, token wrappers, and key metadata | Keep a single source of truth per concept. Wrapper tables are allowed where Better Auth data must be constrained by Internal ID policy. |
+| Better Auth route mounting strategy | Chosen | Mount Better Auth inside `src/better-auth`, expose public contract through Internal ID controllers/wrappers | Preserves a clean boundary and makes it easier to hide unsupported features behind local validation. |
+| Redis timing | Chosen | Deferred | Start with PostgreSQL-backed state; revisit Redis only for rate limiting, caches, or contention hot spots discovered after M3. |
+
+### 10.6.1 Implementation Notes From Chosen Defaults
+
+- `pnpm` and `Node.js 22 LTS` should be treated as the bootstrap baseline for all local scripts and CI.
+- Express is the safer first adapter because the project risk is protocol correctness, not maximal HTTP throughput.
+- Nunjucks should be configured with auto-escaping enabled by default and without arbitrary template execution extensions.
+- Prefixed ULIDs should use consistent prefixes per aggregate, such as `usr_`, `grp_`, `cli_`, `ses_`, `cod_`, `rtk_`, and `aud_`.
+- Better Auth should not become the policy surface. Internal ID modules remain responsible for lifecycle checks, redirect URI rules, claim release, token rotation, and audit emission.
 
 ### 10.7 Definition Of Done For The First Buildable Slice
 
@@ -1024,15 +1032,15 @@ When a future agent session works on this project:
 
 ## 34. Immediate Next Step
 
-Start Phase 0.
+Start implementing the chosen Phase 0 baseline.
 
-The first concrete decision is the package/runtime baseline:
+The first concrete repo changes should be:
 
-- package manager
-- Node.js version
-- NestJS adapter
-- test runner
-- SSR template engine
-- local PostgreSQL setup
+- add `package.json` using `pnpm`
+- add `.nvmrc` for `Node.js 22`
+- scaffold NestJS on the Express adapter
+- add Docker Compose for PostgreSQL
+- wire Vitest and Playwright command placeholders into the scaffold
+- create the initial `src/better-auth` boundary module
 
-After that, begin Phase 1 by scaffolding the NestJS app.
+After those files exist, continue with Phase 1 config validation and TypeORM wiring.
