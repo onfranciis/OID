@@ -30,7 +30,7 @@ Client applications decide what that user can do.
 | Architecture guide | Done | `INTERNAL_OIDC_IDENTITY_PROVIDER_GUIDE.md` exists and is the main design reference. |
 | Roadmap | In Progress | This file defines implementation tracking. |
 | Application code | In Progress | NestJS scaffold, module boundaries, config shell, and health route now exist. |
-| Database schema | In Progress | Internal ID-owned entities and the initial reviewed migration now exist; rollback and seed strategy are still pending. |
+| Database schema | Done | Internal ID-owned entities, reviewed migrations, rollback verification, and bootstrap seed strategy now exist. |
 | Better Auth integration | In Progress | Better Auth boundary module and config shell exist; capability spike is not started. |
 | Tests | In Progress | Vitest and Playwright commands are wired with initial placeholder coverage. |
 | Deployment | In Progress | Docker Compose and runtime baseline files exist; CI and production paths are not set up yet. |
@@ -138,6 +138,8 @@ The project is drifting if:
 | `src/database/typeorm.config.ts` | Shared TypeORM configuration factory. |
 | `src/database/entities/` | Internal ID-owned TypeORM entity definitions. |
 | `src/database/migrations/1718107200000-create-internal-id-foundation.ts` | Initial reviewed PostgreSQL schema migration. |
+| `src/database/scripts/bootstrap.ts` | Idempotent bootstrap seed path for the first admin/group/client records. |
+| `src/database/scripts/verify-migrations.ts` | Disposable migration run and rollback verification script. |
 | `src/better-auth/better-auth.module.ts` | Better Auth integration boundary shell. |
 
 When code exists, update this table with entrypoints such as `src/app.module.ts`,
@@ -162,7 +164,7 @@ Use these labels when updating task status.
 | --- | --- | --- | --- |
 | 0 | Project Setup Decisions | Done | Stack, package manager, Better Auth feasibility, and repo conventions are locked. |
 | 1 | NestJS Foundation | Done | App boots with NestJS, TypeORM, PostgreSQL, Better Auth integration shell, and health check. |
-| 2 | Data Model And Migrations | In Progress | Initial PostgreSQL schema is created by TypeORM migrations; rollback and seed strategy are still pending. |
+| 2 | Data Model And Migrations | Done | Initial PostgreSQL schema is created by TypeORM migrations and verified with rollback on a disposable database. |
 | 3 | Better Auth Integration Spike | Not Started | Better Auth can enforce or be wrapped to enforce the Internal ID protocol contract. |
 | 4 | Authentication And Sessions | Not Started | Active users can log in and receive secure provider sessions. |
 | 5 | Admin Bootstrap | Not Started | Admins can manage users, groups, clients, and audit-relevant state. |
@@ -405,9 +407,9 @@ Before creating migrations, decide and document ownership:
 | P2-12 | Create signing key wrapper if needed | Done | Key status lifecycle is represented. |
 | P2-13 | Create audit event entity | Done | Safe metadata can be stored as JSONB. |
 | P2-14 | Add initial migration | Done | Migration creates all Internal ID-owned tables. |
-| P2-15 | Add rollback path | In Progress | Migration can roll back in local dev. |
+| P2-15 | Add rollback path | Done | Migration can roll back in local dev. |
 | P2-16 | Add indexes | Done | Lookup and active-state indexes exist for token/session/code paths. |
-| P2-17 | Add seed strategy | Not Started | Initial admin/client seed path is defined. |
+| P2-17 | Add seed strategy | Done | Initial admin/client seed path is defined. |
 
 ### PostgreSQL Requirements
 

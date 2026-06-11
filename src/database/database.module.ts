@@ -29,6 +29,36 @@ import { createTypeOrmOptions } from './typeorm.config';
               'betterAuth.cookieName',
             ),
           },
+          bootstrap: {
+            adminEmail: configService.getOrThrow<string>(
+              'bootstrap.adminEmail',
+            ),
+            adminDisplayName: configService.getOrThrow<string>(
+              'bootstrap.adminDisplayName',
+            ),
+            adminGivenName:
+              configService.get<string>('bootstrap.adminGivenName') ?? null,
+            adminFamilyName:
+              configService.get<string>('bootstrap.adminFamilyName') ?? null,
+            adminUsername:
+              configService.get<string>('bootstrap.adminUsername') ?? null,
+            adminGroupSlug: configService.getOrThrow<string>(
+              'bootstrap.adminGroupSlug',
+            ),
+            adminGroupName: configService.getOrThrow<string>(
+              'bootstrap.adminGroupName',
+            ),
+            clientId: configService.getOrThrow<string>('bootstrap.clientId'),
+            clientName: configService.getOrThrow<string>(
+              'bootstrap.clientName',
+            ),
+            clientRedirectUri: configService.getOrThrow<string>(
+              'bootstrap.clientRedirectUri',
+            ),
+            clientPostLogoutRedirectUri: configService.getOrThrow<string>(
+              'bootstrap.clientPostLogoutRedirectUri',
+            ),
+          },
         }),
     }),
   ],

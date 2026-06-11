@@ -16,4 +16,17 @@ export interface AppEnvironment {
     basePath: string;
     cookieName: string;
   };
+  bootstrap: {
+    adminEmail: string;
+    adminDisplayName: string;
+    adminGivenName: string | null;
+    adminFamilyName: string | null;
+    adminUsername: string | null;
+    adminGroupSlug: string;
+    adminGroupName: string;
+    clientId: string;
+    clientName: string;
+    clientRedirectUri: string;
+    clientPostLogoutRedirectUri: string;
+  };
 }

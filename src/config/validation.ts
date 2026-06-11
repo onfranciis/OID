@@ -28,5 +28,12 @@ export function validateEnvironment(
     }
   }
 
+  if (
+    typeof config.DATABASE_URL !== 'string' ||
+    config.DATABASE_URL.length === 0
+  ) {
+    throw new Error('DATABASE_URL is required.');
+  }
+
   return config;
 }

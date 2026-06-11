@@ -23,7 +23,9 @@
     "typeorm": "node --require ts-node/register ./node_modules/typeorm/cli.js -d src/database/data-source.ts",
     "migration:run": "pnpm typeorm migration:run",
     "migration:revert": "pnpm typeorm migration:revert",
-    "migration:show": "pnpm typeorm migration:show"
+    "migration:show": "pnpm typeorm migration:show",
+    "migration:verify": "pnpm exec ts-node --transpile-only src/database/scripts/verify-migrations.ts",
+    "seed:bootstrap": "pnpm exec ts-node --transpile-only src/database/scripts/bootstrap.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -35,7 +37,8 @@
     "pg": "^8.21.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "typeorm": "^0.3.30"
+    "typeorm": "^0.3.30",
+    "ulid": "^3.0.2"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
@@ -48,6 +51,7 @@
     "@types/jest": "^30.0.0",
     "@types/node": "^24.0.0",
     "@types/nunjucks": "^3.2.6",
+    "@types/pg": "^8.20.0",
     "@types/supertest": "^7.0.0",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
