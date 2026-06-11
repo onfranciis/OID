@@ -4,7 +4,9 @@ import { jwt } from 'better-auth/plugins/jwt';
 import { oidcProvider } from 'better-auth/plugins/oidc-provider';
 import { Kysely, PostgresDialect } from 'kysely';
 import { Pool } from 'pg';
+import type { AuditEventRecordInput } from '../audit/audit.types';
 import type { AppEnvironment } from '../config/app-environment';
+import { createInternalAuditPlugin } from './internal-audit.plugin';
 
 export interface BetterAuthMountable {
   api: Record<string, unknown>;
@@ -18,8 +20,13 @@ export interface BetterAuthRuntime {
   db: Kysely<unknown>;
 }
 
+export interface BetterAuthRuntimeOptions {
+  recordAuditEvent?: (input: AuditEventRecordInput) => Promise<string>;
+}
+
 export function createBetterAuthRuntime(
   appEnvironment: AppEnvironment,
+  options?: BetterAuthRuntimeOptions,
 ): BetterAuthRuntime {
   const pool = new Pool({
     connectionString: appEnvironment.database.url,
@@ -101,6 +108,13 @@ export function createBetterAuthRuntime(
           ],
         },
       }),
+      ...(options?.recordAuditEvent
+        ? [
+            createInternalAuditPlugin({
+              recordAuditEvent: options.recordAuditEvent,
+            }),
+          ]
+        : []),
     ],
   });
 

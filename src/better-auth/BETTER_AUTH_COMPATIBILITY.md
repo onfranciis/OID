@@ -49,6 +49,8 @@ Evidence captured from the installed package:
 - `node_modules/better-auth/dist/plugins/oidc-provider/index.d.mts` exposes
   plugin `hooks.after`, which can observe endpoint traffic after Better Auth
   route execution.
+- Internal ID now uses Better Auth `session.create.after` to emit
+  `user.login.succeeded` through the local `AuditService` write boundary.
 - The installed package surface does not yet prove a complete, typed audit hook
   path for all required Internal ID events:
   login, token issuance, refresh rotation, refresh replay, client mutations,
@@ -65,6 +67,8 @@ What this means for Internal ID:
 - Internal ID now records local boundary events for accepted and rejected
   authorize/token requests plus blocked registration attempts before deeper
   Better Auth hook coverage is added.
+- Internal ID now records successful Better Auth session creation as
+  `user.login.succeeded`, which gives the spike one real post-auth audit signal.
 
 ## Current direction
 

@@ -2,6 +2,7 @@ import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { toNodeHandler } from 'better-auth/node';
 import type { IncomingMessage, ServerResponse } from 'node:http';
+import { AuditService } from '../audit/audit.service';
 import type { AppEnvironment } from '../config/app-environment';
 import {
   createBetterAuthRuntime,
@@ -16,7 +17,7 @@ export class BetterAuthService implements OnModuleDestroy {
     res: ServerResponse,
   ) => Promise<void>;
 
-  constructor(configService: ConfigService) {
+  constructor(configService: ConfigService, auditService: AuditService) {
     const appEnvironment: AppEnvironment = {
       app: {
         name: configService.getOrThrow<string>('app.name'),
@@ -63,7 +64,9 @@ export class BetterAuthService implements OnModuleDestroy {
       },
     };
 
-    this.runtime = createBetterAuthRuntime(appEnvironment);
+    this.runtime = createBetterAuthRuntime(appEnvironment, {
+      recordAuditEvent: (input) => auditService.record(input),
+    });
     this.nodeHandler = toNodeHandler(this.runtime.auth);
   }
 
