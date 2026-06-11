@@ -30,7 +30,7 @@ Client applications decide what that user can do.
 | Architecture guide | Done | `INTERNAL_OIDC_IDENTITY_PROVIDER_GUIDE.md` exists and is the main design reference. |
 | Roadmap | In Progress | This file defines implementation tracking. |
 | Application code | In Progress | NestJS scaffold, module boundaries, config shell, and health route now exist. |
-| Database schema | In Progress | TypeORM shell and data source exist; reviewed migrations are not created yet. |
+| Database schema | In Progress | Internal ID-owned entities and the initial reviewed migration now exist; rollback and seed strategy are still pending. |
 | Better Auth integration | In Progress | Better Auth boundary module and config shell exist; capability spike is not started. |
 | Tests | In Progress | Vitest and Playwright commands are wired with initial placeholder coverage. |
 | Deployment | In Progress | Docker Compose and runtime baseline files exist; CI and production paths are not set up yet. |
@@ -136,6 +136,8 @@ The project is drifting if:
 | `src/config/app-config.module.ts` | Global config loading and environment validation. |
 | `src/database/data-source.ts` | TypeORM CLI data source entrypoint. |
 | `src/database/typeorm.config.ts` | Shared TypeORM configuration factory. |
+| `src/database/entities/` | Internal ID-owned TypeORM entity definitions. |
+| `src/database/migrations/1718107200000-create-internal-id-foundation.ts` | Initial reviewed PostgreSQL schema migration. |
 | `src/better-auth/better-auth.module.ts` | Better Auth integration boundary shell. |
 
 When code exists, update this table with entrypoints such as `src/app.module.ts`,
@@ -159,8 +161,8 @@ Use these labels when updating task status.
 | Phase | Name | Status | Primary Exit Gate |
 | --- | --- | --- | --- |
 | 0 | Project Setup Decisions | Done | Stack, package manager, Better Auth feasibility, and repo conventions are locked. |
-| 1 | NestJS Foundation | In Progress | App boots with NestJS, TypeORM, PostgreSQL, Better Auth integration shell, and health check. |
-| 2 | Data Model And Migrations | Not Started | Initial PostgreSQL schema is created by TypeORM migrations and can roll back. |
+| 1 | NestJS Foundation | Done | App boots with NestJS, TypeORM, PostgreSQL, Better Auth integration shell, and health check. |
+| 2 | Data Model And Migrations | In Progress | Initial PostgreSQL schema is created by TypeORM migrations; rollback and seed strategy are still pending. |
 | 3 | Better Auth Integration Spike | Not Started | Better Auth can enforce or be wrapped to enforce the Internal ID protocol contract. |
 | 4 | Authentication And Sessions | Not Started | Active users can log in and receive secure provider sessions. |
 | 5 | Admin Bootstrap | Not Started | Admins can manage users, groups, clients, and audit-relevant state. |
@@ -339,11 +341,11 @@ src/
 
 | ID | Task | Status | Acceptance Criteria |
 | --- | --- | --- | --- |
-| P1-01 | Scaffold NestJS app | In Progress | App starts locally and exposes a basic route. |
+| P1-01 | Scaffold NestJS app | Done | App starts locally and exposes a basic route. |
 | P1-02 | Add TypeScript strictness | Done | `tsconfig` enables strict checks appropriate for NestJS. |
 | P1-03 | Add config module | Done | Env vars are validated at startup. |
 | P1-04 | Add PostgreSQL config | Done | Database URL and pool settings are loaded from config. |
-| P1-05 | Add TypeORM module | In Progress | NestJS can initialize TypeORM against PostgreSQL. |
+| P1-05 | Add TypeORM module | Done | NestJS can initialize TypeORM against PostgreSQL. |
 | P1-06 | Add TypeORM data source | Done | CLI migrations can run using the same config model. |
 | P1-07 | Add Better Auth module shell | Done | Better Auth config is isolated in `src/better-auth`. |
 | P1-08 | Add domain modules | Done | Identity, auth, OIDC, clients, tokens, admin, and audit modules exist. |
@@ -389,22 +391,22 @@ Before creating migrations, decide and document ownership:
 
 | ID | Task | Status | Acceptance Criteria |
 | --- | --- | --- | --- |
-| P2-01 | Create table ownership document | Not Started | Better Auth-owned and Internal ID-owned tables are listed. |
-| P2-02 | Create user/profile entity | Not Started | Stable `sub` is non-reassignable and not email-based. |
-| P2-03 | Create lifecycle fields | Not Started | `pending`, `active`, `suspended`, and `deactivated` states are represented. |
-| P2-04 | Create group entity | Not Started | Group slug is unique and stable. |
-| P2-05 | Create group membership entity | Not Started | `(user_id, group_id)` uniqueness is enforced. |
-| P2-06 | Create client wrapper entity if needed | Not Started | Client type, status, allowed scopes, allowed claims, and TTLs are persisted. |
-| P2-07 | Create redirect URI entity if needed | Not Started | Exact URI uniqueness per client is enforced. |
-| P2-08 | Create post-logout redirect URI entity if needed | Not Started | Exact URI uniqueness per client is enforced. |
-| P2-09 | Create provider session wrapper if needed | Not Started | Session hash is unique and no user data is stored in cookies. |
-| P2-10 | Create authorization code wrapper if needed | Not Started | Code hash is unique; consumed state is represented. |
-| P2-11 | Create refresh token wrapper if needed | Not Started | Token hash and family ID are represented. |
-| P2-12 | Create signing key wrapper if needed | Not Started | Key status lifecycle is represented. |
-| P2-13 | Create audit event entity | Not Started | Safe metadata can be stored as JSONB. |
-| P2-14 | Add initial migration | Not Started | Migration creates all Internal ID-owned tables. |
-| P2-15 | Add rollback path | Not Started | Migration can roll back in local dev. |
-| P2-16 | Add indexes | Not Started | Lookup and active-state indexes exist for token/session/code paths. |
+| P2-01 | Create table ownership document | Done | Better Auth-owned and Internal ID-owned tables are listed. |
+| P2-02 | Create user/profile entity | Done | Stable `sub` is non-reassignable and not email-based. |
+| P2-03 | Create lifecycle fields | Done | `pending`, `active`, `suspended`, and `deactivated` states are represented. |
+| P2-04 | Create group entity | Done | Group slug is unique and stable. |
+| P2-05 | Create group membership entity | Done | `(user_id, group_id)` uniqueness is enforced. |
+| P2-06 | Create client wrapper entity if needed | Done | Client type, status, allowed scopes, allowed claims, and TTLs are persisted. |
+| P2-07 | Create redirect URI entity if needed | Done | Exact URI uniqueness per client is enforced. |
+| P2-08 | Create post-logout redirect URI entity if needed | Done | Exact URI uniqueness per client is enforced. |
+| P2-09 | Create provider session wrapper if needed | Done | Session hash is unique and no user data is stored in cookies. |
+| P2-10 | Create authorization code wrapper if needed | Done | Code hash is unique; consumed state is represented. |
+| P2-11 | Create refresh token wrapper if needed | Done | Token hash and family ID are represented. |
+| P2-12 | Create signing key wrapper if needed | Done | Key status lifecycle is represented. |
+| P2-13 | Create audit event entity | Done | Safe metadata can be stored as JSONB. |
+| P2-14 | Add initial migration | Done | Migration creates all Internal ID-owned tables. |
+| P2-15 | Add rollback path | In Progress | Migration can roll back in local dev. |
+| P2-16 | Add indexes | Done | Lookup and active-state indexes exist for token/session/code paths. |
 | P2-17 | Add seed strategy | Not Started | Initial admin/client seed path is defined. |
 
 ### PostgreSQL Requirements
