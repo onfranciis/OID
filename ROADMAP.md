@@ -29,11 +29,11 @@ Client applications decide what that user can do.
 | --- | --- | --- |
 | Architecture guide | Done | `INTERNAL_OIDC_IDENTITY_PROVIDER_GUIDE.md` exists and is the main design reference. |
 | Roadmap | In Progress | This file defines implementation tracking. |
-| Application code | Not Started | No NestJS project has been scaffolded yet. |
-| Database schema | Designed | Conceptual schema exists in the guide; TypeORM migrations are not created yet. |
-| Better Auth integration | Not Started | Better Auth is a required substrate, but no spike or config exists yet. |
-| Tests | Not Started | Security and protocol conformance tests are required before production use. |
-| Deployment | Not Started | No Docker, CI, or runtime config exists yet. |
+| Application code | In Progress | NestJS scaffold, module boundaries, config shell, and health route now exist. |
+| Database schema | In Progress | TypeORM shell and data source exist; reviewed migrations are not created yet. |
+| Better Auth integration | In Progress | Better Auth boundary module and config shell exist; capability spike is not started. |
+| Tests | In Progress | Vitest and Playwright commands are wired with initial placeholder coverage. |
+| Deployment | In Progress | Docker Compose and runtime baseline files exist; CI and production paths are not set up yet. |
 
 ## 3. Locked Decisions
 
@@ -131,6 +131,12 @@ The project is drifting if:
 | --- | --- |
 | `ROADMAP.md` | Implementation plan, task tracker, phase gates, and agent orientation. |
 | `INTERNAL_OIDC_IDENTITY_PROVIDER_GUIDE.md` | Architecture and engineering blueprint. |
+| `src/app.module.ts` | Top-level module wiring for the modular monolith shell. |
+| `src/main.ts` | NestJS bootstrap and runtime entrypoint. |
+| `src/config/app-config.module.ts` | Global config loading and environment validation. |
+| `src/database/data-source.ts` | TypeORM CLI data source entrypoint. |
+| `src/database/typeorm.config.ts` | Shared TypeORM configuration factory. |
+| `src/better-auth/better-auth.module.ts` | Better Auth integration boundary shell. |
 
 When code exists, update this table with entrypoints such as `src/app.module.ts`,
 `src/better-auth/better-auth.config.ts`, and `src/database/data-source.ts`.
@@ -152,8 +158,8 @@ Use these labels when updating task status.
 
 | Phase | Name | Status | Primary Exit Gate |
 | --- | --- | --- | --- |
-| 0 | Project Setup Decisions | Not Started | Stack, package manager, Better Auth feasibility, and repo conventions are locked. |
-| 1 | NestJS Foundation | Not Started | App boots with NestJS, TypeORM, PostgreSQL, Better Auth integration shell, and health check. |
+| 0 | Project Setup Decisions | Done | Stack, package manager, Better Auth feasibility, and repo conventions are locked. |
+| 1 | NestJS Foundation | In Progress | App boots with NestJS, TypeORM, PostgreSQL, Better Auth integration shell, and health check. |
 | 2 | Data Model And Migrations | Not Started | Initial PostgreSQL schema is created by TypeORM migrations and can roll back. |
 | 3 | Better Auth Integration Spike | Not Started | Better Auth can enforce or be wrapped to enforce the Internal ID protocol contract. |
 | 4 | Authentication And Sessions | Not Started | Active users can log in and receive secure provider sessions. |
@@ -286,16 +292,16 @@ Objective: lock the remaining implementation conventions before scaffolding.
 
 | ID | Task | Status | Acceptance Criteria |
 | --- | --- | --- | --- |
-| P0-01 | Choose package manager | Not Started | One of npm, pnpm, yarn, or bun is selected and documented. |
-| P0-02 | Choose Node.js version | Not Started | `.nvmrc`, `.node-version`, or equivalent is added. |
-| P0-03 | Choose test runner | Not Started | Unit and e2e test command strategy is documented. |
-| P0-04 | Choose NestJS platform adapter | Not Started | Express or Fastify adapter is chosen based on Better Auth compatibility. |
-| P0-05 | Choose template engine | Not Started | SSR login/admin rendering path is selected. |
-| P0-06 | Choose local dev database strategy | Not Started | Docker Compose, local Postgres, or managed dev DB is documented. |
-| P0-07 | Choose ID format | Not Started | Stable IDs use a consistent format such as prefixed ULIDs or UUIDs. |
-| P0-08 | Decide Better Auth table ownership | Not Started | A table ownership map exists before migrations are written. |
-| P0-09 | Decide Better Auth route mounting strategy | Not Started | Better Auth routes are either mounted directly or wrapped by Internal ID controllers. |
-| P0-10 | Decide Redis timing | Not Started | Redis is explicitly deferred or added for rate limits/TTL state. |
+| P0-01 | Choose package manager | Done | One of npm, pnpm, yarn, or bun is selected and documented. |
+| P0-02 | Choose Node.js version | Done | `.nvmrc`, `.node-version`, or equivalent is added. |
+| P0-03 | Choose test runner | Done | Unit and e2e test command strategy is documented. |
+| P0-04 | Choose NestJS platform adapter | Done | Express or Fastify adapter is chosen based on Better Auth compatibility. |
+| P0-05 | Choose template engine | Done | SSR login/admin rendering path is selected. |
+| P0-06 | Choose local dev database strategy | Done | Docker Compose, local Postgres, or managed dev DB is documented. |
+| P0-07 | Choose ID format | Done | Stable IDs use a consistent format such as prefixed ULIDs or UUIDs. |
+| P0-08 | Decide Better Auth table ownership | Done | A table ownership map exists before migrations are written. |
+| P0-09 | Decide Better Auth route mounting strategy | Done | Better Auth routes are either mounted directly or wrapped by Internal ID controllers. |
+| P0-10 | Decide Redis timing | Done | Redis is explicitly deferred or added for rate limits/TTL state. |
 
 ### Phase 0 Exit Criteria
 
@@ -333,20 +339,20 @@ src/
 
 | ID | Task | Status | Acceptance Criteria |
 | --- | --- | --- | --- |
-| P1-01 | Scaffold NestJS app | Not Started | App starts locally and exposes a basic route. |
-| P1-02 | Add TypeScript strictness | Not Started | `tsconfig` enables strict checks appropriate for NestJS. |
-| P1-03 | Add config module | Not Started | Env vars are validated at startup. |
-| P1-04 | Add PostgreSQL config | Not Started | Database URL and pool settings are loaded from config. |
-| P1-05 | Add TypeORM module | Not Started | NestJS can initialize TypeORM against PostgreSQL. |
-| P1-06 | Add TypeORM data source | Not Started | CLI migrations can run using the same config model. |
-| P1-07 | Add Better Auth module shell | Not Started | Better Auth config is isolated in `src/better-auth`. |
-| P1-08 | Add domain modules | Not Started | Identity, auth, OIDC, clients, tokens, admin, and audit modules exist. |
-| P1-09 | Add request context | Not Started | Request ID can be attached to logs and audit events. |
+| P1-01 | Scaffold NestJS app | In Progress | App starts locally and exposes a basic route. |
+| P1-02 | Add TypeScript strictness | Done | `tsconfig` enables strict checks appropriate for NestJS. |
+| P1-03 | Add config module | Done | Env vars are validated at startup. |
+| P1-04 | Add PostgreSQL config | Done | Database URL and pool settings are loaded from config. |
+| P1-05 | Add TypeORM module | In Progress | NestJS can initialize TypeORM against PostgreSQL. |
+| P1-06 | Add TypeORM data source | Done | CLI migrations can run using the same config model. |
+| P1-07 | Add Better Auth module shell | Done | Better Auth config is isolated in `src/better-auth`. |
+| P1-08 | Add domain modules | Done | Identity, auth, OIDC, clients, tokens, admin, and audit modules exist. |
+| P1-09 | Add request context | In Progress | Request ID can be attached to logs and audit events. |
 | P1-10 | Add structured logging | Not Started | Logs include timestamp, level, request ID, and service context. |
-| P1-11 | Add health endpoint | Not Started | Health check reports app and database status without leaking secrets. |
-| P1-12 | Add lint and format commands | Not Started | Commands exist and run cleanly on scaffold. |
-| P1-13 | Add unit test command | Not Started | Empty or sample test suite passes. |
-| P1-14 | Add e2e test command | Not Started | Empty or sample e2e test suite passes. |
+| P1-11 | Add health endpoint | Done | Health check reports app and database status without leaking secrets. |
+| P1-12 | Add lint and format commands | Done | Commands exist and run cleanly on scaffold. |
+| P1-13 | Add unit test command | Done | Empty or sample test suite passes. |
+| P1-14 | Add e2e test command | Done | Empty or sample e2e test suite passes. |
 
 ### Phase 1 Exit Criteria
 
