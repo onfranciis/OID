@@ -447,7 +447,7 @@ Objective: prove Better Auth can be used without widening Internal ID scope.
 | P3-05 | Can unsupported grant types be rejected? | In Progress | `password`, `client_credentials`, and device grants fail. |
 | P3-06 | Can PKCE be required for all clients? | Done | Missing PKCE and `plain` are rejected. |
 | P3-07 | Can dynamic registration be disabled? | Done | No self-service client registration is exposed. |
-| P3-08 | Can refresh token rotation behavior satisfy this guide? | In Progress | Rotation exists, and the remaining gap is family/replay semantics. |
+| P3-08 | Can refresh token rotation behavior satisfy this guide? | In Progress | Local family/replay semantics exist, and the remaining gap is endpoint integration. |
 | P3-09 | Can claims be shaped by client policy? | In Progress | Claim release can be constrained. |
 | P3-10 | Can audit hooks capture security events? | In Progress | Boundary audit capture exists, and deeper login/refresh/revocation coverage remains. |
 

@@ -36,6 +36,9 @@ What this means for Internal ID:
 - Internal ID should keep its `refresh_tokens` wrapper table until replay,
   family tracking, and audit requirements are either implemented locally or
   explicitly proven against Better Auth behavior.
+- Internal ID now has a local `RefreshTokenService` that owns wrapper issuance,
+  rotation, replay-family revocation, and refresh audit event emission. It is
+  not wired into public token endpoints yet.
 
 ## Audit-event capture
 
