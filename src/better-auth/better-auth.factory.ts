@@ -6,6 +6,7 @@ import { Kysely, PostgresDialect } from 'kysely';
 import { Pool } from 'pg';
 import type { AuditEventRecordInput } from '../audit/audit.types';
 import type { AppEnvironment } from '../config/app-environment';
+import { getAdditionalUserInfoClaims } from './claim-policy';
 import { createInternalAuditPlugin } from './internal-audit.plugin';
 
 export interface BetterAuthMountable {
@@ -78,6 +79,8 @@ export function createBetterAuthRuntime(
         accessTokenExpiresIn: 900,
         refreshTokenExpiresIn: 604800,
         codeExpiresIn: 600,
+        getAdditionalUserInfoClaim: async (user, scopes, client) =>
+          getAdditionalUserInfoClaims(db, user, scopes, client),
         metadata: {
           response_types_supported: ['code'],
           grant_types_supported: ['authorization_code', 'refresh_token'],
