@@ -448,7 +448,7 @@ Objective: prove Better Auth can be used without widening Internal ID scope.
 | P3-06 | Can PKCE be required for all clients? | Done | Missing PKCE and `plain` are rejected. |
 | P3-07 | Can dynamic registration be disabled? | Done | No self-service client registration is exposed. |
 | P3-08 | Can refresh token rotation behavior satisfy this guide? | In Progress | Local family/replay semantics and token-path integration exist, and the remaining gap is end-to-end proof. |
-| P3-09 | Can claims be shaped by client policy? | In Progress | Claim release can be constrained. |
+| P3-09 | Can claims be shaped by client policy? | Done | Additional claims and mounted userinfo output are constrained by client policy. |
 | P3-10 | Can audit hooks capture security events? | In Progress | Boundary audit capture exists, and deeper login/refresh/revocation coverage remains. |
 
 ### Better Auth Integration Rules

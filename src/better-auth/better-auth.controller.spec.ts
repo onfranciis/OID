@@ -446,6 +446,92 @@ describe('BetterAuthController', () => {
       }),
     );
   });
+
+  it('passes through non-OK userinfo responses without policy filtering', async () => {
+    dispatch.mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          error: 'invalid_token',
+        }),
+        {
+          status: 401,
+          headers: {
+            'content-type': 'application/json',
+          },
+        },
+      ),
+    );
+    const response = createExpressResponseStub();
+
+    await expect(
+      controller.userInfo(
+        {
+          headers: {
+            authorization: 'Bearer invalid-token',
+          },
+          method: 'GET',
+          originalUrl: '/api/auth/oauth2/userinfo',
+          url: '/api/auth/oauth2/userinfo',
+        } as never,
+        response,
+      ),
+    ).resolves.toBeUndefined();
+
+    expect(filterUserInfoClaims).not.toHaveBeenCalled();
+    expect(response.statusCode).toBe(401);
+    expect(response.send).toHaveBeenCalledWith(
+      JSON.stringify({
+        error: 'invalid_token',
+      }),
+    );
+  });
+
+  it('falls back to sub-only userinfo when no bearer token is available for policy lookup', async () => {
+    dispatch.mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          sub: 'usr_123',
+          email: 'admin@company.com',
+          groups: ['identity-admins'],
+        }),
+        {
+          status: 200,
+          headers: {
+            'content-type': 'application/json',
+          },
+        },
+      ),
+    );
+    filterUserInfoClaims.mockResolvedValueOnce({
+      sub: 'usr_123',
+    });
+    const response = createExpressResponseStub();
+
+    await expect(
+      controller.userInfo(
+        {
+          headers: {},
+          method: 'GET',
+          originalUrl: '/api/auth/oauth2/userinfo',
+          url: '/api/auth/oauth2/userinfo',
+        } as never,
+        response,
+      ),
+    ).resolves.toBeUndefined();
+
+    expect(filterUserInfoClaims).toHaveBeenCalledWith(
+      undefined,
+      expect.objectContaining({
+        sub: 'usr_123',
+        email: 'admin@company.com',
+      }),
+    );
+    expect(response.send).toHaveBeenCalledWith(
+      JSON.stringify({
+        sub: 'usr_123',
+      }),
+    );
+  });
 });
 
 function createExpressResponseStub() {

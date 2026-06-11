@@ -38,6 +38,9 @@ local wrappers and route guards.
   tokens.
 - `src/better-auth/claim-policy.ts` now applies Internal ID
   `allowed_claims` policy to additional OIDC claims per client.
+- `src/better-auth/userinfo-policy.service.ts` now filters the final public
+  userinfo payload by client policy, which closes the claim-suppression gap for
+  the mounted `/api/auth/oauth2/userinfo` route.
 - `pnpm better-auth:inspect` reports Better Auth plugin IDs, exposed API
   endpoint IDs, and Better Auth-managed schema tables.
 
@@ -53,7 +56,7 @@ local wrappers and route guards.
 | P3-06 | Can PKCE be required for all clients? | Done | Yes, with caveat. `requirePKCE` can be set true, but `plain` must also be disabled explicitly. |
 | P3-07 | Can dynamic registration be disabled? | Done | Yes, configuration can disable it, but the registration surface should still be blocked at the Internal ID boundary. |
 | P3-08 | Can refresh token rotation behavior satisfy this guide? | In Progress | Internal ID now has local family/replay wrapper behavior and controller integration, but full route-level proof is still pending. |
-| P3-09 | Can claims be shaped by client policy? | In Progress | Internal ID now constrains additional client claims per policy, but Better Auth base `email` and `profile` userinfo claims are still not fully suppressible at this layer. |
+| P3-09 | Can claims be shaped by client policy? | Done | Internal ID now constrains additional claims and filters the mounted public userinfo payload by client policy. |
 | P3-10 | Can audit hooks capture security events? | In Progress | Local audit capture now exists for Better Auth session creation plus authorize, token, and blocked registration traffic, but refresh and revocation coverage is still unproven. |
 
 ## Risks that remain
@@ -78,8 +81,7 @@ local wrappers and route guards.
 1. Run `pnpm better-auth:inspect` and capture the Better Auth-owned schema
    tables that would be introduced.
 2. Add end-to-end protocol-negative tests around discovery, authorize, token,
-   and registration behavior before adopting Better Auth endpoints as public
-   contract routes.
-3. Decide whether refresh replay detection and token-family semantics will be
-   implemented as Internal ID wrappers or replaced with a different provider
-   substrate before Phase 8 work begins.
+   registration, and userinfo behavior before adopting Better Auth endpoints as
+   public contract routes.
+3. Prove deeper refresh and revocation behavior against a live mounted app in a
+   less restricted environment.

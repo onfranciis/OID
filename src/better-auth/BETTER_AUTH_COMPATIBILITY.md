@@ -84,24 +84,25 @@ What this means for Internal ID:
 
 ## Claim policy shaping
 
-Current conclusion: partial match only. Internal ID can constrain additional
-OIDC claims by client policy, but Better Auth still keeps its own base
-`email` and `profile` userinfo claims when those scopes are requested.
+Current conclusion: workable with wrapper ownership. Internal ID now constrains
+additional claims by client policy and also filters the mounted public
+`userinfo` response before it leaves the Nest boundary.
 
 Evidence captured in repo:
 
 - `src/better-auth/claim-policy.ts` now loads Internal ID client policy from
   `oidc_clients.allowed_claims` and applies it to additional claims.
+- `src/better-auth/userinfo-policy.service.ts` now filters the final mounted
+  `userinfo` payload using the current access token's client and scope context.
 - The current implementation constrains Internal ID-managed claims:
   `preferred_username`, `profile_type`, and `groups`.
 - `node_modules/better-auth/dist/plugins/oidc-provider/index.mjs` shows the
   `userinfo` endpoint merges `baseUserClaims` with any additional claims, which
-  means base `email` / `profile` claims are not fully suppressible at this
-  layer.
+  is why Internal ID now filters the final public `userinfo` response itself.
 
 What this means for Internal ID:
 
-- Client-aware claim shaping is now proven for the Internal ID-specific claims
-  carried through `getAdditionalUserInfoClaim`.
-- Full per-client suppression of Better Auth base profile/email claims is not
-  yet proven and may require a deeper wrapper or custom endpoint ownership.
+- Client-aware claim shaping is now proven for both additional claims and the
+  mounted public `userinfo` payload exposed by Internal ID.
+- Strict claim governance still depends on keeping the public `userinfo` route
+  behind the Internal ID wrapper rather than exposing Better Auth directly.
