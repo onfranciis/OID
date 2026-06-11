@@ -10,6 +10,7 @@ describe('RefreshTokenService', () => {
     const savedEntities: OidcRefreshTokenEntity[] = [];
     const service = new RefreshTokenService(
       {} as never,
+      {} as never,
       createDataSourceStub({
         save: (entity) => {
           savedEntities.push(entity as OidcRefreshTokenEntity);
@@ -18,6 +19,9 @@ describe('RefreshTokenService', () => {
       }),
       {
         record: auditRecord,
+      } as never,
+      {
+        getOrThrow: () => 'test-better-auth-secret',
       } as never,
     );
 
@@ -47,6 +51,7 @@ describe('RefreshTokenService', () => {
     const auditRecord = vi.fn(() => Promise.resolve('evt_123'));
     const service = new RefreshTokenService(
       {} as never,
+      {} as never,
       createDataSourceStub({
         findOne: () => Promise.resolve(currentToken),
         save: (entity) => {
@@ -61,6 +66,9 @@ describe('RefreshTokenService', () => {
       }),
       {
         record: auditRecord,
+      } as never,
+      {
+        getOrThrow: () => 'test-better-auth-secret',
       } as never,
     );
 
@@ -100,6 +108,7 @@ describe('RefreshTokenService', () => {
     const auditRecord = vi.fn(() => Promise.resolve('evt_123'));
     const service = new RefreshTokenService(
       {} as never,
+      {} as never,
       createDataSourceStub({
         findOne: () => Promise.resolve(replayedToken),
         find: () => Promise.resolve(familyMembers),
@@ -107,6 +116,9 @@ describe('RefreshTokenService', () => {
       }),
       {
         record: auditRecord,
+      } as never,
+      {
+        getOrThrow: () => 'test-better-auth-secret',
       } as never,
     );
 
@@ -138,11 +150,15 @@ describe('RefreshTokenService', () => {
     });
     const service = new RefreshTokenService(
       {} as never,
+      {} as never,
       createDataSourceStub({
         findOne: () => Promise.resolve(expiredToken),
       }),
       {
         record: vi.fn(() => Promise.resolve('evt_123')),
+      } as never,
+      {
+        getOrThrow: () => 'test-better-auth-secret',
       } as never,
     );
 

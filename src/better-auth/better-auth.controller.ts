@@ -1,7 +1,8 @@
 import { All, Controller, Get, Post, Req, Res } from '@nestjs/common';
-import type { Request, Response } from 'express';
+import type { Request, Response as ExpressResponse } from 'express';
 import { AuditService } from '../audit/audit.service';
 import { AuditSeverity } from '../database/entities/audit-event.entity';
+import { RefreshTokenService } from '../tokens/refresh-token.service';
 import { BetterAuthService } from './better-auth.service';
 import {
   assertSupportedAuthorizationRequest,
@@ -14,10 +15,14 @@ export class BetterAuthController {
   constructor(
     private readonly betterAuthService: BetterAuthService,
     private readonly auditService: AuditService,
+    private readonly refreshTokenService: RefreshTokenService,
   ) {}
 
   @Get('oauth2/authorize')
-  async authorize(@Req() req: Request, @Res() res: Response): Promise<void> {
+  async authorize(
+    @Req() req: Request,
+    @Res() res: ExpressResponse,
+  ): Promise<void> {
     try {
       assertSupportedAuthorizationRequest(req.query);
     } catch (error) {
@@ -47,7 +52,9 @@ export class BetterAuthController {
   }
 
   @Post('oauth2/token')
-  async token(@Req() req: Request, @Res() res: Response): Promise<void> {
+  async token(@Req() req: Request, @Res() res: ExpressResponse): Promise<void> {
+    const grantType = getBodyValue(req.body, 'grant_type');
+
     try {
       assertSupportedTokenRequest(req.body);
     } catch (error) {
@@ -63,7 +70,12 @@ export class BetterAuthController {
       throw error;
     }
 
-    await this.betterAuthService.handle(req, res);
+    const response =
+      grantType === 'refresh_token'
+        ? await this.handleWrappedRefreshGrant(req)
+        : await this.handleTokenExchange(req);
+
+    await sendFetchResponse(res, response);
     await this.recordAuditEvent(
       'oidc.token.request.accepted',
       AuditSeverity.INFO,
@@ -91,12 +103,18 @@ export class BetterAuthController {
   }
 
   @All()
-  async handleRoot(@Req() req: Request, @Res() res: Response): Promise<void> {
+  async handleRoot(
+    @Req() req: Request,
+    @Res() res: ExpressResponse,
+  ): Promise<void> {
     await this.betterAuthService.handle(req, res);
   }
 
   @All('*path')
-  async handleNested(@Req() req: Request, @Res() res: Response): Promise<void> {
+  async handleNested(
+    @Req() req: Request,
+    @Res() res: ExpressResponse,
+  ): Promise<void> {
     await this.betterAuthService.handle(req, res);
   }
 
@@ -113,6 +131,83 @@ export class BetterAuthController {
       userAgent: req.get('user-agent') ?? null,
       metadata,
     });
+  }
+
+  private async handleTokenExchange(
+    req: Request,
+  ): Promise<globalThis.Response> {
+    const response = await this.betterAuthService.dispatch(req);
+
+    if (!response.ok) {
+      return response;
+    }
+
+    const payload = await readJsonBody(response);
+    const upstreamRefreshToken =
+      typeof payload.refresh_token === 'string' ? payload.refresh_token : null;
+    const idToken =
+      typeof payload.id_token === 'string' ? payload.id_token : null;
+    const clientIdentifier = getBodyValue(req.body, 'client_id');
+    const userId = idToken ? extractJwtSubject(idToken) : null;
+
+    if (!upstreamRefreshToken || !clientIdentifier || !userId) {
+      return rebuildJsonResponse(payload, response);
+    }
+
+    const wrappedToken = await this.refreshTokenService.issueTokenForClient({
+      userId,
+      clientIdentifier,
+      upstreamRefreshToken,
+    });
+
+    if (!wrappedToken) {
+      delete payload.refresh_token;
+      return rebuildJsonResponse(payload, response);
+    }
+
+    payload.refresh_token = wrappedToken.refreshToken;
+    return rebuildJsonResponse(payload, response);
+  }
+
+  private async handleWrappedRefreshGrant(
+    req: Request,
+  ): Promise<globalThis.Response> {
+    const wrapperRefreshToken = getBodyValue(req.body, 'refresh_token');
+
+    if (!wrapperRefreshToken) {
+      return this.betterAuthService.dispatch(req);
+    }
+
+    const resolvedGrant =
+      await this.refreshTokenService.resolveRefreshGrant(wrapperRefreshToken);
+    const upstreamResponse = await this.betterAuthService.dispatch(req, {
+      body: {
+        ...(req.body as Record<string, unknown>),
+        refresh_token: resolvedGrant.upstreamRefreshToken,
+      },
+    });
+
+    if (!upstreamResponse.ok) {
+      return upstreamResponse;
+    }
+
+    const payload = await readJsonBody(upstreamResponse);
+    const nextUpstreamRefreshToken =
+      typeof payload.refresh_token === 'string' ? payload.refresh_token : null;
+
+    if (!nextUpstreamRefreshToken) {
+      return rebuildJsonResponse(payload, upstreamResponse);
+    }
+
+    const rotatedToken = await this.refreshTokenService.rotateToken({
+      refreshToken: wrapperRefreshToken,
+      idleTtlSeconds: getTtlSecondsFromDelta(payload.expires_in, 604800),
+      absoluteTtlSeconds: getTtlSecondsFromDelta(payload.expires_in, 604800),
+      upstreamRefreshToken: nextUpstreamRefreshToken,
+    });
+
+    payload.refresh_token = rotatedToken.refreshToken;
+    return rebuildJsonResponse(payload, upstreamResponse);
   }
 }
 
@@ -134,4 +229,75 @@ function getBodyValue(body: unknown, key: string): string | null {
   }
 
   return getSingleValue((body as Record<string, unknown>)[key]);
+}
+
+async function sendFetchResponse(
+  res: ExpressResponse,
+  response: globalThis.Response,
+): Promise<void> {
+  res.status(response.status);
+
+  response.headers.forEach((value, key) => {
+    if (key.toLowerCase() === 'set-cookie') {
+      return;
+    }
+
+    res.setHeader(key, value);
+  });
+
+  const setCookieValues =
+    typeof response.headers.getSetCookie === 'function'
+      ? response.headers.getSetCookie()
+      : [];
+
+  if (setCookieValues.length > 0) {
+    res.setHeader('set-cookie', setCookieValues);
+  }
+
+  const bodyText = await response.text();
+  res.send(bodyText);
+}
+
+async function readJsonBody(
+  response: globalThis.Response,
+): Promise<Record<string, unknown>> {
+  return (await response.json()) as Record<string, unknown>;
+}
+
+function rebuildJsonResponse(
+  payload: Record<string, unknown>,
+  response: globalThis.Response,
+): globalThis.Response {
+  const headers = new Headers(response.headers);
+  headers.set('content-type', 'application/json; charset=utf-8');
+
+  return new Response(JSON.stringify(payload), {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
+function extractJwtSubject(token: string): string | null {
+  const parts = token.split('.');
+
+  if (parts.length < 2) {
+    return null;
+  }
+
+  try {
+    const payload = JSON.parse(
+      Buffer.from(parts[1] ?? '', 'base64url').toString('utf8'),
+    ) as { sub?: unknown };
+
+    return typeof payload.sub === 'string' ? payload.sub : null;
+  } catch {
+    return null;
+  }
+}
+
+function getTtlSecondsFromDelta(value: unknown, fallback: number): number {
+  return typeof value === 'number' && Number.isFinite(value) && value > 0
+    ? value
+    : fallback;
 }

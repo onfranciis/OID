@@ -20,6 +20,13 @@ export class OidcRefreshTokenEntity {
   @Column({ name: 'token_hash', type: 'text' })
   tokenHash!: string;
 
+  @Column({
+    name: 'upstream_refresh_token_ciphertext',
+    type: 'text',
+    nullable: true,
+  })
+  upstreamRefreshTokenCiphertext!: string | null;
+
   @Column({ name: 'user_id', type: 'text' })
   userId!: string;
 

@@ -10,13 +10,54 @@ import {
 } from 'vitest';
 import { AuditService } from '../audit/audit.service';
 import { AuditSeverity } from '../database/entities/audit-event.entity';
+import { RefreshTokenService } from '../tokens/refresh-token.service';
 import { BetterAuthController } from './better-auth.controller';
 import { BetterAuthService } from './better-auth.service';
 
 describe('BetterAuthController', () => {
   let controller: BetterAuthController;
   const handle = vi.fn(() => Promise.resolve());
+  const dispatch = vi.fn(() =>
+    Promise.resolve(
+      new Response(
+        JSON.stringify({
+          access_token: 'access-token',
+          token_type: 'Bearer',
+          expires_in: 900,
+          id_token: buildIdToken('usr_123'),
+        }),
+        {
+          status: 200,
+          headers: {
+            'content-type': 'application/json',
+          },
+        },
+      ),
+    ),
+  );
   const record = vi.fn(() => Promise.resolve('evt_test'));
+  const issueTokenForClient = vi.fn(() => Promise.resolve(null));
+  const resolveRefreshGrant = vi.fn(() =>
+    Promise.resolve({
+      upstreamRefreshToken: 'upstream-refresh-token',
+      token: {
+        id: 'rtk_123',
+        familyId: 'rtf_123',
+        userId: 'usr_123',
+        clientId: 'cli_internal_123',
+        providerSessionId: null,
+      },
+    }),
+  );
+  const rotateToken = vi.fn(() =>
+    Promise.resolve({
+      refreshToken: 'wrapped-refresh-token',
+      tokenId: 'rtk_next',
+      familyId: 'rtf_123',
+      idleExpiresAt: new Date('2026-06-11T01:00:00.000Z'),
+      absoluteExpiresAt: new Date('2026-06-11T01:00:00.000Z'),
+    }),
+  );
 
   beforeAll(async () => {
     const moduleRef: TestingModule = await Test.createTestingModule({
@@ -26,12 +67,21 @@ describe('BetterAuthController', () => {
           provide: BetterAuthService,
           useValue: {
             handle,
+            dispatch,
           },
         },
         {
           provide: AuditService,
           useValue: {
             record,
+          },
+        },
+        {
+          provide: RefreshTokenService,
+          useValue: {
+            issueTokenForClient,
+            resolveRefreshGrant,
+            rotateToken,
           },
         },
       ],
@@ -42,7 +92,11 @@ describe('BetterAuthController', () => {
 
   beforeEach(() => {
     handle.mockClear();
+    dispatch.mockClear();
     record.mockClear();
+    issueTokenForClient.mockClear();
+    resolveRefreshGrant.mockClear();
+    rotateToken.mockClear();
   });
 
   afterAll(() => {
@@ -127,15 +181,17 @@ describe('BetterAuthController', () => {
         {
           body: {
             grant_type: 'authorization_code',
+            client_id: 'internal-id-client',
           },
           ip: '127.0.0.1',
           get: vi.fn(() => 'test-agent'),
         } as never,
-        { statusCode: 200 } as never,
+        createExpressResponseStub(),
       ),
     ).resolves.toBeUndefined();
 
-    expect(handle).toHaveBeenCalledTimes(1);
+    expect(handle).not.toHaveBeenCalled();
+    expect(dispatch).toHaveBeenCalledTimes(1);
     expect(record).toHaveBeenCalledWith(
       expect.objectContaining({
         eventType: 'oidc.token.request.accepted',
@@ -159,6 +215,7 @@ describe('BetterAuthController', () => {
     ).rejects.toThrow(/authorization_code and refresh_token/);
 
     expect(handle).not.toHaveBeenCalled();
+    expect(dispatch).not.toHaveBeenCalled();
     expect(record).toHaveBeenCalledWith(
       expect.objectContaining({
         eventType: 'oidc.token.request.rejected',
@@ -185,3 +242,22 @@ describe('BetterAuthController', () => {
     );
   });
 });
+
+function createExpressResponseStub() {
+  return {
+    statusCode: 200,
+    status(code: number) {
+      this.statusCode = code;
+      return this;
+    },
+    setHeader: vi.fn(),
+    send: vi.fn(),
+  } as never;
+}
+
+function buildIdToken(subject: string): string {
+  const encode = (value: Record<string, unknown>) =>
+    Buffer.from(JSON.stringify(value)).toString('base64url');
+
+  return `${encode({ alg: 'RS256', typ: 'JWT' })}.${encode({ sub: subject })}.signature`;
+}

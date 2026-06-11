@@ -1,18 +1,32 @@
 import {
   ConflictException,
+  InternalServerErrorException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
-import { createHash, randomBytes } from 'node:crypto';
+import {
+  createCipheriv,
+  createDecipheriv,
+  createHash,
+  randomBytes,
+} from 'node:crypto';
 import { ulid } from 'ulid';
+import { ConfigService } from '@nestjs/config';
 import { DataSource, Repository } from 'typeorm';
 import { AuditService } from '../audit/audit.service';
 import { AuditSeverity } from '../database/entities/audit-event.entity';
+import {
+  OidcClientEntity,
+  OidcClientStatus,
+} from '../database/entities/oidc-client.entity';
 import { OidcRefreshTokenEntity } from '../database/entities/oidc-refresh-token.entity';
 import type {
+  IssueRefreshTokenForClientInput,
   IssueRefreshTokenInput,
   IssueRefreshTokenResult,
+  ResolveRefreshGrantResult,
   RotateRefreshTokenInput,
 } from './refresh-token.types';
 
@@ -21,10 +35,46 @@ export class RefreshTokenService {
   constructor(
     @InjectRepository(OidcRefreshTokenEntity)
     private readonly refreshTokenRepository: Repository<OidcRefreshTokenEntity>,
+    @InjectRepository(OidcClientEntity)
+    private readonly clientRepository: Repository<OidcClientEntity>,
     @InjectDataSource()
     private readonly dataSource: DataSource,
     private readonly auditService: AuditService,
+    private readonly configService: ConfigService,
   ) {}
+
+  async issueTokenForClient(
+    input: IssueRefreshTokenForClientInput,
+  ): Promise<IssueRefreshTokenResult | null> {
+    const client = await this.clientRepository.findOne({
+      where: {
+        clientId: input.clientIdentifier,
+        status: OidcClientStatus.ACTIVE,
+      },
+    });
+
+    if (!client) {
+      throw new NotFoundException('OIDC client not found.');
+    }
+
+    if (
+      !client.allowRefreshTokens ||
+      !client.refreshTokenIdleTtlSeconds ||
+      !client.refreshTokenAbsoluteTtlSeconds
+    ) {
+      return null;
+    }
+
+    return this.issueToken({
+      userId: input.userId,
+      clientId: client.id,
+      providerSessionId: input.providerSessionId ?? null,
+      idleTtlSeconds: client.refreshTokenIdleTtlSeconds,
+      absoluteTtlSeconds: client.refreshTokenAbsoluteTtlSeconds,
+      upstreamRefreshToken: input.upstreamRefreshToken,
+      now: input.now,
+    });
+  }
 
   async issueToken(
     input: IssueRefreshTokenInput,
@@ -37,6 +87,9 @@ export class RefreshTokenService {
       const entity = manager.create(OidcRefreshTokenEntity, {
         id: tokenId,
         tokenHash: hashRefreshToken(rawRefreshToken),
+        upstreamRefreshTokenCiphertext: input.upstreamRefreshToken
+          ? this.encryptUpstreamRefreshToken(input.upstreamRefreshToken)
+          : null,
         userId: input.userId,
         clientId: input.clientId,
         providerSessionId: input.providerSessionId ?? null,
@@ -73,6 +126,69 @@ export class RefreshTokenService {
         absoluteExpiresAt: entity.absoluteExpiresAt,
       };
     });
+  }
+
+  async resolveRefreshGrant(
+    refreshToken: string,
+    now = new Date(),
+  ): Promise<ResolveRefreshGrantResult> {
+    const token = await this.dataSource.transaction(async (manager) => {
+      const repository = manager.getRepository(OidcRefreshTokenEntity);
+      const currentToken = await repository.findOne({
+        where: {
+          tokenHash: hashRefreshToken(refreshToken),
+        },
+      });
+
+      if (!currentToken) {
+        throw new UnauthorizedException('Invalid refresh token.');
+      }
+
+      if (currentToken.rotatedToTokenId) {
+        await this.revokeFamily(
+          repository,
+          currentToken.familyId,
+          now,
+          'replay_detected',
+        );
+        await this.auditService.record({
+          eventType: 'oidc.refresh_token.replay_detected',
+          severity: AuditSeverity.CRITICAL,
+          actorUserId: currentToken.userId,
+          clientId: currentToken.clientId,
+          providerSessionId: currentToken.providerSessionId,
+          metadata: {
+            tokenId: currentToken.id,
+            familyId: currentToken.familyId,
+          },
+        });
+        throw new ConflictException(
+          'Refresh token replay detected. Token family revoked.',
+        );
+      }
+
+      assertTokenIsUsable(currentToken, now);
+      return currentToken;
+    });
+
+    if (!token.upstreamRefreshTokenCiphertext) {
+      throw new InternalServerErrorException(
+        'Refresh token is missing upstream mapping.',
+      );
+    }
+
+    return {
+      upstreamRefreshToken: this.decryptUpstreamRefreshToken(
+        token.upstreamRefreshTokenCiphertext,
+      ),
+      token: {
+        id: token.id,
+        familyId: token.familyId,
+        userId: token.userId,
+        clientId: token.clientId,
+        providerSessionId: token.providerSessionId,
+      },
+    };
   }
 
   async rotateToken(
@@ -121,6 +237,9 @@ export class RefreshTokenService {
       const successor = repository.create({
         id: successorId,
         tokenHash: hashRefreshToken(successorRawToken),
+        upstreamRefreshTokenCiphertext: input.upstreamRefreshToken
+          ? this.encryptUpstreamRefreshToken(input.upstreamRefreshToken)
+          : currentToken.upstreamRefreshTokenCiphertext,
         userId: currentToken.userId,
         clientId: currentToken.clientId,
         providerSessionId: currentToken.providerSessionId,
@@ -225,6 +344,50 @@ export class RefreshTokenService {
 
     await repository.save(familyTokens);
     return familyTokens;
+  }
+
+  private encryptUpstreamRefreshToken(refreshToken: string): string {
+    const iv = randomBytes(12);
+    const key = createHash('sha256')
+      .update(this.configService.getOrThrow<string>('betterAuth.secret'))
+      .digest();
+    const cipher = createCipheriv('aes-256-gcm', key, iv);
+    const ciphertext = Buffer.concat([
+      cipher.update(refreshToken, 'utf8'),
+      cipher.final(),
+    ]);
+    const authTag = cipher.getAuthTag();
+
+    return [iv, authTag, ciphertext]
+      .map((buffer) => buffer.toString('base64url'))
+      .join('.');
+  }
+
+  private decryptUpstreamRefreshToken(ciphertext: string): string {
+    const [ivPart, authTagPart, payloadPart] = ciphertext.split('.');
+
+    if (!ivPart || !authTagPart || !payloadPart) {
+      throw new InternalServerErrorException(
+        'Refresh token mapping ciphertext is invalid.',
+      );
+    }
+
+    const key = createHash('sha256')
+      .update(this.configService.getOrThrow<string>('betterAuth.secret'))
+      .digest();
+    const decipher = createDecipheriv(
+      'aes-256-gcm',
+      key,
+      Buffer.from(ivPart, 'base64url'),
+    );
+    decipher.setAuthTag(Buffer.from(authTagPart, 'base64url'));
+
+    const plaintext = Buffer.concat([
+      decipher.update(Buffer.from(payloadPart, 'base64url')),
+      decipher.final(),
+    ]);
+
+    return plaintext.toString('utf8');
   }
 }
 

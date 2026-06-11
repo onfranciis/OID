@@ -12,6 +12,7 @@ import {
 @Injectable()
 export class BetterAuthService implements OnModuleDestroy {
   private readonly runtime: BetterAuthRuntime;
+  private readonly baseUrl: string;
   private readonly nodeHandler: (
     req: IncomingMessage,
     res: ServerResponse,
@@ -64,6 +65,7 @@ export class BetterAuthService implements OnModuleDestroy {
       },
     };
 
+    this.baseUrl = appEnvironment.app.baseUrl;
     this.runtime = createBetterAuthRuntime(appEnvironment, {
       recordAuditEvent: (input) => auditService.record(input),
     });
@@ -78,7 +80,111 @@ export class BetterAuthService implements OnModuleDestroy {
     await this.nodeHandler(req, res);
   }
 
+  async dispatch(
+    req: {
+      method: string;
+      originalUrl?: string;
+      url: string;
+      headers: Record<string, string | string[] | undefined>;
+      body?: unknown;
+    },
+    overrides?: {
+      body?: Record<string, unknown>;
+    },
+  ): Promise<Response> {
+    const url = new URL(req.originalUrl ?? req.url, this.baseUrl);
+    const headers = new Headers();
+
+    for (const [key, value] of Object.entries(req.headers)) {
+      if (value === undefined) {
+        continue;
+      }
+
+      if (Array.isArray(value)) {
+        headers.set(key, value.join(', '));
+        continue;
+      }
+
+      headers.set(key, value);
+    }
+
+    const body =
+      req.method === 'GET' || req.method === 'HEAD'
+        ? undefined
+        : serializeBody(overrides?.body ?? req.body, headers);
+
+    return this.runtime.auth.handler(
+      new Request(url, {
+        method: req.method,
+        headers,
+        body,
+      }),
+    );
+  }
+
   async onModuleDestroy(): Promise<void> {
     await this.runtime.db.destroy();
   }
+}
+
+function serializeBody(body: unknown, headers: Headers): string | undefined {
+  if (body === undefined || body === null) {
+    return undefined;
+  }
+
+  if (typeof body === 'string') {
+    return body;
+  }
+
+  if (body instanceof URLSearchParams) {
+    headers.set('content-type', 'application/x-www-form-urlencoded');
+    return body.toString();
+  }
+
+  if (typeof body === 'object') {
+    headers.set('content-type', 'application/x-www-form-urlencoded');
+    const params = new URLSearchParams();
+
+    for (const [key, value] of Object.entries(
+      body as Record<string, unknown>,
+    )) {
+      if (value === undefined || value === null) {
+        continue;
+      }
+
+      if (Array.isArray(value)) {
+        for (const entry of value) {
+          const serializedEntry = stringifyFormValue(entry);
+
+          if (serializedEntry !== null) {
+            params.append(key, serializedEntry);
+          }
+        }
+
+        continue;
+      }
+
+      const serializedValue = stringifyFormValue(value);
+
+      if (serializedValue !== null) {
+        params.set(key, serializedValue);
+      }
+    }
+
+    return params.toString();
+  }
+
+  return stringifyFormValue(body) ?? undefined;
+}
+
+function stringifyFormValue(value: unknown): string | null {
+  if (
+    typeof value === 'string' ||
+    typeof value === 'number' ||
+    typeof value === 'boolean'
+  ) {
+    return String(value);
+  }
+
+  return null;
 }

@@ -38,7 +38,8 @@ What this means for Internal ID:
   explicitly proven against Better Auth behavior.
 - Internal ID now has a local `RefreshTokenService` that owns wrapper issuance,
   rotation, replay-family revocation, and refresh audit event emission. It is
-  not wired into public token endpoints yet.
+  now wired into the public token controller path for wrapped refresh-token
+  issuance and refresh exchange.
 
 ## Audit-event capture
 

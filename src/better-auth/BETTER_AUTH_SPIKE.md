@@ -32,6 +32,10 @@ local wrappers and route guards.
   boundary.
 - `src/tokens/refresh-token.service.ts` now owns local refresh-token wrapper
   issuance, rotation, replay-family revocation, and refresh audit emission.
+- `src/better-auth/better-auth.controller.ts` now rewrites successful token
+  responses so Internal ID wrapper refresh tokens are issued to clients and
+  wrapper refresh grants are translated back to Better Auth upstream refresh
+  tokens.
 - `pnpm better-auth:inspect` reports Better Auth plugin IDs, exposed API
   endpoint IDs, and Better Auth-managed schema tables.
 
@@ -46,7 +50,7 @@ local wrappers and route guards.
 | P3-05 | Can unsupported grant types be rejected? | In Progress | Wrapper validation now rejects unsupported token grants and blocks dynamic registration, but broader end-to-end negative tests are still needed. |
 | P3-06 | Can PKCE be required for all clients? | Done | Yes, with caveat. `requirePKCE` can be set true, but `plain` must also be disabled explicitly. |
 | P3-07 | Can dynamic registration be disabled? | Done | Yes, configuration can disable it, but the registration surface should still be blocked at the Internal ID boundary. |
-| P3-08 | Can refresh token rotation behavior satisfy this guide? | In Progress | Internal ID now has local family/replay wrapper behavior, but it is not yet wired into the public token flow. |
+| P3-08 | Can refresh token rotation behavior satisfy this guide? | In Progress | Internal ID now has local family/replay wrapper behavior and controller integration, but full route-level proof is still pending. |
 | P3-09 | Can claims be shaped by client policy? | In Progress | Additional claims can be customized, but the per-client Internal ID claim policy still needs a wrapper layer tied to Internal ID-owned client records. |
 | P3-10 | Can audit hooks capture security events? | In Progress | Local audit capture now exists for Better Auth session creation plus authorize, token, and blocked registration traffic, but refresh and revocation coverage is still unproven. |
 
