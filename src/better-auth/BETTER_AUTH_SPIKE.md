@@ -24,6 +24,9 @@ local wrappers and route guards.
 - `src/better-auth/BETTER_AUTH_COMPATIBILITY.md` records the current
   refresh-token and audit-hook compatibility findings from the installed Better
   Auth package.
+- `src/better-auth/better-auth.controller.ts` now emits local audit events for
+  accepted and rejected authorize/token requests plus blocked registration
+  attempts through the Internal ID audit boundary.
 - `pnpm better-auth:inspect` reports Better Auth plugin IDs, exposed API
   endpoint IDs, and Better Auth-managed schema tables.
 
@@ -40,7 +43,7 @@ local wrappers and route guards.
 | P3-07 | Can dynamic registration be disabled? | Done | Yes, configuration can disable it, but the registration surface should still be blocked at the Internal ID boundary. |
 | P3-08 | Can refresh token rotation behavior satisfy this guide? | In Progress | Better Auth rotates refresh tokens, but this spike has not yet proven family tracking, replay detection, or Internal ID-compatible audit semantics. |
 | P3-09 | Can claims be shaped by client policy? | In Progress | Additional claims can be customized, but the per-client Internal ID claim policy still needs a wrapper layer tied to Internal ID-owned client records. |
-| P3-10 | Can audit hooks capture security events? | In Progress | Better Auth exposes useful hook surfaces, but this spike has not yet proven complete coverage for login, token, client, refresh, and revocation events. |
+| P3-10 | Can audit hooks capture security events? | In Progress | Local audit capture now exists at the Better Auth boundary for authorize, token, and blocked registration traffic, but full login, refresh, and revocation coverage is still unproven. |
 
 ## Risks that remain
 

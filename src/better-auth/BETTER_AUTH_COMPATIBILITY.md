@@ -62,6 +62,9 @@ What this means for Internal ID:
 - The Nest `AuditService` should become the only write boundary for future
   Better Auth hook integration, controller-level security events, and admin
   mutations.
+- Internal ID now records local boundary events for accepted and rejected
+  authorize/token requests plus blocked registration attempts before deeper
+  Better Auth hook coverage is added.
 
 ## Current direction
 

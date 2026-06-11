@@ -449,7 +449,7 @@ Objective: prove Better Auth can be used without widening Internal ID scope.
 | P3-07 | Can dynamic registration be disabled? | Done | No self-service client registration is exposed. |
 | P3-08 | Can refresh token rotation behavior satisfy this guide? | In Progress | Rotation exists, and the remaining gap is family/replay semantics. |
 | P3-09 | Can claims be shaped by client policy? | In Progress | Claim release can be constrained. |
-| P3-10 | Can audit hooks capture security events? | In Progress | Hook coverage and the local audit write boundary are defined. |
+| P3-10 | Can audit hooks capture security events? | In Progress | Boundary audit capture exists, and deeper login/refresh/revocation coverage remains. |
 
 ### Better Auth Integration Rules
 
