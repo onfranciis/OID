@@ -28,6 +28,8 @@ import { createTypeOrmOptions } from './typeorm.config';
             cookieName: configService.getOrThrow<string>(
               'betterAuth.cookieName',
             ),
+            secret: configService.getOrThrow<string>('betterAuth.secret'),
+            loginPath: configService.getOrThrow<string>('betterAuth.loginPath'),
           },
           bootstrap: {
             adminEmail: configService.getOrThrow<string>(

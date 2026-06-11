@@ -12,4 +12,12 @@ export class BetterAuthConfigService {
   get cookieName(): string {
     return this.configService.getOrThrow<string>('betterAuth.cookieName');
   }
+
+  get secret(): string {
+    return this.configService.getOrThrow<string>('betterAuth.secret');
+  }
+
+  get loginPath(): string {
+    return this.configService.getOrThrow<string>('betterAuth.loginPath');
+  }
 }

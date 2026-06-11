@@ -25,7 +25,8 @@
     "migration:revert": "pnpm typeorm migration:revert",
     "migration:show": "pnpm typeorm migration:show",
     "migration:verify": "pnpm exec ts-node --transpile-only src/database/scripts/verify-migrations.ts",
-    "seed:bootstrap": "pnpm exec ts-node --transpile-only src/database/scripts/bootstrap.ts"
+    "seed:bootstrap": "pnpm exec ts-node --transpile-only src/database/scripts/bootstrap.ts",
+    "better-auth:inspect": "pnpm exec ts-node --transpile-only src/better-auth/scripts/inspect.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -33,6 +34,8 @@
     "@nestjs/core": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/typeorm": "^11.0.1",
+    "better-auth": "^1.6.16",
+    "kysely": "^0.29.2",
     "nunjucks": "^3.2.4",
     "pg": "^8.21.0",
     "reflect-metadata": "^0.2.2",

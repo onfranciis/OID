@@ -31,7 +31,7 @@ Client applications decide what that user can do.
 | Roadmap | In Progress | This file defines implementation tracking. |
 | Application code | In Progress | NestJS scaffold, module boundaries, config shell, and health route now exist. |
 | Database schema | Done | Internal ID-owned entities, reviewed migrations, rollback verification, and bootstrap seed strategy now exist. |
-| Better Auth integration | In Progress | Better Auth boundary module and config shell exist; capability spike is not started. |
+| Better Auth integration | In Progress | Better Auth now mounts inside NestJS and can inspect its Postgres-backed schema footprint; contract hardening and ownership reconciliation remain open. |
 | Tests | In Progress | Vitest and Playwright commands are wired with initial placeholder coverage. |
 | Deployment | In Progress | Docker Compose and runtime baseline files exist; CI and production paths are not set up yet. |
 
@@ -141,6 +141,9 @@ The project is drifting if:
 | `src/database/scripts/bootstrap.ts` | Idempotent bootstrap seed path for the first admin/group/client records. |
 | `src/database/scripts/verify-migrations.ts` | Disposable migration run and rollback verification script. |
 | `src/better-auth/better-auth.module.ts` | Better Auth integration boundary shell. |
+| `src/better-auth/better-auth.factory.ts` | Better Auth runtime factory for PostgreSQL, JWT, and OIDC plugin wiring. |
+| `src/better-auth/better-auth.controller.ts` | NestJS mount point for Better Auth routes under `/api/auth`. |
+| `src/better-auth/BETTER_AUTH_SPIKE.md` | Phase 3 findings and unresolved Better Auth constraints. |
 
 When code exists, update this table with entrypoints such as `src/app.module.ts`,
 `src/better-auth/better-auth.config.ts`, and `src/database/data-source.ts`.
@@ -165,7 +168,7 @@ Use these labels when updating task status.
 | 0 | Project Setup Decisions | Done | Stack, package manager, Better Auth feasibility, and repo conventions are locked. |
 | 1 | NestJS Foundation | Done | App boots with NestJS, TypeORM, PostgreSQL, Better Auth integration shell, and health check. |
 | 2 | Data Model And Migrations | Done | Initial PostgreSQL schema is created by TypeORM migrations and verified with rollback on a disposable database. |
-| 3 | Better Auth Integration Spike | Not Started | Better Auth can enforce or be wrapped to enforce the Internal ID protocol contract. |
+| 3 | Better Auth Integration Spike | In Progress | Better Auth mounts in NestJS and PostgreSQL-backed schema inspection works; protocol hardening and ownership decisions remain. |
 | 4 | Authentication And Sessions | Not Started | Active users can log in and receive secure provider sessions. |
 | 5 | Admin Bootstrap | Not Started | Admins can manage users, groups, clients, and audit-relevant state. |
 | 6 | OIDC Authorization | Not Started | Valid auth requests issue one-time authorization codes; invalid requests are rejected safely. |
@@ -436,16 +439,16 @@ Objective: prove Better Auth can be used without widening Internal ID scope.
 
 | ID | Question | Status | Required Outcome |
 | --- | --- | --- | --- |
-| P3-01 | Can Better Auth run cleanly inside NestJS? | Not Started | Working module integration exists. |
-| P3-02 | Can Better Auth use PostgreSQL with the chosen adapter? | Not Started | Tables are created or mapped. |
-| P3-03 | Can OAuth Provider expose OIDC discovery? | Not Started | Discovery metadata can be controlled. |
-| P3-04 | Can unsupported response types be rejected? | Not Started | `token`, `id_token`, and hybrid flows fail. |
-| P3-05 | Can unsupported grant types be rejected? | Not Started | `password`, `client_credentials`, and device grants fail. |
-| P3-06 | Can PKCE be required for all clients? | Not Started | Missing PKCE and `plain` are rejected. |
-| P3-07 | Can dynamic registration be disabled? | Not Started | No self-service client registration is exposed. |
-| P3-08 | Can refresh token rotation behavior satisfy this guide? | Not Started | Rotation and replay detection behavior is known. |
-| P3-09 | Can claims be shaped by client policy? | Not Started | Claim release can be constrained. |
-| P3-10 | Can audit hooks capture security events? | Not Started | Login, token, client, and revocation events can be recorded. |
+| P3-01 | Can Better Auth run cleanly inside NestJS? | Done | Working module integration exists. |
+| P3-02 | Can Better Auth use PostgreSQL with the chosen adapter? | Done | Tables are created or mapped. |
+| P3-03 | Can OAuth Provider expose OIDC discovery? | Done | Discovery metadata can be controlled. |
+| P3-04 | Can unsupported response types be rejected? | In Progress | `token`, `id_token`, and hybrid flows fail. |
+| P3-05 | Can unsupported grant types be rejected? | In Progress | `password`, `client_credentials`, and device grants fail. |
+| P3-06 | Can PKCE be required for all clients? | Done | Missing PKCE and `plain` are rejected. |
+| P3-07 | Can dynamic registration be disabled? | Done | No self-service client registration is exposed. |
+| P3-08 | Can refresh token rotation behavior satisfy this guide? | In Progress | Rotation and replay detection behavior is known. |
+| P3-09 | Can claims be shaped by client policy? | In Progress | Claim release can be constrained. |
+| P3-10 | Can audit hooks capture security events? | In Progress | Login, token, client, and revocation events can be recorded. |
 
 ### Better Auth Integration Rules
 

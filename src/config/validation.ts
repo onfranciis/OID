@@ -35,5 +35,12 @@ export function validateEnvironment(
     throw new Error('DATABASE_URL is required.');
   }
 
+  if (
+    config.BETTER_AUTH_SECRET !== undefined &&
+    typeof config.BETTER_AUTH_SECRET !== 'string'
+  ) {
+    throw new Error('BETTER_AUTH_SECRET must be a string when provided.');
+  }
+
   return config;
 }

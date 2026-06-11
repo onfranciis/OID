@@ -15,6 +15,8 @@ export interface AppEnvironment {
   betterAuth: {
     basePath: string;
     cookieName: string;
+    secret: string;
+    loginPath: string;
   };
   bootstrap: {
     adminEmail: string;

@@ -40,6 +40,10 @@ export function configuration(): AppEnvironment {
     betterAuth: {
       basePath: process.env.BETTER_AUTH_BASE_PATH ?? '/api/auth',
       cookieName: process.env.BETTER_AUTH_COOKIE_NAME ?? 'internal_id_session',
+      secret:
+        process.env.BETTER_AUTH_SECRET ??
+        'development-only-better-auth-secret-change-me',
+      loginPath: process.env.BETTER_AUTH_LOGIN_PATH ?? '/login',
     },
     bootstrap: {
       adminEmail: process.env.BOOTSTRAP_ADMIN_EMAIL ?? 'admin@company.com',
