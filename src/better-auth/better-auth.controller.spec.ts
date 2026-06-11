@@ -176,6 +176,8 @@ describe('BetterAuthController', () => {
   });
 
   it('passes supported token grants through to Better Auth', async () => {
+    const response = createExpressResponseStub();
+
     await expect(
       controller.token(
         {
@@ -186,16 +188,156 @@ describe('BetterAuthController', () => {
           ip: '127.0.0.1',
           get: vi.fn(() => 'test-agent'),
         } as never,
-        createExpressResponseStub(),
+        response,
       ),
     ).resolves.toBeUndefined();
 
     expect(handle).not.toHaveBeenCalled();
     expect(dispatch).toHaveBeenCalledTimes(1);
+    expect(issueTokenForClient).not.toHaveBeenCalled();
+    expect(response.send).toHaveBeenCalledWith(
+      JSON.stringify({
+        access_token: 'access-token',
+        token_type: 'Bearer',
+        expires_in: 900,
+        id_token: buildIdToken('usr_123'),
+      }),
+    );
     expect(record).toHaveBeenCalledWith(
       expect.objectContaining({
         eventType: 'oidc.token.request.accepted',
         severity: AuditSeverity.INFO,
+      }),
+    );
+  });
+
+  it('replaces upstream refresh tokens with wrapped refresh tokens on authorization_code exchange', async () => {
+    dispatch.mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          access_token: 'access-token',
+          token_type: 'Bearer',
+          expires_in: 900,
+          id_token: buildIdToken('usr_123'),
+          refresh_token: 'upstream-refresh-token',
+        }),
+        {
+          status: 200,
+          headers: {
+            'content-type': 'application/json',
+          },
+        },
+      ),
+    );
+    issueTokenForClient.mockResolvedValueOnce({
+      refreshToken: 'wrapped-refresh-token',
+      tokenId: 'rtk_wrapped',
+      familyId: 'rtf_wrapped',
+      idleExpiresAt: new Date('2026-06-11T01:00:00.000Z'),
+      absoluteExpiresAt: new Date('2026-06-11T01:00:00.000Z'),
+    });
+    const response = createExpressResponseStub();
+
+    await expect(
+      controller.token(
+        {
+          body: {
+            grant_type: 'authorization_code',
+            client_id: 'internal-id-client',
+          },
+          ip: '127.0.0.1',
+          get: vi.fn(() => 'test-agent'),
+        } as never,
+        response,
+      ),
+    ).resolves.toBeUndefined();
+
+    expect(issueTokenForClient).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'usr_123',
+        clientIdentifier: 'internal-id-client',
+        upstreamRefreshToken: 'upstream-refresh-token',
+      }),
+    );
+    expect(response.send).toHaveBeenCalledWith(
+      JSON.stringify({
+        access_token: 'access-token',
+        token_type: 'Bearer',
+        expires_in: 900,
+        id_token: buildIdToken('usr_123'),
+        refresh_token: 'wrapped-refresh-token',
+      }),
+    );
+  });
+
+  it('translates wrapped refresh grants to upstream refresh grants and returns the rotated wrapper token', async () => {
+    dispatch.mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          access_token: 'next-access-token',
+          token_type: 'Bearer',
+          expires_in: 900,
+          refresh_token: 'next-upstream-refresh-token',
+        }),
+        {
+          status: 200,
+          headers: {
+            'content-type': 'application/json',
+          },
+        },
+      ),
+    );
+    rotateToken.mockResolvedValueOnce({
+      refreshToken: 'rotated-wrapper-refresh-token',
+      tokenId: 'rtk_rotated',
+      familyId: 'rtf_123',
+      idleExpiresAt: new Date('2026-06-11T01:00:00.000Z'),
+      absoluteExpiresAt: new Date('2026-06-11T01:00:00.000Z'),
+    });
+    const response = createExpressResponseStub();
+
+    await expect(
+      controller.token(
+        {
+          body: {
+            grant_type: 'refresh_token',
+            client_id: 'internal-id-client',
+            refresh_token: 'wrapped-refresh-token',
+          },
+          ip: '127.0.0.1',
+          get: vi.fn(() => 'test-agent'),
+          headers: {
+            'content-type': 'application/x-www-form-urlencoded',
+          },
+          method: 'POST',
+          originalUrl: '/api/auth/oauth2/token',
+          url: '/api/auth/oauth2/token',
+        } as never,
+        response,
+      ),
+    ).resolves.toBeUndefined();
+
+    expect(resolveRefreshGrant).toHaveBeenCalledWith('wrapped-refresh-token');
+    expect(dispatch).toHaveBeenCalledTimes(1);
+    const secondDispatchCall = dispatch.mock.calls[0];
+    const dispatchOverrides = secondDispatchCall?.[1] as
+      | { body?: Record<string, unknown> }
+      | undefined;
+    expect(dispatchOverrides?.body).toMatchObject({
+      refresh_token: 'upstream-refresh-token',
+    });
+    expect(rotateToken).toHaveBeenCalledWith(
+      expect.objectContaining({
+        refreshToken: 'wrapped-refresh-token',
+        upstreamRefreshToken: 'next-upstream-refresh-token',
+      }),
+    );
+    expect(response.send).toHaveBeenCalledWith(
+      JSON.stringify({
+        access_token: 'next-access-token',
+        token_type: 'Bearer',
+        expires_in: 900,
+        refresh_token: 'rotated-wrapper-refresh-token',
       }),
     );
   });
