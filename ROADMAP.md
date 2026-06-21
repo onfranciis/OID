@@ -531,15 +531,15 @@ Objective: trusted admins can manage the initial internal identity system.
 | P5-02 | Add admin guard | Done | Non-admin users cannot access admin routes. |
 | P5-03 | Add recent-auth guard | Not Started | Sensitive actions require recent authentication. |
 | P5-04 | Build admin shell | Done | SSR admin pages render safely. |
-| P5-05 | User create/edit | Not Started | Admin can create and update users. |
-| P5-06 | User status changes | Not Started | Admin can suspend, reactivate, and deactivate users. |
+| P5-05 | User create/edit | Done | Admin can create and update users. |
+| P5-06 | User status changes | Done | Admin can suspend, reactivate, and deactivate users. |
 | P5-07 | Group management | Not Started | Admin can create groups and manage memberships. |
 | P5-08 | Client management | Not Started | Admin can create clients and disable clients. |
 | P5-09 | Redirect URI management | Not Started | Admin can add/remove exact redirect URIs. |
 | P5-10 | Claim policy management | Not Started | Admin can configure allowed claims per client. |
 | P5-11 | Refresh token policy management | Not Started | Admin can enable/disable refresh tokens per client. |
 | P5-12 | Audit viewer | Not Started | Admin can view relevant audit events. |
-| P5-13 | Admin audit events | Not Started | Every admin mutation writes an audit event. |
+| P5-13 | Admin audit events | In Progress | Every admin mutation writes an audit event. |
 
 ### Phase 5 Exit Criteria
 

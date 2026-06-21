@@ -9,6 +9,7 @@ import { AdminAccessService } from './admin-access.service';
 import { AdminController } from './admin.controller';
 import { AdminGuard } from './admin.guard';
 import { AdminPageService } from './admin-page.service';
+import { AdminUserService } from './admin-user.service';
 
 @Module({
   imports: [
@@ -21,6 +22,11 @@ import { AdminPageService } from './admin-page.service';
     ]),
   ],
   controllers: [AdminController],
-  providers: [AdminAccessService, AdminGuard, AdminPageService],
+  providers: [
+    AdminAccessService,
+    AdminGuard,
+    AdminPageService,
+    AdminUserService,
+  ],
 })
 export class AdminModule {}
