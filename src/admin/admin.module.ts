@@ -8,6 +8,7 @@ import { GroupEntity } from '../database/entities/group.entity';
 import { OidcClientEntity } from '../database/entities/oidc-client.entity';
 import { OidcProviderSessionEntity } from '../database/entities/oidc-provider-session.entity';
 import { OidcRedirectUriEntity } from '../database/entities/oidc-redirect-uri.entity';
+import { OidcRefreshTokenEntity } from '../database/entities/oidc-refresh-token.entity';
 import { UserEntity } from '../database/entities/user.entity';
 import { AdminAccessService } from './admin-access.service';
 import { AdminAuditService } from './admin-audit.service';
@@ -32,6 +33,7 @@ import { AdminUserService } from './admin-user.service';
       GroupMembershipEntity,
       OidcClientEntity,
       OidcProviderSessionEntity,
+      OidcRefreshTokenEntity,
       OidcRedirectUriEntity,
     ]),
   ],

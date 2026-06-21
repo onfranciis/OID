@@ -6,9 +6,11 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { monotonicFactory } from 'ulid';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { AuditService } from '../audit/audit.service';
 import { AuditSeverity } from '../database/entities/audit-event.entity';
+import { OidcProviderSessionEntity } from '../database/entities/oidc-provider-session.entity';
+import { OidcRefreshTokenEntity } from '../database/entities/oidc-refresh-token.entity';
 import {
   UserEntity,
   UserProfileType,
@@ -51,6 +53,10 @@ export class AdminUserService {
   constructor(
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
+    @InjectRepository(OidcProviderSessionEntity)
+    private readonly providerSessionRepository: Repository<OidcProviderSessionEntity>,
+    @InjectRepository(OidcRefreshTokenEntity)
+    private readonly refreshTokenRepository: Repository<OidcRefreshTokenEntity>,
     private readonly auditService: AuditService,
   ) {}
 
@@ -156,9 +162,14 @@ export class AdminUserService {
     const user = await this.getExistingUser(userId);
 
     user.status = status;
-    user.deactivatedAt = status === UserStatus.DEACTIVATED ? new Date() : null;
+    const deactivatedAt = status === UserStatus.DEACTIVATED ? new Date() : null;
+    user.deactivatedAt = deactivatedAt;
 
     const savedUser = await this.userRepository.save(user);
+    const revocationMetadata =
+      status === UserStatus.DEACTIVATED
+        ? await this.revokeUserSecurityState(user.id, deactivatedAt)
+        : {};
 
     await this.auditAdminMutation(
       'admin.user.status_changed',
@@ -166,6 +177,7 @@ export class AdminUserService {
       context,
       {
         status,
+        ...revocationMetadata,
       },
     );
 
@@ -240,6 +252,43 @@ export class AdminUserService {
       userAgent: context.userAgent,
       metadata,
     });
+  }
+
+  private async revokeUserSecurityState(
+    userId: string,
+    now: Date | null,
+  ): Promise<Record<string, number>> {
+    if (!now) {
+      return {};
+    }
+
+    const [providerSessionResult, refreshTokenResult] = await Promise.all([
+      this.providerSessionRepository.update(
+        {
+          userId,
+          revokedAt: IsNull(),
+        },
+        {
+          revokedAt: now,
+          revocationReason: 'user_deactivated',
+        },
+      ),
+      this.refreshTokenRepository.update(
+        {
+          userId,
+          revokedAt: IsNull(),
+        },
+        {
+          revokedAt: now,
+          revocationReason: 'user_deactivated',
+        },
+      ),
+    ]);
+
+    return {
+      revokedProviderSessionCount: providerSessionResult.affected ?? 0,
+      revokedRefreshTokenCount: refreshTokenResult.affected ?? 0,
+    };
   }
 }
 

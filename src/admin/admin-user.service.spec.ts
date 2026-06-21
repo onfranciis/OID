@@ -17,6 +17,8 @@ describe('AdminUserService', () => {
       id: input.id ?? 'usr_created',
     }),
   );
+  const updateProviderSessions = vi.fn(() => Promise.resolve({ affected: 2 }));
+  const updateRefreshTokens = vi.fn(() => Promise.resolve({ affected: 3 }));
   const record = vi.fn<(input: unknown) => Promise<string>>(() =>
     Promise.resolve('evt_123'),
   );
@@ -25,6 +27,12 @@ describe('AdminUserService', () => {
       findOne,
       create,
       save,
+    } as never,
+    {
+      update: updateProviderSessions,
+    } as never,
+    {
+      update: updateRefreshTokens,
     } as never,
     {
       record,
@@ -48,6 +56,8 @@ describe('AdminUserService', () => {
     findOne.mockReset();
     create.mockClear();
     save.mockClear();
+    updateProviderSessions.mockClear();
+    updateRefreshTokens.mockClear();
     record.mockClear();
   });
 
@@ -180,12 +190,30 @@ describe('AdminUserService', () => {
 
     expect(user.status).toBe(UserStatus.DEACTIVATED);
     expect(user.deactivatedAt).toBeInstanceOf(Date);
+    expect(updateProviderSessions).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'usr_target',
+      }),
+      expect.objectContaining({
+        revocationReason: 'user_deactivated',
+      }),
+    );
+    expect(updateRefreshTokens).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'usr_target',
+      }),
+      expect.objectContaining({
+        revocationReason: 'user_deactivated',
+      }),
+    );
     expect(record).toHaveBeenCalledWith(
       expect.objectContaining({
         eventType: 'admin.user.status_changed',
         targetUserId: 'usr_target',
         metadata: {
           status: UserStatus.DEACTIVATED,
+          revokedProviderSessionCount: 2,
+          revokedRefreshTokenCount: 3,
         },
       }),
     );

@@ -28,15 +28,15 @@ changes.
 | Authorization codes are stored as hashes.                                   | Covered | `src/oidc/oidc-authorization.service.spec.ts`                                     |
 | Authorization code exchange happens in a transaction.                       | Covered | `src/oidc/oidc-token.service.ts` transaction path.                                |
 | Consumed authorization code reuse fails.                                    | Covered | `src/oidc/oidc-token.service.spec.ts`                                             |
-| Authorization code concurrent consumption is row-lock proven.               | Gap     | Needs integration test with PostgreSQL row locking.                               |
+| Authorization code concurrent consumption is row-lock protected.            | Covered | Token exchange locks the authorization code row with `pessimistic_write`.         |
 | Refresh tokens are stored as hashes.                                        | Covered | `src/tokens/refresh-token.service.spec.ts`                                        |
 | Refresh token rotation links parent and successor.                          | Covered | `src/tokens/refresh-token.service.spec.ts`                                        |
 | Refresh token replay revokes the family.                                    | Covered | `src/tokens/refresh-token.service.spec.ts`                                        |
-| Refresh token rotation is row-lock proven.                                  | Gap     | Needs integration test against PostgreSQL transaction locks.                      |
+| Refresh token rotation is row-lock protected.                               | Covered | Refresh token lookups lock the token row with `pessimistic_write`.                |
 | Client disable blocks authorization.                                        | Covered | `src/oidc/oidc-authorization.service.spec.ts`                                     |
 | Client disable blocks token exchange and refresh.                           | Covered | `src/oidc/oidc-token.service.spec.ts`, `src/tokens/refresh-token.service.spec.ts` |
 | Inactive users cannot login, authorize, or refresh.                         | Covered | Authentication, authorization, and refresh token tests.                           |
-| User deactivation immediately revokes existing sessions and refresh tokens. | Gap     | Existing flows reject inactive users, but bulk revocation is not implemented.     |
+| User deactivation immediately revokes existing sessions and refresh tokens. | Covered | `src/admin/admin-user.service.spec.ts`                                            |
 
 ## Browser And Admin Security
 
@@ -65,4 +65,6 @@ changes.
 
 - Run `pnpm test:migrations` against a reachable PostgreSQL instance.
 - Run the sample client flow locally with `pnpm sample-client:start`.
+- Add PostgreSQL-level concurrency stress tests before production if token paths
+  show contention under load.
 - Review production alerting and key rotation runbooks before go-live.

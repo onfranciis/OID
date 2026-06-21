@@ -171,6 +171,13 @@ describe('OidcTokenService', () => {
         consumedAt: now,
       }),
     );
+    expect(codeRepository.findOne).toHaveBeenCalledWith(
+      expect.objectContaining({
+        lock: {
+          mode: 'pessimistic_write',
+        },
+      }),
+    );
     expect(record).toHaveBeenCalledWith(
       expect.objectContaining({
         eventType: 'oidc.token.issued',

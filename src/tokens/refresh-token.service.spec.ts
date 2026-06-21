@@ -54,11 +54,12 @@ describe('RefreshTokenService', () => {
     const currentToken = createRefreshTokenEntity();
     const savedEntities: OidcRefreshTokenEntity[] = [];
     const auditRecord = vi.fn(() => Promise.resolve('evt_123'));
+    const findOne = vi.fn(() => Promise.resolve(currentToken));
     const service = new RefreshTokenService(
       {} as never,
       {} as never,
       createDataSourceStub({
-        findOne: () => Promise.resolve(currentToken),
+        findOne,
         save: (entity) => {
           if (Array.isArray(entity)) {
             savedEntities.push(...entity);
@@ -88,6 +89,13 @@ describe('RefreshTokenService', () => {
       (entity) => entity.id === result.tokenId,
     );
     expect(successor?.parentTokenId).toBe(currentToken.id);
+    expect(findOne).toHaveBeenCalledWith(
+      expect.objectContaining({
+        lock: {
+          mode: 'pessimistic_write',
+        },
+      }),
+    );
     expect(currentToken.rotatedToTokenId).toBe(result.tokenId);
     expect(currentToken.revocationReason).toBe('rotated');
     expect(result.familyId).toBe(currentToken.familyId);

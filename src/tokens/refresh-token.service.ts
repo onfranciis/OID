@@ -143,6 +143,9 @@ export class RefreshTokenService {
         where: {
           tokenHash: hashRefreshToken(refreshToken),
         },
+        lock: {
+          mode: 'pessimistic_write',
+        },
       });
 
       if (!currentToken) {
@@ -205,6 +208,9 @@ export class RefreshTokenService {
       const currentToken = await repository.findOne({
         where: {
           tokenHash: hashRefreshToken(input.refreshToken),
+        },
+        lock: {
+          mode: 'pessimistic_write',
         },
       });
 
@@ -301,6 +307,9 @@ export class RefreshTokenService {
       const currentToken = await repository.findOne({
         where: {
           tokenHash: hashRefreshToken(input.refreshToken),
+        },
+        lock: {
+          mode: 'pessimistic_write',
         },
       });
 
@@ -467,6 +476,9 @@ export class RefreshTokenService {
       const token = await repository.findOne({
         where: {
           tokenHash: hashRefreshToken(input.refreshToken),
+        },
+        lock: {
+          mode: 'pessimistic_write',
         },
       });
 

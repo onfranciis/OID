@@ -31,9 +31,8 @@ Lifecycle effects:
 - Pending, suspended, and deactivated users cannot log in.
 - Existing provider sessions and refresh tokens are checked against active user
   status during authorization and refresh.
-- Immediate bulk revocation on deactivation is not implemented yet; use the
-  incident checklist in `docs/OPERATIONS.md` if a user must be forcefully
-  removed from all active sessions.
+- Deactivation immediately revokes active provider sessions and refresh tokens
+  with the `user_deactivated` reason.
 
 ## Groups
 

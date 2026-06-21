@@ -121,6 +121,9 @@ export class OidcTokenService {
         where: {
           codeHash: hashSecret(code),
         },
+        lock: {
+          mode: 'pessimistic_write',
+        },
       });
 
       if (!authorizationCode) {

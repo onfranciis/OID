@@ -954,19 +954,19 @@ Run this checklist after initial integration and after every Better Auth upgrade
 
 Use this checklist before accepting token/session-related work.
 
-| Check                                                                      | Status       |
-| -------------------------------------------------------------------------- | ------------ |
-| Authorization code lookup uses hash, not raw code.                         | Done         |
-| Authorization code consumption is atomic.                                  | Done         |
-| Consumed authorization code cannot be reused under concurrency.            | Needs Review |
-| Refresh token lookup uses hash, not raw token.                             | Done         |
-| Refresh token rotation locks the current row.                              | Needs Review |
-| Refresh token replay revokes the token family.                             | Done         |
-| User deactivation revokes sessions and refresh tokens.                     | Needs Review |
-| Client disable blocks new authorization immediately.                       | Done         |
-| Client disable blocks token exchange immediately.                          | Done         |
-| Signing key activation/retirement is tracked.                              | Done         |
-| Audit event writes are included in sensitive transactions where practical. | Done         |
+| Check                                                                      | Status |
+| -------------------------------------------------------------------------- | ------ |
+| Authorization code lookup uses hash, not raw code.                         | Done   |
+| Authorization code consumption is atomic.                                  | Done   |
+| Consumed authorization code cannot be reused under concurrency.            | Done   |
+| Refresh token lookup uses hash, not raw token.                             | Done   |
+| Refresh token rotation locks the current row.                              | Done   |
+| Refresh token replay revokes the token family.                             | Done   |
+| User deactivation revokes sessions and refresh tokens.                     | Done   |
+| Client disable blocks new authorization immediately.                       | Done   |
+| Client disable blocks token exchange immediately.                          | Done   |
+| Signing key activation/retirement is tracked.                              | Done   |
+| Audit event writes are included in sensitive transactions where practical. | Done   |
 
 ## 28. Documentation Deliverables
 
