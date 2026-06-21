@@ -11,12 +11,19 @@ import {
 import type { Request, Response } from 'express';
 import type { AdminPrincipal } from './admin-access.service';
 import {
+  AdminClientService,
+  type AdminCreateClientInput,
+  type AdminRedirectUriInput,
+  type AdminUpdateClientInput,
+} from './admin-client.service';
+import {
   AdminGroupService,
   type AdminCreateGroupInput,
   type AdminUpdateGroupInput,
 } from './admin-group.service';
 import { AdminGuard } from './admin.guard';
 import { AdminPageService } from './admin-page.service';
+import { OidcClientStatus } from '../database/entities/oidc-client.entity';
 import {
   AdminUserService,
   type AdminCreateUserInput,
@@ -33,6 +40,7 @@ interface AdminRequest extends Request {
 export class AdminController {
   constructor(
     private readonly adminPageService: AdminPageService,
+    private readonly adminClientService: AdminClientService,
     private readonly adminGroupService: AdminGroupService,
     private readonly adminUserService: AdminUserService,
   ) {}
@@ -117,6 +125,66 @@ export class AdminController {
     return this.adminGroupService.removeMembership(
       groupId,
       userId,
+      buildMutationContext(req),
+    );
+  }
+
+  @Post('clients')
+  createClient(@Req() req: AdminRequest, @Body() body: AdminCreateClientInput) {
+    return this.adminClientService.createClient(
+      body,
+      buildMutationContext(req),
+    );
+  }
+
+  @Post('clients/:clientRecordId')
+  updateClient(
+    @Req() req: AdminRequest,
+    @Param('clientRecordId') clientRecordId: string,
+    @Body() body: AdminUpdateClientInput,
+  ) {
+    return this.adminClientService.updateClient(
+      clientRecordId,
+      body,
+      buildMutationContext(req),
+    );
+  }
+
+  @Post('clients/:clientRecordId/status')
+  setClientStatus(
+    @Req() req: AdminRequest,
+    @Param('clientRecordId') clientRecordId: string,
+    @Body('status') status: OidcClientStatus,
+  ) {
+    return this.adminClientService.setClientStatus(
+      clientRecordId,
+      status,
+      buildMutationContext(req),
+    );
+  }
+
+  @Post('clients/:clientRecordId/redirect-uris')
+  addRedirectUri(
+    @Req() req: AdminRequest,
+    @Param('clientRecordId') clientRecordId: string,
+    @Body() body: AdminRedirectUriInput,
+  ) {
+    return this.adminClientService.addRedirectUri(
+      clientRecordId,
+      body,
+      buildMutationContext(req),
+    );
+  }
+
+  @Post('clients/:clientRecordId/redirect-uris/:redirectUriId/remove')
+  removeRedirectUri(
+    @Req() req: AdminRequest,
+    @Param('clientRecordId') clientRecordId: string,
+    @Param('redirectUriId') redirectUriId: string,
+  ) {
+    return this.adminClientService.removeRedirectUri(
+      clientRecordId,
+      redirectUriId,
       buildMutationContext(req),
     );
   }

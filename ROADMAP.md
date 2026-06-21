@@ -534,10 +534,10 @@ Objective: trusted admins can manage the initial internal identity system.
 | P5-05 | User create/edit | Done | Admin can create and update users. |
 | P5-06 | User status changes | Done | Admin can suspend, reactivate, and deactivate users. |
 | P5-07 | Group management | Done | Admin can create groups and manage memberships. |
-| P5-08 | Client management | Not Started | Admin can create clients and disable clients. |
-| P5-09 | Redirect URI management | Not Started | Admin can add/remove exact redirect URIs. |
-| P5-10 | Claim policy management | Not Started | Admin can configure allowed claims per client. |
-| P5-11 | Refresh token policy management | Not Started | Admin can enable/disable refresh tokens per client. |
+| P5-08 | Client management | Done | Admin can create clients and disable clients. |
+| P5-09 | Redirect URI management | Done | Admin can add/remove exact redirect URIs. |
+| P5-10 | Claim policy management | Done | Admin can configure allowed claims per client. |
+| P5-11 | Refresh token policy management | Done | Admin can enable/disable refresh tokens per client. |
 | P5-12 | Audit viewer | Not Started | Admin can view relevant audit events. |
 | P5-13 | Admin audit events | In Progress | Every admin mutation writes an audit event. |
 
