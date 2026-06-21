@@ -4,12 +4,17 @@ import {
   Get,
   Param,
   Post,
+  Query,
   Req,
   Res,
   UseGuards,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import type { AdminPrincipal } from './admin-access.service';
+import {
+  AdminAuditService,
+  type AdminAuditQueryInput,
+} from './admin-audit.service';
 import {
   AdminClientService,
   type AdminCreateClientInput,
@@ -40,6 +45,7 @@ interface AdminRequest extends Request {
 export class AdminController {
   constructor(
     private readonly adminPageService: AdminPageService,
+    private readonly adminAuditService: AdminAuditService,
     private readonly adminClientService: AdminClientService,
     private readonly adminGroupService: AdminGroupService,
     private readonly adminUserService: AdminUserService,
@@ -52,6 +58,11 @@ export class AdminController {
         displayName: req.adminPrincipal.user.displayName,
       }),
     );
+  }
+
+  @Get('audit-events')
+  listAuditEvents(@Query() query: AdminAuditQueryInput) {
+    return this.adminAuditService.listRecent(query);
   }
 
   @Post('users')

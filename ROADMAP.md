@@ -538,8 +538,8 @@ Objective: trusted admins can manage the initial internal identity system.
 | P5-09 | Redirect URI management | Done | Admin can add/remove exact redirect URIs. |
 | P5-10 | Claim policy management | Done | Admin can configure allowed claims per client. |
 | P5-11 | Refresh token policy management | Done | Admin can enable/disable refresh tokens per client. |
-| P5-12 | Audit viewer | Not Started | Admin can view relevant audit events. |
-| P5-13 | Admin audit events | In Progress | Every admin mutation writes an audit event. |
+| P5-12 | Audit viewer | Done | Admin can view relevant audit events. |
+| P5-13 | Admin audit events | Done | Every admin mutation writes an audit event. |
 
 ### Phase 5 Exit Criteria
 
