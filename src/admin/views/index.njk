@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Internal ID Admin</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #17211d;
+        --muted: #61706a;
+        --line: #d8ded9;
+        --surface: #ffffff;
+        --page: #f4f7f5;
+        --accent: #1d6f5f;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: ui-sans-serif, "Aptos", "Segoe UI", sans-serif;
+        color: var(--ink);
+        background: var(--page);
+      }
+
+      header {
+        border-bottom: 1px solid var(--line);
+        background: var(--surface);
+      }
+
+      .bar,
+      main {
+        width: min(1120px, calc(100% - 32px));
+        margin: 0 auto;
+      }
+
+      .bar {
+        min-height: 64px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+      }
+
+      .brand {
+        font-weight: 700;
+      }
+
+      .actor {
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      main {
+        padding: 32px 0;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: 1.75rem;
+        letter-spacing: 0;
+      }
+
+      p {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 16px;
+        margin-top: 28px;
+      }
+
+      .tile {
+        min-height: 112px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+        padding: 18px;
+      }
+
+      .tile h2 {
+        margin: 0 0 8px;
+        font-size: 1rem;
+        letter-spacing: 0;
+      }
+
+      .tile p {
+        font-size: 0.95rem;
+        line-height: 1.45;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="bar">
+        <div class="brand">Internal ID Admin</div>
+        <div class="actor">{{ displayName }}</div>
+      </div>
+    </header>
+    <main>
+      <h1>Admin console</h1>
+      <p>Manage the internal identity provider from a provider-owned surface.</p>
+      <section class="grid" aria-label="Admin areas">
+        <article class="tile">
+          <h2>Users</h2>
+          <p>Create users, manage profiles, and control lifecycle status.</p>
+        </article>
+        <article class="tile">
+          <h2>Groups</h2>
+          <p>Maintain admin groups and application-facing memberships.</p>
+        </article>
+        <article class="tile">
+          <h2>Clients</h2>
+          <p>Configure redirect URIs, scopes, claims, and token policy.</p>
+        </article>
+        <article class="tile">
+          <h2>Audit</h2>
+          <p>Review security-sensitive identity events.</p>
+        </article>
+      </section>
+    </main>
+  </body>
+</html>

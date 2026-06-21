@@ -527,10 +527,10 @@ Objective: trusted admins can manage the initial internal identity system.
 
 | ID | Task | Status | Acceptance Criteria |
 | --- | --- | --- | --- |
-| P5-01 | Define admin authorization model | Not Started | Provider-local admin rule is documented. |
-| P5-02 | Add admin guard | Not Started | Non-admin users cannot access admin routes. |
+| P5-01 | Define admin authorization model | Done | Provider-local admin rule is documented. |
+| P5-02 | Add admin guard | Done | Non-admin users cannot access admin routes. |
 | P5-03 | Add recent-auth guard | Not Started | Sensitive actions require recent authentication. |
-| P5-04 | Build admin shell | Not Started | SSR admin pages render safely. |
+| P5-04 | Build admin shell | Done | SSR admin pages render safely. |
 | P5-05 | User create/edit | Not Started | Admin can create and update users. |
 | P5-06 | User status changes | Not Started | Admin can suspend, reactivate, and deactivate users. |
 | P5-07 | Group management | Not Started | Admin can create groups and manage memberships. |

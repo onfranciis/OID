@@ -1,4 +1,26 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { GroupMembershipEntity } from '../database/entities/group-membership.entity';
+import { GroupEntity } from '../database/entities/group.entity';
+import { OidcProviderSessionEntity } from '../database/entities/oidc-provider-session.entity';
+import { UserEntity } from '../database/entities/user.entity';
+import { AdminAccessService } from './admin-access.service';
+import { AdminController } from './admin.controller';
+import { AdminGuard } from './admin.guard';
+import { AdminPageService } from './admin-page.service';
 
-@Module({})
+@Module({
+  imports: [
+    ConfigModule,
+    TypeOrmModule.forFeature([
+      UserEntity,
+      GroupEntity,
+      GroupMembershipEntity,
+      OidcProviderSessionEntity,
+    ]),
+  ],
+  controllers: [AdminController],
+  providers: [AdminAccessService, AdminGuard, AdminPageService],
+})
 export class AdminModule {}
