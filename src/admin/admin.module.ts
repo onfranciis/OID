@@ -7,6 +7,7 @@ import { OidcProviderSessionEntity } from '../database/entities/oidc-provider-se
 import { UserEntity } from '../database/entities/user.entity';
 import { AdminAccessService } from './admin-access.service';
 import { AdminController } from './admin.controller';
+import { AdminGroupService } from './admin-group.service';
 import { AdminGuard } from './admin.guard';
 import { AdminPageService } from './admin-page.service';
 import { AdminUserService } from './admin-user.service';
@@ -24,6 +25,7 @@ import { AdminUserService } from './admin-user.service';
   controllers: [AdminController],
   providers: [
     AdminAccessService,
+    AdminGroupService,
     AdminGuard,
     AdminPageService,
     AdminUserService,

@@ -533,7 +533,7 @@ Objective: trusted admins can manage the initial internal identity system.
 | P5-04 | Build admin shell | Done | SSR admin pages render safely. |
 | P5-05 | User create/edit | Done | Admin can create and update users. |
 | P5-06 | User status changes | Done | Admin can suspend, reactivate, and deactivate users. |
-| P5-07 | Group management | Not Started | Admin can create groups and manage memberships. |
+| P5-07 | Group management | Done | Admin can create groups and manage memberships. |
 | P5-08 | Client management | Not Started | Admin can create clients and disable clients. |
 | P5-09 | Redirect URI management | Not Started | Admin can add/remove exact redirect URIs. |
 | P5-10 | Claim policy management | Not Started | Admin can configure allowed claims per client. |

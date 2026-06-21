@@ -10,6 +10,11 @@ import {
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import type { AdminPrincipal } from './admin-access.service';
+import {
+  AdminGroupService,
+  type AdminCreateGroupInput,
+  type AdminUpdateGroupInput,
+} from './admin-group.service';
 import { AdminGuard } from './admin.guard';
 import { AdminPageService } from './admin-page.service';
 import {
@@ -28,6 +33,7 @@ interface AdminRequest extends Request {
 export class AdminController {
   constructor(
     private readonly adminPageService: AdminPageService,
+    private readonly adminGroupService: AdminGroupService,
     private readonly adminUserService: AdminUserService,
   ) {}
 
@@ -67,6 +73,50 @@ export class AdminController {
     return this.adminUserService.setUserStatus(
       userId,
       status,
+      buildMutationContext(req),
+    );
+  }
+
+  @Post('groups')
+  createGroup(@Req() req: AdminRequest, @Body() body: AdminCreateGroupInput) {
+    return this.adminGroupService.createGroup(body, buildMutationContext(req));
+  }
+
+  @Post('groups/:groupId')
+  updateGroup(
+    @Req() req: AdminRequest,
+    @Param('groupId') groupId: string,
+    @Body() body: AdminUpdateGroupInput,
+  ) {
+    return this.adminGroupService.updateGroup(
+      groupId,
+      body,
+      buildMutationContext(req),
+    );
+  }
+
+  @Post('groups/:groupId/members/:userId')
+  addGroupMembership(
+    @Req() req: AdminRequest,
+    @Param('groupId') groupId: string,
+    @Param('userId') userId: string,
+  ) {
+    return this.adminGroupService.addMembership(
+      groupId,
+      userId,
+      buildMutationContext(req),
+    );
+  }
+
+  @Post('groups/:groupId/members/:userId/remove')
+  removeGroupMembership(
+    @Req() req: AdminRequest,
+    @Param('groupId') groupId: string,
+    @Param('userId') userId: string,
+  ) {
+    return this.adminGroupService.removeMembership(
+      groupId,
+      userId,
       buildMutationContext(req),
     );
   }
