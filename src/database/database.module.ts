@@ -88,6 +88,8 @@ import { createTypeOrmOptions } from './typeorm.config';
             clientName: configService.getOrThrow<string>(
               'bootstrap.clientName',
             ),
+            clientSecret:
+              configService.get<string>('bootstrap.clientSecret') ?? null,
             clientRedirectUri: configService.getOrThrow<string>(
               'bootstrap.clientRedirectUri',
             ),

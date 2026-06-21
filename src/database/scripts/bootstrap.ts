@@ -1,4 +1,5 @@
 import { existsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { loadEnvFile } from 'node:process';
 import { hashPassword } from 'better-auth/crypto';
 import { monotonicFactory } from 'ulid';
@@ -42,6 +43,10 @@ function normalizeNullable(value: string | null): string | null {
   const normalized = value.trim();
 
   return normalized.length > 0 ? normalized : null;
+}
+
+function hashSecret(secret: string): string {
+  return createHash('sha256').update(secret).digest('hex');
 }
 
 async function bootstrap(): Promise<void> {
@@ -153,7 +158,9 @@ async function bootstrap(): Promise<void> {
         oidcClient = clientRepository.create({
           id: prefixedUlid('cli'),
           clientId: appEnvironment.bootstrap.clientId,
-          clientSecretHash: null,
+          clientSecretHash: appEnvironment.bootstrap.clientSecret
+            ? hashSecret(appEnvironment.bootstrap.clientSecret)
+            : null,
           name: appEnvironment.bootstrap.clientName,
           type: OidcClientType.CONFIDENTIAL,
           status: OidcClientStatus.ACTIVE,
@@ -182,6 +189,11 @@ async function bootstrap(): Promise<void> {
         oidcClient.type = OidcClientType.CONFIDENTIAL;
         oidcClient.status = OidcClientStatus.ACTIVE;
         oidcClient.requirePkce = true;
+        if (appEnvironment.bootstrap.clientSecret) {
+          oidcClient.clientSecretHash = hashSecret(
+            appEnvironment.bootstrap.clientSecret,
+          );
+        }
       }
 
       oidcClient = await clientRepository.save(oidcClient);

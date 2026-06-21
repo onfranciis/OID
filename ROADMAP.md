@@ -147,10 +147,13 @@ The project is drifting if:
 | `src/better-auth/BETTER_AUTH_SPIKE.md`                                   | Phase 3 findings and unresolved Better Auth constraints.                                         |
 | `src/better-auth/BETTER_AUTH_OWNERSHIP.md`                               | Current coexistence decision between Better Auth-managed and Internal ID-owned schema.           |
 | `src/metrics/metrics.module.ts`                                          | Prometheus-style metrics endpoint and request recording.                                         |
+| `sample-client/src/server.ts`                                            | Runnable sample internal OIDC client using Authorization Code + PKCE.                            |
+| `sample-client/src/oidc-client.ts`                                       | Sample OIDC helpers for PKCE, code exchange, ID token validation, and local app sessions.        |
 | `Dockerfile`                                                             | Production container image definition.                                                           |
 | `docker-compose.yml`                                                     | Local app and PostgreSQL runtime definition.                                                     |
 | `.github/workflows/ci.yml`                                               | CI verification for build, typecheck, lint, tests, migrations, and dependency audit.             |
 | `docs/OPERATIONS.md`                                                     | Deployment, environment, backup, cleanup, metrics, alerting, key rotation, and incident runbook. |
+| `docs/CLIENT_INTEGRATION.md`                                             | Internal application integration guide for OIDC, local sessions, and logout boundaries.          |
 
 When code exists, update this table with entrypoints such as `src/app.module.ts`,
 `src/better-auth/better-auth.config.ts`, and `src/database/data-source.ts`.
@@ -183,7 +186,7 @@ Use these labels when updating task status.
 | 8     | Refresh Tokens And Revocation | Done        | Refresh rotation, replay detection, and revocation work transactionally.                                                       |
 | 9     | Security Hardening            | Done        | Negative protocol tests, rate limits, CSRF, XSS protections, and audit coverage are in place.                                  |
 | 10    | Operations And Deployment     | Done        | Local and production-like deployment paths exist with backups, logging, metrics, and cleanup jobs.                             |
-| 11    | Client Integration Readiness  | Not Started | A sample internal client can complete the full Authorization Code + PKCE flow.                                                 |
+| 11    | Client Integration Readiness  | Done        | A sample internal client can complete the full Authorization Code + PKCE flow.                                                 |
 
 ## 10. Execution Plan
 
@@ -793,15 +796,15 @@ Objective: prove an internal app can use Internal ID correctly.
 
 ### Tasks
 
-| ID     | Task                                  | Status      | Acceptance Criteria                                               |
-| ------ | ------------------------------------- | ----------- | ----------------------------------------------------------------- |
-| P11-01 | Create sample confidential client     | Not Started | Server-rendered sample app can complete code flow.                |
-| P11-02 | Create sample public client if needed | Deferred    | Public client can complete PKCE without secret.                   |
-| P11-03 | Validate ID token in sample client    | Not Started | Client checks signature, issuer, audience, expiration, and nonce. |
-| P11-04 | Establish local app session           | Not Started | Sample app uses its own session cookie after login.               |
-| P11-05 | Test provider logout                  | Not Started | Provider logout clears provider session and redirects safely.     |
-| P11-06 | Test app logout                       | Not Started | App clears local session and revokes refresh token if present.    |
-| P11-07 | Document client integration guide     | Not Started | Internal app owners know how to integrate safely.                 |
+| ID     | Task                                  | Status   | Acceptance Criteria                                               |
+| ------ | ------------------------------------- | -------- | ----------------------------------------------------------------- |
+| P11-01 | Create sample confidential client     | Done     | Server-rendered sample app can complete code flow.                |
+| P11-02 | Create sample public client if needed | Deferred | Public client can complete PKCE without secret.                   |
+| P11-03 | Validate ID token in sample client    | Done     | Client checks signature, issuer, audience, expiration, and nonce. |
+| P11-04 | Establish local app session           | Done     | Sample app uses its own session cookie after login.               |
+| P11-05 | Test provider logout                  | Done     | Provider logout clears provider session and redirects safely.     |
+| P11-06 | Test app logout                       | Done     | App clears local session and revokes refresh token if present.    |
+| P11-07 | Document client integration guide     | Done     | Internal app owners know how to integrate safely.                 |
 
 ### Phase 11 Exit Criteria
 
@@ -971,7 +974,7 @@ Use this checklist before accepting token/session-related work.
 | Roadmap                         | In Progress | Implementation tracking and agent orientation.              |
 | Local development guide         | Done        | How to run app, Postgres, migrations, and tests.            |
 | Environment variables reference | Done        | Required config and safe defaults.                          |
-| Client integration guide        | Not Started | How internal apps use OIDC safely.                          |
+| Client integration guide        | Done        | How internal apps use OIDC safely.                          |
 | Admin guide                     | Not Started | How admins manage users, groups, clients, and sessions.     |
 | Operations runbook              | Done        | Deployment, backups, cleanup jobs, key rotation, incidents. |
 | Security test matrix            | Not Started | Required conformance and negative tests.                    |

@@ -36,14 +36,26 @@ describe('validateEnvironment', () => {
         BOOTSTRAP_ADMIN_PASSWORD: 'change-this-for-local-bootstrap',
       }),
     ).toThrow(/local development default/);
+    expect(() =>
+      validateEnvironment({
+        ...baseConfig,
+        BOOTSTRAP_CLIENT_SECRET: 'replace-this-sample-client-secret',
+      }),
+    ).toThrow(/sample development default/);
   });
 
-  it('rejects malformed bootstrap password values before production checks', () => {
+  it('rejects malformed bootstrap values before production checks', () => {
     expect(() =>
       validateEnvironment({
         ...baseConfig,
         BOOTSTRAP_ADMIN_PASSWORD: 123,
       }),
     ).toThrow(/BOOTSTRAP_ADMIN_PASSWORD/);
+    expect(() =>
+      validateEnvironment({
+        ...baseConfig,
+        BOOTSTRAP_CLIENT_SECRET: 123,
+      }),
+    ).toThrow(/BOOTSTRAP_CLIENT_SECRET/);
   });
 });

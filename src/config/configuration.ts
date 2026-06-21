@@ -100,6 +100,7 @@ export function configuration(): AppEnvironment {
       clientId: process.env.BOOTSTRAP_CLIENT_ID ?? 'internal-id-sample-client',
       clientName:
         process.env.BOOTSTRAP_CLIENT_NAME ?? 'Internal ID Sample Client',
+      clientSecret: process.env.BOOTSTRAP_CLIENT_SECRET ?? null,
       clientRedirectUri:
         process.env.BOOTSTRAP_CLIENT_REDIRECT_URI ??
         'http://localhost:4000/auth/callback',

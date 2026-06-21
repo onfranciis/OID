@@ -50,6 +50,14 @@ export function validateEnvironment(
     throw new Error('BOOTSTRAP_ADMIN_PASSWORD must be a string when provided.');
   }
 
+  if (
+    config.BOOTSTRAP_CLIENT_SECRET !== undefined &&
+    config.BOOTSTRAP_CLIENT_SECRET !== null &&
+    typeof config.BOOTSTRAP_CLIENT_SECRET !== 'string'
+  ) {
+    throw new Error('BOOTSTRAP_CLIENT_SECRET must be a string when provided.');
+  }
+
   if (nodeEnv === 'production') {
     validateProductionEnvironment(config);
   }
@@ -87,6 +95,12 @@ function validateProductionEnvironment(config: Record<string, unknown>): void {
   if (config.BOOTSTRAP_ADMIN_PASSWORD === 'change-this-for-local-bootstrap') {
     throw new Error(
       'BOOTSTRAP_ADMIN_PASSWORD must not use the local development default.',
+    );
+  }
+
+  if (config.BOOTSTRAP_CLIENT_SECRET === 'replace-this-sample-client-secret') {
+    throw new Error(
+      'BOOTSTRAP_CLIENT_SECRET must not use the sample development default.',
     );
   }
 }

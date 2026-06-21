@@ -41,6 +41,7 @@ export interface AppEnvironment {
     adminGroupName: string;
     clientId: string;
     clientName: string;
+    clientSecret: string | null;
     clientRedirectUri: string;
     clientPostLogoutRedirectUri: string;
   };

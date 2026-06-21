@@ -90,6 +90,8 @@ export class BetterAuthService implements OnModuleDestroy {
         ),
         clientId: configService.getOrThrow<string>('bootstrap.clientId'),
         clientName: configService.getOrThrow<string>('bootstrap.clientName'),
+        clientSecret:
+          configService.get<string>('bootstrap.clientSecret') ?? null,
         clientRedirectUri: configService.getOrThrow<string>(
           'bootstrap.clientRedirectUri',
         ),

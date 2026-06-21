@@ -17,6 +17,9 @@ describe('package scripts', () => {
     expect(packageJson.scripts['start:prod:migrate']).toBe(
       'pnpm migration:run && node dist/main',
     );
+    expect(packageJson.scripts['sample-client:start']).toContain(
+      'sample-client/src/server.ts',
+    );
     expect(packageJson.scripts['test:migrations']).toBe(
       'pnpm migration:verify',
     );

@@ -24,6 +24,7 @@ The app listens on `http://localhost:3000` by default.
 - `pnpm start:prod:migrate`: run migrations before production startup.
 - `pnpm cleanup:expired`: cleanup expired authorization codes, sessions, and refresh tokens.
 - `pnpm better-auth:schema`: materialize or verify Better Auth-owned tables.
+- `pnpm sample-client:start`: run the sample OIDC client on `http://localhost:4000`.
 
 ## Docker
 
@@ -44,3 +45,6 @@ docker compose up --build
 Operational guidance lives in `docs/OPERATIONS.md`, including environment
 reference, backups, cleanup jobs, metrics, alerts, key rotation, and incident
 checklists.
+
+Client integration guidance lives in `docs/CLIENT_INTEGRATION.md`, including the
+sample app, required ID token checks, session boundary, and logout behavior.
