@@ -10,11 +10,13 @@
   },
   "scripts": {
     "build": "nest build",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\" \"*.{ts,mjs,json,md,yml}\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
+    "start:prod:migrate": "pnpm migration:run && node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "vitest run",
     "test:migrations": "pnpm migration:verify",
@@ -27,6 +29,7 @@
     "migration:revert": "pnpm typeorm migration:revert",
     "migration:show": "pnpm typeorm migration:show",
     "migration:verify": "pnpm exec ts-node --transpile-only src/database/scripts/verify-migrations.ts",
+    "cleanup:expired": "pnpm exec ts-node --transpile-only src/database/scripts/cleanup-expired.ts",
     "seed:bootstrap": "pnpm exec ts-node --transpile-only src/database/scripts/bootstrap.ts",
     "better-auth:inspect": "pnpm exec ts-node --transpile-only src/better-auth/scripts/inspect.ts",
     "better-auth:schema": "pnpm exec ts-node --transpile-only src/better-auth/scripts/materialize-schema.ts"
@@ -74,6 +77,13 @@
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.20.0",
     "vitest": "^4.1.8"
+  },
+  "pnpm": {
+    "overrides": {
+      "form-data": "4.0.6",
+      "js-yaml": "4.2.0",
+      "multer": "2.2.0"
+    }
   },
   "packageManager": "pnpm@10.12.4"
 }

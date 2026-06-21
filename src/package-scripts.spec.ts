@@ -9,15 +9,22 @@ describe('package scripts', () => {
     scripts: Record<string, string>;
   };
 
-  it('exposes dependency audit and migration verification workflows', () => {
+  it('exposes operations workflows', () => {
     expect(packageJson.scripts['dependency:audit']).toBe(
       'pnpm audit --audit-level moderate',
+    );
+    expect(packageJson.scripts.typecheck).toBe('tsc --noEmit -p tsconfig.json');
+    expect(packageJson.scripts['start:prod:migrate']).toBe(
+      'pnpm migration:run && node dist/main',
     );
     expect(packageJson.scripts['test:migrations']).toBe(
       'pnpm migration:verify',
     );
     expect(packageJson.scripts['migration:verify']).toContain(
       'src/database/scripts/verify-migrations.ts',
+    );
+    expect(packageJson.scripts['cleanup:expired']).toContain(
+      'src/database/scripts/cleanup-expired.ts',
     );
   });
 });

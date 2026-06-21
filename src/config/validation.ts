@@ -43,13 +43,6 @@ export function validateEnvironment(
   }
 
   if (
-    typeof config.BETTER_AUTH_SECRET === 'string' &&
-    config.BETTER_AUTH_SECRET.length < 32
-  ) {
-    throw new Error('BETTER_AUTH_SECRET must be at least 32 characters long.');
-  }
-
-  if (
     config.BOOTSTRAP_ADMIN_PASSWORD !== undefined &&
     config.BOOTSTRAP_ADMIN_PASSWORD !== null &&
     typeof config.BOOTSTRAP_ADMIN_PASSWORD !== 'string'
@@ -57,5 +50,43 @@ export function validateEnvironment(
     throw new Error('BOOTSTRAP_ADMIN_PASSWORD must be a string when provided.');
   }
 
+  if (nodeEnv === 'production') {
+    validateProductionEnvironment(config);
+  }
+
+  if (
+    typeof config.BETTER_AUTH_SECRET === 'string' &&
+    config.BETTER_AUTH_SECRET.length < 32
+  ) {
+    throw new Error('BETTER_AUTH_SECRET must be at least 32 characters long.');
+  }
+
   return config;
+}
+
+function validateProductionEnvironment(config: Record<string, unknown>): void {
+  if (
+    typeof config.APP_BASE_URL !== 'string' ||
+    !config.APP_BASE_URL.startsWith('https://')
+  ) {
+    throw new Error('APP_BASE_URL must use https:// in production.');
+  }
+
+  if (typeof config.BETTER_AUTH_SECRET !== 'string') {
+    throw new Error('BETTER_AUTH_SECRET is required in production.');
+  }
+
+  if (
+    config.BETTER_AUTH_SECRET ===
+      'development-only-better-auth-secret-change-me' ||
+    config.BETTER_AUTH_SECRET === 'replace-this-before-production'
+  ) {
+    throw new Error('BETTER_AUTH_SECRET must not use a development default.');
+  }
+
+  if (config.BOOTSTRAP_ADMIN_PASSWORD === 'change-this-for-local-bootstrap') {
+    throw new Error(
+      'BOOTSTRAP_ADMIN_PASSWORD must not use the local development default.',
+    );
+  }
 }

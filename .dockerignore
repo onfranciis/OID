@@ -1,0 +1,11 @@
+node_modules
+dist
+coverage
+test-results
+playwright-report
+.git
+.env
+.env.local
+pnpm-debug.log
+Dockerfile
+docker-compose.yml

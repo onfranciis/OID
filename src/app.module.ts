@@ -2,6 +2,8 @@ import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { AppConfigModule } from './config/app-config.module';
 import { RequestContextMiddleware } from './common/request-context.middleware';
 import { SecurityHeadersMiddleware } from './common/security-headers.middleware';
+import { MetricsMiddleware } from './metrics/metrics.middleware';
+import { MetricsModule } from './metrics/metrics.module';
 import { IdentityModule } from './identity/identity.module';
 import { AuthenticationModule } from './authentication/authentication.module';
 import { OidcModule } from './oidc/oidc.module';
@@ -19,6 +21,7 @@ import { HealthModule } from './health/health.module';
     DatabaseModule,
     BetterAuthModule,
     HealthModule,
+    MetricsModule,
     IdentityModule,
     AuthenticationModule,
     OidcModule,
@@ -31,7 +34,11 @@ import { HealthModule } from './health/health.module';
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
     consumer
-      .apply(SecurityHeadersMiddleware, RequestContextMiddleware)
+      .apply(
+        SecurityHeadersMiddleware,
+        RequestContextMiddleware,
+        MetricsMiddleware,
+      )
       .forRoutes('*');
   }
 }
