@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import type { Request, Response } from 'express';
 import { OidcAuthorizationService } from './oidc-authorization.service';
 import { OidcTokenService } from './oidc-token.service';
+import { TokenRateLimitService } from './token-rate-limit.service';
 
 interface AuthorizeQuery {
   response_type?: string;
@@ -39,6 +40,7 @@ export class OidcController {
     configService: ConfigService,
     private readonly authorizationService: OidcAuthorizationService,
     private readonly tokenService: OidcTokenService,
+    private readonly tokenRateLimitService: TokenRateLimitService,
   ) {
     this.issuer = configService.getOrThrow<string>('app.baseUrl');
     this.providerSessionCookieName = configService.getOrThrow<string>(
@@ -121,6 +123,8 @@ export class OidcController {
 
   @Post('oauth/token')
   token(@Body() body: TokenBody, @Req() req: Request) {
+    this.tokenRateLimitService.assertAllowed(req.ip ?? null);
+
     return this.tokenService.exchangeAuthorizationCode({
       grantType: body.grant_type,
       code: body.code,
@@ -142,7 +146,9 @@ export class OidcController {
   }
 
   @Post('oauth/revoke')
-  async revoke(@Body() body: RevokeBody): Promise<void> {
+  async revoke(@Body() body: RevokeBody, @Req() req: Request): Promise<void> {
+    this.tokenRateLimitService.assertAllowed(req.ip ?? null);
+
     await this.tokenService.revokeToken({
       token: body.token,
     });

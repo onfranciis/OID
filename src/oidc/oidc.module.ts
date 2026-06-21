@@ -12,6 +12,7 @@ import { TokensModule } from '../tokens/tokens.module';
 import { OidcAuthorizationService } from './oidc-authorization.service';
 import { OidcController } from './oidc.controller';
 import { OidcTokenService } from './oidc-token.service';
+import { TokenRateLimitService } from './token-rate-limit.service';
 
 @Module({
   imports: [
@@ -28,6 +29,10 @@ import { OidcTokenService } from './oidc-token.service';
     ]),
   ],
   controllers: [OidcController],
-  providers: [OidcAuthorizationService, OidcTokenService],
+  providers: [
+    OidcAuthorizationService,
+    OidcTokenService,
+    TokenRateLimitService,
+  ],
 })
 export class OidcModule {}

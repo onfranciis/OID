@@ -27,6 +27,8 @@ export interface AppEnvironment {
     loginRateLimitWindowSeconds: number;
     loginRateLimitIpMaxAttempts: number;
     loginRateLimitAccountMaxAttempts: number;
+    tokenRateLimitWindowSeconds: number;
+    tokenRateLimitIpMaxAttempts: number;
   };
   bootstrap: {
     adminEmail: string;

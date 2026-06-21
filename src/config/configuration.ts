@@ -75,6 +75,14 @@ export function configuration(): AppEnvironment {
         process.env.AUTHENTICATION_LOGIN_RATE_LIMIT_ACCOUNT_MAX_ATTEMPTS,
         5,
       ),
+      tokenRateLimitWindowSeconds: parseNumber(
+        process.env.AUTHENTICATION_TOKEN_RATE_LIMIT_WINDOW_SECONDS,
+        60,
+      ),
+      tokenRateLimitIpMaxAttempts: parseNumber(
+        process.env.AUTHENTICATION_TOKEN_RATE_LIMIT_IP_MAX_ATTEMPTS,
+        60,
+      ),
     },
     bootstrap: {
       adminEmail: process.env.BOOTSTRAP_ADMIN_EMAIL ?? 'admin@company.com',

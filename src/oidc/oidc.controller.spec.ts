@@ -11,6 +11,7 @@ describe('OidcController', () => {
     vi.fn<OidcTokenService['exchangeAuthorizationCode']>();
   const userInfo = vi.fn<OidcTokenService['userInfo']>();
   const revokeToken = vi.fn<OidcTokenService['revokeToken']>();
+  const assertAllowed = vi.fn();
   const controller = new OidcController(
     {
       getOrThrow: vi.fn((key: string) => {
@@ -34,15 +35,26 @@ describe('OidcController', () => {
       userInfo,
       revokeToken,
     } as never,
+    {
+      assertAllowed,
+    } as never,
   );
 
   beforeEach(() => {
     authorize.mockReset();
     revokeToken.mockReset();
+    exchangeAuthorizationCode.mockReset();
+    assertAllowed.mockClear();
     authorize.mockResolvedValue({
       redirectTo: 'https://app.company.com/callback?code=abc&state=state_123',
     });
     revokeToken.mockResolvedValue(undefined);
+    exchangeAuthorizationCode.mockResolvedValue({
+      access_token: 'access-token',
+      token_type: 'Bearer',
+      expires_in: 600,
+      scope: 'openid',
+    });
   });
 
   it('returns constrained discovery metadata', () => {
@@ -98,13 +110,42 @@ describe('OidcController', () => {
 
   it('passes revocation requests to the token service', async () => {
     await expect(
-      controller.revoke({
-        token: 'refresh-token',
-      }),
+      controller.revoke(
+        {
+          token: 'refresh-token',
+        },
+        {
+          ip: '127.0.0.1',
+        } as never,
+      ),
     ).resolves.toBeUndefined();
 
+    expect(assertAllowed).toHaveBeenCalledWith('127.0.0.1');
     expect(revokeToken).toHaveBeenCalledWith({
       token: 'refresh-token',
     });
+  });
+
+  it('rate limits token requests before token exchange', async () => {
+    await controller.token(
+      {
+        grant_type: 'authorization_code',
+        code: 'code',
+        client_id: 'client',
+      },
+      {
+        ip: '127.0.0.1',
+        get: vi.fn(() => 'vitest'),
+      } as never,
+    );
+
+    expect(assertAllowed).toHaveBeenCalledWith('127.0.0.1');
+    expect(exchangeAuthorizationCode).toHaveBeenCalledWith(
+      expect.objectContaining({
+        grantType: 'authorization_code',
+        code: 'code',
+        clientId: 'client',
+      }),
+    );
   });
 });

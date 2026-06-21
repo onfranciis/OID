@@ -62,6 +62,12 @@ export class BetterAuthService implements OnModuleDestroy {
         loginRateLimitAccountMaxAttempts: configService.getOrThrow<number>(
           'authentication.loginRateLimitAccountMaxAttempts',
         ),
+        tokenRateLimitWindowSeconds: configService.getOrThrow<number>(
+          'authentication.tokenRateLimitWindowSeconds',
+        ),
+        tokenRateLimitIpMaxAttempts: configService.getOrThrow<number>(
+          'authentication.tokenRateLimitIpMaxAttempts',
+        ),
       },
       bootstrap: {
         adminEmail: configService.getOrThrow<string>('bootstrap.adminEmail'),
