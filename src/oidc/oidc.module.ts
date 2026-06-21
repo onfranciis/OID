@@ -6,9 +6,11 @@ import { OidcAuthorizationCodeEntity } from '../database/entities/oidc-authoriza
 import { OidcClientEntity } from '../database/entities/oidc-client.entity';
 import { OidcProviderSessionEntity } from '../database/entities/oidc-provider-session.entity';
 import { OidcRedirectUriEntity } from '../database/entities/oidc-redirect-uri.entity';
+import { SigningKeyEntity } from '../database/entities/signing-key.entity';
 import { UserEntity } from '../database/entities/user.entity';
 import { OidcAuthorizationService } from './oidc-authorization.service';
 import { OidcController } from './oidc.controller';
+import { OidcTokenService } from './oidc-token.service';
 
 @Module({
   imports: [
@@ -19,10 +21,11 @@ import { OidcController } from './oidc.controller';
       OidcClientEntity,
       OidcProviderSessionEntity,
       OidcRedirectUriEntity,
+      SigningKeyEntity,
       UserEntity,
     ]),
   ],
   controllers: [OidcController],
-  providers: [OidcAuthorizationService],
+  providers: [OidcAuthorizationService, OidcTokenService],
 })
 export class OidcModule {}

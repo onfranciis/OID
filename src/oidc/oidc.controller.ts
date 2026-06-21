@@ -1,7 +1,8 @@
-import { Controller, Get, Query, Req, Res } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, Req, Res } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Request, Response } from 'express';
 import { OidcAuthorizationService } from './oidc-authorization.service';
+import { OidcTokenService } from './oidc-token.service';
 
 interface AuthorizeQuery {
   response_type?: string;
@@ -15,6 +16,15 @@ interface AuthorizeQuery {
   prompt?: string;
 }
 
+interface TokenBody {
+  grant_type?: string;
+  code?: string;
+  redirect_uri?: string;
+  client_id?: string;
+  client_secret?: string;
+  code_verifier?: string;
+}
+
 @Controller()
 export class OidcController {
   private readonly issuer: string;
@@ -23,6 +33,7 @@ export class OidcController {
   constructor(
     configService: ConfigService,
     private readonly authorizationService: OidcAuthorizationService,
+    private readonly tokenService: OidcTokenService,
   ) {
     this.issuer = configService.getOrThrow<string>('app.baseUrl');
     this.providerSessionCookieName = configService.getOrThrow<string>(
@@ -70,6 +81,11 @@ export class OidcController {
     };
   }
 
+  @Get('.well-known/jwks.json')
+  jwks() {
+    return this.tokenService.jwks();
+  }
+
   @Get('oauth/authorize')
   async authorize(
     @Query() query: AuthorizeQuery,
@@ -95,6 +111,27 @@ export class OidcController {
     });
 
     res.redirect(result.redirectTo);
+  }
+
+  @Post('oauth/token')
+  token(@Body() body: TokenBody, @Req() req: Request) {
+    return this.tokenService.exchangeAuthorizationCode({
+      grantType: body.grant_type,
+      code: body.code,
+      redirectUri: body.redirect_uri,
+      clientId: body.client_id,
+      clientSecret: body.client_secret,
+      codeVerifier: body.code_verifier,
+      ipAddress: req.ip ?? null,
+      userAgent: req.get('user-agent') ?? null,
+    });
+  }
+
+  @Get('oauth/userinfo')
+  userInfo(@Req() req: Request) {
+    return this.tokenService.userInfo({
+      authorizationHeader: req.get('authorization') ?? undefined,
+    });
   }
 }
 

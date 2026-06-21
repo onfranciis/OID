@@ -173,7 +173,7 @@ Use these labels when updating task status.
 | 4 | Authentication And Sessions | Not Started | Active users can log in and receive secure provider sessions. |
 | 5 | Admin Bootstrap | Done | Admins can manage users, groups, clients, and audit-relevant state. |
 | 6 | OIDC Authorization | Done | Valid auth requests issue one-time authorization codes; invalid requests are rejected safely. |
-| 7 | Token Issuance And JWKS | Not Started | Code exchange issues verifiable ID/access tokens and UserInfo works. |
+| 7 | Token Issuance And JWKS | Done | Code exchange issues verifiable ID/access tokens and UserInfo works. |
 | 8 | Refresh Tokens And Revocation | Not Started | Refresh rotation, replay detection, and revocation work transactionally. |
 | 9 | Security Hardening | Not Started | Negative protocol tests, rate limits, CSRF, XSS protections, and audit coverage are in place. |
 | 10 | Operations And Deployment | Not Started | Local and production-like deployment paths exist with backups, logging, metrics, and cleanup jobs. |
@@ -625,19 +625,19 @@ GET /oauth/userinfo
 
 | ID | Task | Status | Acceptance Criteria |
 | --- | --- | --- | --- |
-| P7-01 | Configure signing keys | Not Started | Active signing key exists and is not committed to source. |
-| P7-02 | Publish JWKS | Not Started | Public keys are available with correct `kid`. |
-| P7-03 | Implement token route mount/wrapper | Not Started | Better Auth token behavior is constrained by Internal ID rules. |
-| P7-04 | Validate authorization code | Not Started | Code hash exists, is unexpired, unconsumed, and client-bound. |
-| P7-05 | Validate redirect URI on exchange | Not Started | Redirect URI matches original authorization request. |
-| P7-06 | Validate PKCE verifier | Not Started | Verifier matches stored S256 challenge. |
-| P7-07 | Authenticate confidential clients | Not Started | Client secret validation works where applicable. |
-| P7-08 | Reject unsupported grants | Not Started | `password`, `client_credentials`, and device grants fail. |
-| P7-09 | Issue ID token | Not Started | JWT validates against JWKS and includes expected claims. |
-| P7-10 | Issue access token | Not Started | Token is short-lived and scoped to provider resources. |
-| P7-11 | Apply claim release policy | Not Started | Claims are intersection of scopes, client policy, and user data. |
-| P7-12 | Implement UserInfo | Not Started | UserInfo returns allowed claims for valid access token. |
-| P7-13 | Audit token issuance | Not Started | Safe event is written without raw tokens. |
+| P7-01 | Configure signing keys | Done | Active signing key exists and is not committed to source. |
+| P7-02 | Publish JWKS | Done | Public keys are available with correct `kid`. |
+| P7-03 | Implement token route mount/wrapper | Done | Better Auth token behavior is constrained by Internal ID rules. |
+| P7-04 | Validate authorization code | Done | Code hash exists, is unexpired, unconsumed, and client-bound. |
+| P7-05 | Validate redirect URI on exchange | Done | Redirect URI matches original authorization request. |
+| P7-06 | Validate PKCE verifier | Done | Verifier matches stored S256 challenge. |
+| P7-07 | Authenticate confidential clients | Done | Client secret validation works where applicable. |
+| P7-08 | Reject unsupported grants | Done | `password`, `client_credentials`, and device grants fail. |
+| P7-09 | Issue ID token | Done | JWT validates against JWKS and includes expected claims. |
+| P7-10 | Issue access token | Done | Token is short-lived and scoped to provider resources. |
+| P7-11 | Apply claim release policy | Done | Claims are intersection of scopes, client policy, and user data. |
+| P7-12 | Implement UserInfo | Done | UserInfo returns allowed claims for valid access token. |
+| P7-13 | Audit token issuance | Done | Safe event is written without raw tokens. |
 
 ### Token Rules
 

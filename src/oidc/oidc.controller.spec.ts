@@ -2,9 +2,14 @@ import { ConfigService } from '@nestjs/config';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { OidcController } from './oidc.controller';
 import type { OidcAuthorizationService } from './oidc-authorization.service';
+import type { OidcTokenService } from './oidc-token.service';
 
 describe('OidcController', () => {
   const authorize = vi.fn<OidcAuthorizationService['authorize']>();
+  const jwks = vi.fn<OidcTokenService['jwks']>();
+  const exchangeAuthorizationCode =
+    vi.fn<OidcTokenService['exchangeAuthorizationCode']>();
+  const userInfo = vi.fn<OidcTokenService['userInfo']>();
   const controller = new OidcController(
     {
       getOrThrow: vi.fn((key: string) => {
@@ -21,6 +26,11 @@ describe('OidcController', () => {
     } as unknown as ConfigService,
     {
       authorize,
+    } as never,
+    {
+      jwks,
+      exchangeAuthorizationCode,
+      userInfo,
     } as never,
   );
 
