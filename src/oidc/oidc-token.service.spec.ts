@@ -57,6 +57,39 @@ describe('OidcTokenService', () => {
   const record = vi.fn<(input: unknown) => Promise<string>>(() =>
     Promise.resolve('evt_123'),
   );
+  const issueRefreshToken = vi.fn(() =>
+    Promise.resolve({
+      refreshToken: 'issued-refresh-token',
+      tokenId: 'rtk_issued',
+      familyId: 'rtf_issued',
+      idleExpiresAt: new Date('2026-06-21T13:00:00.000Z'),
+      absoluteExpiresAt: new Date('2026-06-22T12:00:00.000Z'),
+    }),
+  );
+  const rotateTokenForClient = vi.fn(() =>
+    Promise.resolve({
+      refreshToken: 'rotated-refresh-token',
+      tokenId: 'rtk_rotated',
+      familyId: 'rtf_issued',
+      idleExpiresAt: new Date('2026-06-21T13:00:00.000Z'),
+      absoluteExpiresAt: new Date('2026-06-22T12:00:00.000Z'),
+      token: {
+        id: 'rtk_rotated',
+        familyId: 'rtf_issued',
+        userId: 'usr_123',
+        clientId: 'cli_123',
+        providerSessionId: 'psn_123',
+      },
+      client: {
+        id: 'cli_123',
+        clientId: 'internal-web',
+        accessTokenTtlSeconds: 600,
+        idTokenTtlSeconds: 900,
+        allowedClaims: ['email', 'name'],
+      },
+    }),
+  );
+  const revokePresentedToken = vi.fn(() => Promise.resolve());
   const service = new OidcTokenService(
     {
       getOrThrow: vi.fn((key: string) => {
@@ -78,6 +111,11 @@ describe('OidcTokenService', () => {
     {
       record,
     } as never,
+    {
+      issueToken: issueRefreshToken,
+      rotateTokenForClient,
+      revokePresentedToken,
+    } as never,
   );
 
   beforeEach(() => {
@@ -93,6 +131,9 @@ describe('OidcTokenService', () => {
     topLevelUserRepository.findOne.mockReset();
     topLevelClientRepository.findOne.mockReset();
     record.mockClear();
+    issueRefreshToken.mockClear();
+    rotateTokenForClient.mockClear();
+    revokePresentedToken.mockClear();
     seedValidExchangeState();
   });
 
@@ -105,8 +146,11 @@ describe('OidcTokenService', () => {
       scope: 'openid email profile',
     });
     expect(result.access_token.split('.')).toHaveLength(3);
-    expect(result.id_token.split('.')).toHaveLength(3);
-    const idTokenPayload = decodeJwtPayload(result.id_token);
+    expect(result.id_token).toBeDefined();
+    const idToken = result.id_token ?? '';
+
+    expect(idToken.split('.')).toHaveLength(3);
+    const idTokenPayload = decodeJwtPayload(idToken);
 
     expect(idTokenPayload).toMatchObject({
       iss: 'https://auth.company.com',
@@ -135,6 +179,87 @@ describe('OidcTokenService', () => {
         clientId: 'cli_123',
       }),
     );
+  });
+
+  it('issues refresh tokens only when offline_access and client policy allow it', async () => {
+    codeRepository.findOne.mockResolvedValueOnce({
+      ...validCode(),
+      scope: 'openid offline_access',
+    });
+    clientRepository.findOne.mockResolvedValueOnce({
+      ...validClient(),
+      allowRefreshTokens: true,
+      refreshTokenIdleTtlSeconds: 600,
+      refreshTokenAbsoluteTtlSeconds: 3600,
+    });
+
+    await expect(
+      service.exchangeAuthorizationCode(validInput()),
+    ).resolves.toMatchObject({
+      refresh_token: 'issued-refresh-token',
+    });
+
+    expect(issueRefreshToken).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'usr_123',
+        clientId: 'cli_123',
+        providerSessionId: 'psn_123',
+        idleTtlSeconds: 600,
+        absoluteTtlSeconds: 3600,
+        now,
+      }),
+    );
+
+    issueRefreshToken.mockClear();
+    codeRepository.findOne.mockResolvedValueOnce({
+      ...validCode(),
+      scope: 'openid',
+    });
+
+    await expect(
+      service.exchangeAuthorizationCode(validInput()),
+    ).resolves.not.toHaveProperty('refresh_token');
+    expect(issueRefreshToken).not.toHaveBeenCalled();
+  });
+
+  it('rotates refresh tokens and returns a new access token', async () => {
+    const result = await service.exchangeAuthorizationCode({
+      grantType: 'refresh_token',
+      refreshToken: 'presented-refresh-token',
+      clientId: 'internal-web',
+      ipAddress: '127.0.0.1',
+      userAgent: 'vitest',
+      now,
+    });
+
+    expect(result).toMatchObject({
+      token_type: 'Bearer',
+      expires_in: 600,
+      refresh_token: 'rotated-refresh-token',
+      scope: 'openid offline_access',
+    });
+    expect(result.access_token.split('.')).toHaveLength(3);
+    expect(rotateTokenForClient).toHaveBeenCalledWith({
+      refreshToken: 'presented-refresh-token',
+      clientIdentifier: 'internal-web',
+      clientSecret: undefined,
+      now,
+    });
+  });
+
+  it('revokes presented refresh tokens without returning token state', async () => {
+    await expect(
+      service.revokeToken({
+        token: 'presented-refresh-token',
+        now,
+      }),
+    ).resolves.toBeUndefined();
+
+    expect(revokePresentedToken).toHaveBeenCalledWith({
+      refreshToken: 'presented-refresh-token',
+      reason: 'client_revocation',
+      now,
+    });
   });
 
   it('publishes the active signing key as JWKS', async () => {
@@ -298,6 +423,9 @@ describe('OidcTokenService', () => {
       accessTokenTtlSeconds: 600,
       idTokenTtlSeconds: 900,
       allowedClaims: ['email', 'name'],
+      allowRefreshTokens: false,
+      refreshTokenIdleTtlSeconds: null,
+      refreshTokenAbsoluteTtlSeconds: null,
     };
   }
 

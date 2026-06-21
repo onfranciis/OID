@@ -174,7 +174,7 @@ Use these labels when updating task status.
 | 5 | Admin Bootstrap | Done | Admins can manage users, groups, clients, and audit-relevant state. |
 | 6 | OIDC Authorization | Done | Valid auth requests issue one-time authorization codes; invalid requests are rejected safely. |
 | 7 | Token Issuance And JWKS | Done | Code exchange issues verifiable ID/access tokens and UserInfo works. |
-| 8 | Refresh Tokens And Revocation | Not Started | Refresh rotation, replay detection, and revocation work transactionally. |
+| 8 | Refresh Tokens And Revocation | Done | Refresh rotation, replay detection, and revocation work transactionally. |
 | 9 | Security Hardening | Not Started | Negative protocol tests, rate limits, CSRF, XSS protections, and audit coverage are in place. |
 | 10 | Operations And Deployment | Not Started | Local and production-like deployment paths exist with backups, logging, metrics, and cleanup jobs. |
 | 11 | Client Integration Readiness | Not Started | A sample internal client can complete the full Authorization Code + PKCE flow. |
@@ -684,19 +684,19 @@ POST /oauth/revoke
 
 | ID | Task | Status | Acceptance Criteria |
 | --- | --- | --- | --- |
-| P8-01 | Enable per-client refresh token policy | Not Started | Refresh tokens are issued only when scope and client policy allow. |
-| P8-02 | Generate opaque refresh tokens | Not Started | Token has high entropy and is not a JWT. |
-| P8-03 | Store refresh token hashes | Not Started | Raw refresh token is not stored. |
-| P8-04 | Add refresh token family tracking | Not Started | Family ID and parent/child links are represented. |
-| P8-05 | Implement rotation | Not Started | Each successful refresh revokes old token and issues new token. |
-| P8-06 | Implement replay detection | Not Started | Reuse of rotated token revokes family and emits critical audit event. |
-| P8-07 | Add idle expiration | Not Started | Token cannot refresh after idle expiry. |
-| P8-08 | Add absolute expiration | Not Started | Token cannot refresh after absolute expiry. |
-| P8-09 | Add revocation endpoint | Not Started | Client can revoke refresh token. |
-| P8-10 | Return success for unknown revoke token | Not Started | Token probing is not possible. |
-| P8-11 | Revoke on user deactivation | Not Started | Deactivated user cannot refresh. |
-| P8-12 | Revoke on client disable | Not Started | Disabled client cannot refresh. |
-| P8-13 | Audit refresh events | Not Started | Rotation, revocation, and replay are audited. |
+| P8-01 | Enable per-client refresh token policy | Done | Refresh tokens are issued only when scope and client policy allow. |
+| P8-02 | Generate opaque refresh tokens | Done | Token has high entropy and is not a JWT. |
+| P8-03 | Store refresh token hashes | Done | Raw refresh token is not stored. |
+| P8-04 | Add refresh token family tracking | Done | Family ID and parent/child links are represented. |
+| P8-05 | Implement rotation | Done | Each successful refresh revokes old token and issues new token. |
+| P8-06 | Implement replay detection | Done | Reuse of rotated token revokes family and emits critical audit event. |
+| P8-07 | Add idle expiration | Done | Token cannot refresh after idle expiry. |
+| P8-08 | Add absolute expiration | Done | Token cannot refresh after absolute expiry. |
+| P8-09 | Add revocation endpoint | Done | Client can revoke refresh token. |
+| P8-10 | Return success for unknown revoke token | Done | Token probing is not possible. |
+| P8-11 | Revoke on user deactivation | Done | Deactivated user cannot refresh. |
+| P8-12 | Revoke on client disable | Done | Disabled client cannot refresh. |
+| P8-13 | Audit refresh events | Done | Rotation, revocation, and replay are audited. |
 
 ### PostgreSQL Atomicity Requirements
 

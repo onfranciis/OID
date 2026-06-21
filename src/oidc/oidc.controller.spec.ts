@@ -10,6 +10,7 @@ describe('OidcController', () => {
   const exchangeAuthorizationCode =
     vi.fn<OidcTokenService['exchangeAuthorizationCode']>();
   const userInfo = vi.fn<OidcTokenService['userInfo']>();
+  const revokeToken = vi.fn<OidcTokenService['revokeToken']>();
   const controller = new OidcController(
     {
       getOrThrow: vi.fn((key: string) => {
@@ -31,14 +32,17 @@ describe('OidcController', () => {
       jwks,
       exchangeAuthorizationCode,
       userInfo,
+      revokeToken,
     } as never,
   );
 
   beforeEach(() => {
     authorize.mockReset();
+    revokeToken.mockReset();
     authorize.mockResolvedValue({
       redirectTo: 'https://app.company.com/callback?code=abc&state=state_123',
     });
+    revokeToken.mockResolvedValue(undefined);
   });
 
   it('returns constrained discovery metadata', () => {
@@ -90,5 +94,17 @@ describe('OidcController', () => {
     expect(redirect).toHaveBeenCalledWith(
       'https://app.company.com/callback?code=abc&state=state_123',
     );
+  });
+
+  it('passes revocation requests to the token service', async () => {
+    await expect(
+      controller.revoke({
+        token: 'refresh-token',
+      }),
+    ).resolves.toBeUndefined();
+
+    expect(revokeToken).toHaveBeenCalledWith({
+      token: 'refresh-token',
+    });
   });
 });

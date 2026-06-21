@@ -8,6 +8,7 @@ import { OidcProviderSessionEntity } from '../database/entities/oidc-provider-se
 import { OidcRedirectUriEntity } from '../database/entities/oidc-redirect-uri.entity';
 import { SigningKeyEntity } from '../database/entities/signing-key.entity';
 import { UserEntity } from '../database/entities/user.entity';
+import { TokensModule } from '../tokens/tokens.module';
 import { OidcAuthorizationService } from './oidc-authorization.service';
 import { OidcController } from './oidc.controller';
 import { OidcTokenService } from './oidc-token.service';
@@ -16,6 +17,7 @@ import { OidcTokenService } from './oidc-token.service';
   imports: [
     ConfigModule,
     AuditModule,
+    TokensModule,
     TypeOrmModule.forFeature([
       OidcAuthorizationCodeEntity,
       OidcClientEntity,

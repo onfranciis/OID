@@ -16,6 +16,13 @@ export interface RotateRefreshTokenInput {
   now?: Date;
 }
 
+export interface RotateRefreshTokenForClientInput {
+  refreshToken: string;
+  clientIdentifier: string;
+  clientSecret?: string | null;
+  now?: Date;
+}
+
 export interface IssueRefreshTokenResult {
   refreshToken: string;
   tokenId: string;
@@ -41,4 +48,27 @@ export interface ResolveRefreshGrantResult {
     clientId: string;
     providerSessionId: string | null;
   };
+}
+
+export interface RotateRefreshTokenForClientResult extends IssueRefreshTokenResult {
+  token: {
+    id: string;
+    familyId: string;
+    userId: string;
+    clientId: string;
+    providerSessionId: string | null;
+  };
+  client: {
+    id: string;
+    clientId: string;
+    accessTokenTtlSeconds: number;
+    idTokenTtlSeconds: number;
+    allowedClaims: string[];
+  };
+}
+
+export interface RevokePresentedRefreshTokenInput {
+  refreshToken: string;
+  reason: string;
+  now?: Date;
 }

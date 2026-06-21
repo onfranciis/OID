@@ -20,14 +20,19 @@ import { AuditSeverity } from '../database/entities/audit-event.entity';
 import {
   OidcClientEntity,
   OidcClientStatus,
+  OidcClientType,
 } from '../database/entities/oidc-client.entity';
 import { OidcRefreshTokenEntity } from '../database/entities/oidc-refresh-token.entity';
+import { UserEntity, UserStatus } from '../database/entities/user.entity';
 import type {
   IssueRefreshTokenForClientInput,
   IssueRefreshTokenInput,
   IssueRefreshTokenResult,
   ResolveRefreshGrantResult,
+  RotateRefreshTokenForClientInput,
+  RotateRefreshTokenForClientResult,
   RotateRefreshTokenInput,
+  RevokePresentedRefreshTokenInput,
 } from './refresh-token.types';
 
 @Injectable()
@@ -287,6 +292,144 @@ export class RefreshTokenService {
     });
   }
 
+  async rotateTokenForClient(
+    input: RotateRefreshTokenForClientInput,
+  ): Promise<RotateRefreshTokenForClientResult> {
+    return this.dataSource.transaction(async (manager) => {
+      const now = input.now ?? new Date();
+      const repository = manager.getRepository(OidcRefreshTokenEntity);
+      const currentToken = await repository.findOne({
+        where: {
+          tokenHash: hashRefreshToken(input.refreshToken),
+        },
+      });
+
+      if (!currentToken) {
+        throw new UnauthorizedException('Invalid refresh token.');
+      }
+
+      if (currentToken.rotatedToTokenId) {
+        await this.revokeFamily(
+          repository,
+          currentToken.familyId,
+          now,
+          'replay_detected',
+        );
+        await this.auditService.record({
+          eventType: 'oidc.refresh_token.replay_detected',
+          severity: AuditSeverity.CRITICAL,
+          actorUserId: currentToken.userId,
+          clientId: currentToken.clientId,
+          providerSessionId: currentToken.providerSessionId,
+          metadata: {
+            tokenId: currentToken.id,
+            familyId: currentToken.familyId,
+          },
+        });
+        throw new ConflictException(
+          'Refresh token replay detected. Token family revoked.',
+        );
+      }
+
+      assertTokenIsUsable(currentToken, now);
+
+      const client = await manager.getRepository(OidcClientEntity).findOne({
+        where: {
+          id: currentToken.clientId,
+          clientId: input.clientIdentifier,
+        },
+      });
+
+      if (
+        !client ||
+        client.status !== OidcClientStatus.ACTIVE ||
+        !client.allowRefreshTokens ||
+        !client.refreshTokenIdleTtlSeconds ||
+        !client.refreshTokenAbsoluteTtlSeconds
+      ) {
+        throw new UnauthorizedException('Invalid refresh token client.');
+      }
+
+      assertClientSecret(client, input.clientSecret);
+
+      const user = await manager.getRepository(UserEntity).findOne({
+        where: {
+          id: currentToken.userId,
+        },
+      });
+
+      if (!user || user.status !== UserStatus.ACTIVE) {
+        throw new UnauthorizedException('Invalid refresh token user.');
+      }
+
+      const successorRawToken = generateOpaqueRefreshToken();
+      const successorId = `rtk_${ulid().toLowerCase()}`;
+      const successor = repository.create({
+        id: successorId,
+        tokenHash: hashRefreshToken(successorRawToken),
+        upstreamRefreshTokenCiphertext:
+          currentToken.upstreamRefreshTokenCiphertext,
+        userId: currentToken.userId,
+        clientId: currentToken.clientId,
+        providerSessionId: currentToken.providerSessionId,
+        parentTokenId: currentToken.id,
+        rotatedToTokenId: null,
+        familyId: currentToken.familyId,
+        issuedAt: now,
+        lastUsedAt: null,
+        idleExpiresAt: addSeconds(now, client.refreshTokenIdleTtlSeconds),
+        absoluteExpiresAt: addSeconds(
+          currentToken.issuedAt,
+          client.refreshTokenAbsoluteTtlSeconds,
+        ),
+        revokedAt: null,
+        revocationReason: null,
+      });
+
+      currentToken.lastUsedAt = now;
+      currentToken.rotatedToTokenId = successorId;
+      currentToken.revokedAt = now;
+      currentToken.revocationReason = 'rotated';
+
+      await repository.save(successor);
+      await repository.save(currentToken);
+      await this.auditService.record({
+        eventType: 'oidc.refresh_token.rotated',
+        severity: AuditSeverity.INFO,
+        actorUserId: currentToken.userId,
+        clientId: currentToken.clientId,
+        providerSessionId: currentToken.providerSessionId,
+        metadata: {
+          tokenId: currentToken.id,
+          successorTokenId: successorId,
+          familyId: currentToken.familyId,
+        },
+      });
+
+      return {
+        refreshToken: successorRawToken,
+        tokenId: successorId,
+        familyId: currentToken.familyId,
+        idleExpiresAt: successor.idleExpiresAt,
+        absoluteExpiresAt: successor.absoluteExpiresAt,
+        token: {
+          id: successorId,
+          familyId: currentToken.familyId,
+          userId: currentToken.userId,
+          clientId: currentToken.clientId,
+          providerSessionId: currentToken.providerSessionId,
+        },
+        client: {
+          id: client.id,
+          clientId: client.clientId,
+          accessTokenTtlSeconds: client.accessTokenTtlSeconds,
+          idTokenTtlSeconds: client.idTokenTtlSeconds,
+          allowedClaims: client.allowedClaims,
+        },
+      };
+    });
+  }
+
   async revokeTokenFamily(
     familyId: string,
     reason: string,
@@ -310,6 +453,44 @@ export class RefreshTokenService {
         metadata: {
           familyId,
           reason,
+          revokedTokenCount: tokens.length,
+        },
+      });
+    });
+  }
+
+  async revokePresentedToken(
+    input: RevokePresentedRefreshTokenInput,
+  ): Promise<void> {
+    await this.dataSource.transaction(async (manager) => {
+      const repository = manager.getRepository(OidcRefreshTokenEntity);
+      const token = await repository.findOne({
+        where: {
+          tokenHash: hashRefreshToken(input.refreshToken),
+        },
+      });
+
+      if (!token) {
+        return;
+      }
+
+      const now = input.now ?? new Date();
+      const tokens = await this.revokeFamily(
+        repository,
+        token.familyId,
+        now,
+        input.reason,
+      );
+
+      await this.auditService.record({
+        eventType: 'oidc.refresh_token.revoked',
+        severity: AuditSeverity.INFO,
+        actorUserId: token.userId,
+        clientId: token.clientId,
+        providerSessionId: token.providerSessionId,
+        metadata: {
+          familyId: token.familyId,
+          reason: input.reason,
           revokedTokenCount: tokens.length,
         },
       });
@@ -410,5 +591,22 @@ function assertTokenIsUsable(token: OidcRefreshTokenEntity, now: Date): void {
 
   if (token.idleExpiresAt <= now || token.absoluteExpiresAt <= now) {
     throw new UnauthorizedException('Refresh token has expired.');
+  }
+}
+
+function assertClientSecret(
+  client: OidcClientEntity,
+  clientSecret: string | null | undefined,
+): void {
+  if (client.type === OidcClientType.PUBLIC) {
+    return;
+  }
+
+  if (!client.clientSecretHash || !clientSecret) {
+    throw new UnauthorizedException('Client authentication required.');
+  }
+
+  if (hashRefreshToken(clientSecret) !== client.clientSecretHash) {
+    throw new UnauthorizedException('Client authentication failed.');
   }
 }

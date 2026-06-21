@@ -1,7 +1,12 @@
 import { ConflictException, UnauthorizedException } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
 import { AuditSeverity } from '../database/entities/audit-event.entity';
+import {
+  OidcClientStatus,
+  OidcClientType,
+} from '../database/entities/oidc-client.entity';
 import { OidcRefreshTokenEntity } from '../database/entities/oidc-refresh-token.entity';
+import { UserStatus } from '../database/entities/user.entity';
 import { RefreshTokenService } from './refresh-token.service';
 
 describe('RefreshTokenService', () => {
@@ -171,11 +176,174 @@ describe('RefreshTokenService', () => {
       }),
     ).rejects.toBeInstanceOf(UnauthorizedException);
   });
+
+  it('rotates refresh tokens only for active clients and active users', async () => {
+    const currentToken = createRefreshTokenEntity();
+    const savedEntities: OidcRefreshTokenEntity[] = [];
+    const service = new RefreshTokenService(
+      {} as never,
+      {} as never,
+      createDataSourceStub({
+        findOne: (criteria) => {
+          if (isRefreshTokenLookup(criteria)) {
+            return Promise.resolve(currentToken);
+          }
+
+          return Promise.resolve(null);
+        },
+        findClient: () =>
+          Promise.resolve({
+            id: 'cli_123',
+            clientId: 'internal-web',
+            type: OidcClientType.PUBLIC,
+            status: OidcClientStatus.ACTIVE,
+            allowRefreshTokens: true,
+            refreshTokenIdleTtlSeconds: 600,
+            refreshTokenAbsoluteTtlSeconds: 3600,
+            accessTokenTtlSeconds: 600,
+            idTokenTtlSeconds: 900,
+            allowedClaims: ['email'],
+          }),
+        findUser: () =>
+          Promise.resolve({
+            id: 'usr_123',
+            status: UserStatus.ACTIVE,
+          }),
+        save: (entity) => {
+          if (Array.isArray(entity)) {
+            savedEntities.push(...entity);
+          } else {
+            savedEntities.push(entity);
+          }
+
+          return Promise.resolve(entity);
+        },
+      }) as never,
+      {
+        record: vi.fn(() => Promise.resolve('evt_123')),
+      } as never,
+      {
+        getOrThrow: () => 'test-better-auth-secret',
+      } as never,
+    );
+
+    const result = await service.rotateTokenForClient({
+      refreshToken: 'presented-token',
+      clientIdentifier: 'internal-web',
+      now: new Date('2026-06-11T00:05:00.000Z'),
+    });
+
+    expect(result.refreshToken).toHaveLength(43);
+    expect(result.client.clientId).toBe('internal-web');
+    expect(
+      savedEntities.some((entity) => entity.parentTokenId === currentToken.id),
+    ).toBe(true);
+  });
+
+  it('rejects disabled clients and inactive users during refresh rotation', async () => {
+    const currentToken = createRefreshTokenEntity();
+    const serviceWithDisabledClient = new RefreshTokenService(
+      {} as never,
+      {} as never,
+      createDataSourceStub({
+        findOne: () => Promise.resolve(currentToken),
+        findClient: () =>
+          Promise.resolve({
+            id: 'cli_123',
+            clientId: 'internal-web',
+            type: OidcClientType.PUBLIC,
+            status: OidcClientStatus.DISABLED,
+            allowRefreshTokens: true,
+            refreshTokenIdleTtlSeconds: 600,
+            refreshTokenAbsoluteTtlSeconds: 3600,
+          }),
+      }) as never,
+      {
+        record: vi.fn(() => Promise.resolve('evt_123')),
+      } as never,
+      {
+        getOrThrow: () => 'test-better-auth-secret',
+      } as never,
+    );
+
+    await expect(
+      serviceWithDisabledClient.rotateTokenForClient({
+        refreshToken: 'presented-token',
+        clientIdentifier: 'internal-web',
+        now: new Date('2026-06-11T00:05:00.000Z'),
+      }),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+
+    const serviceWithInactiveUser = new RefreshTokenService(
+      {} as never,
+      {} as never,
+      createDataSourceStub({
+        findOne: () => Promise.resolve(currentToken),
+        findClient: () =>
+          Promise.resolve({
+            id: 'cli_123',
+            clientId: 'internal-web',
+            type: OidcClientType.PUBLIC,
+            status: OidcClientStatus.ACTIVE,
+            allowRefreshTokens: true,
+            refreshTokenIdleTtlSeconds: 600,
+            refreshTokenAbsoluteTtlSeconds: 3600,
+          }),
+        findUser: () =>
+          Promise.resolve({
+            id: 'usr_123',
+            status: UserStatus.SUSPENDED,
+          }),
+      }) as never,
+      {
+        record: vi.fn(() => Promise.resolve('evt_123')),
+      } as never,
+      {
+        getOrThrow: () => 'test-better-auth-secret',
+      } as never,
+    );
+
+    await expect(
+      serviceWithInactiveUser.rotateTokenForClient({
+        refreshToken: 'presented-token',
+        clientIdentifier: 'internal-web',
+        now: new Date('2026-06-11T00:05:00.000Z'),
+      }),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+
+  it('returns success for unknown revocation tokens without disclosure', async () => {
+    const auditRecord = vi.fn(() => Promise.resolve('evt_123'));
+    const service = new RefreshTokenService(
+      {} as never,
+      {} as never,
+      createDataSourceStub({
+        findOne: () => Promise.resolve(null),
+      }) as never,
+      {
+        record: auditRecord,
+      } as never,
+      {
+        getOrThrow: () => 'test-better-auth-secret',
+      } as never,
+    );
+
+    await expect(
+      service.revokePresentedToken({
+        refreshToken: 'unknown-token',
+        reason: 'client_revocation',
+      }),
+    ).resolves.toBeUndefined();
+
+    expect(auditRecord).not.toHaveBeenCalled();
+  });
 });
 
 function createDataSourceStub(repositoryBehavior: {
   findOne?: (criteria: unknown) => Promise<OidcRefreshTokenEntity | null>;
   find?: (criteria: unknown) => Promise<OidcRefreshTokenEntity[]>;
+  findClient?: (criteria: unknown) => Promise<unknown>;
+  findUser?: (criteria: unknown) => Promise<unknown>;
   save?: (
     entity: OidcRefreshTokenEntity | OidcRefreshTokenEntity[],
   ) => Promise<unknown>;
@@ -208,15 +376,43 @@ function createDataSourceStub(repositoryBehavior: {
         create: (_entity, input) =>
           Object.assign(new OidcRefreshTokenEntity(), input),
         save: async (entity) => repositoryBehavior.save?.(entity) ?? entity,
-        getRepository: () => ({
-          create: (input) => Object.assign(new OidcRefreshTokenEntity(), input),
-          findOne: async (criteria) =>
-            repositoryBehavior.findOne?.(criteria) ?? null,
-          find: async (criteria) => repositoryBehavior.find?.(criteria) ?? [],
-          save: async (entity) => repositoryBehavior.save?.(entity) ?? entity,
-        }),
+        getRepository: (entity) => {
+          if (entity.name === 'OidcClientEntity') {
+            return {
+              findOne: async (criteria: unknown) =>
+                repositoryBehavior.findClient?.(criteria) ?? null,
+            } as never;
+          }
+
+          if (entity.name === 'UserEntity') {
+            return {
+              findOne: async (criteria: unknown) =>
+                repositoryBehavior.findUser?.(criteria) ?? null,
+            } as never;
+          }
+
+          return {
+            create: (input) =>
+              Object.assign(new OidcRefreshTokenEntity(), input),
+            findOne: async (criteria) =>
+              repositoryBehavior.findOne?.(criteria) ?? null,
+            find: async (criteria) => repositoryBehavior.find?.(criteria) ?? [],
+            save: async (entity) => repositoryBehavior.save?.(entity) ?? entity,
+          };
+        },
       }),
   };
+}
+
+function isRefreshTokenLookup(criteria: unknown): boolean {
+  return (
+    typeof criteria === 'object' &&
+    criteria !== null &&
+    'where' in criteria &&
+    typeof (criteria as { where?: unknown }).where === 'object' &&
+    (criteria as { where?: { tokenHash?: unknown } }).where?.tokenHash !==
+      undefined
+  );
 }
 
 function createRefreshTokenEntity(

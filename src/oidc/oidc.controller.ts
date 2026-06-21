@@ -23,6 +23,11 @@ interface TokenBody {
   client_id?: string;
   client_secret?: string;
   code_verifier?: string;
+  refresh_token?: string;
+}
+
+interface RevokeBody {
+  token?: string;
 }
 
 @Controller()
@@ -47,10 +52,11 @@ export class OidcController {
       issuer: this.issuer,
       authorization_endpoint: `${this.issuer}/oauth/authorize`,
       token_endpoint: `${this.issuer}/oauth/token`,
+      revocation_endpoint: `${this.issuer}/oauth/revoke`,
       jwks_uri: `${this.issuer}/.well-known/jwks.json`,
       userinfo_endpoint: `${this.issuer}/oauth/userinfo`,
       response_types_supported: ['code'],
-      grant_types_supported: ['authorization_code'],
+      grant_types_supported: ['authorization_code', 'refresh_token'],
       subject_types_supported: ['public'],
       id_token_signing_alg_values_supported: ['RS256'],
       scopes_supported: [
@@ -122,6 +128,7 @@ export class OidcController {
       clientId: body.client_id,
       clientSecret: body.client_secret,
       codeVerifier: body.code_verifier,
+      refreshToken: body.refresh_token,
       ipAddress: req.ip ?? null,
       userAgent: req.get('user-agent') ?? null,
     });
@@ -131,6 +138,13 @@ export class OidcController {
   userInfo(@Req() req: Request) {
     return this.tokenService.userInfo({
       authorizationHeader: req.get('authorization') ?? undefined,
+    });
+  }
+
+  @Post('oauth/revoke')
+  async revoke(@Body() body: RevokeBody): Promise<void> {
+    await this.tokenService.revokeToken({
+      token: body.token,
     });
   }
 }

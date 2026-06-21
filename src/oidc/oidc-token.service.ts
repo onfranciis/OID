@@ -30,6 +30,7 @@ import {
   SigningKeyStatus,
 } from '../database/entities/signing-key.entity';
 import { UserEntity, UserStatus } from '../database/entities/user.entity';
+import { RefreshTokenService } from '../tokens/refresh-token.service';
 
 const nextUlid = monotonicFactory();
 
@@ -40,6 +41,7 @@ export interface TokenRequestInput {
   clientId?: string;
   clientSecret?: string;
   codeVerifier?: string;
+  refreshToken?: string;
   ipAddress: string | null;
   userAgent: string | null;
   now?: Date;
@@ -49,12 +51,18 @@ export interface TokenResponse {
   access_token: string;
   token_type: 'Bearer';
   expires_in: number;
-  id_token: string;
+  id_token?: string;
+  refresh_token?: string;
   scope: string;
 }
 
 export interface UserInfoInput {
   authorizationHeader?: string;
+}
+
+export interface RevokeTokenInput {
+  token?: string;
+  now?: Date;
 }
 
 @Injectable()
@@ -73,6 +81,7 @@ export class OidcTokenService {
     @InjectRepository(OidcClientEntity)
     private readonly clientRepository: Repository<OidcClientEntity>,
     private readonly auditService: AuditService,
+    private readonly refreshTokenService: RefreshTokenService,
   ) {
     this.issuer = configService.getOrThrow<string>('app.baseUrl');
     this.signingSecret = configService.getOrThrow<string>('betterAuth.secret');
@@ -89,6 +98,10 @@ export class OidcTokenService {
   async exchangeAuthorizationCode(
     input: TokenRequestInput,
   ): Promise<TokenResponse> {
+    if (input.grantType === 'refresh_token') {
+      return this.refreshAccessToken(input);
+    }
+
     if (input.grantType !== 'authorization_code') {
       throw new BadRequestException('Unsupported grant_type.');
     }
@@ -191,6 +204,16 @@ export class OidcTokenService {
         signingKey,
         this.signingSecret,
       );
+      const refreshToken = shouldIssueRefreshToken(client, scope)
+        ? await this.refreshTokenService.issueToken({
+            userId: user.id,
+            clientId: client.id,
+            providerSessionId: authorizationCode.providerSessionId,
+            idleTtlSeconds: client.refreshTokenIdleTtlSeconds,
+            absoluteTtlSeconds: client.refreshTokenAbsoluteTtlSeconds,
+            now,
+          })
+        : null;
 
       await this.auditService.record({
         eventType: 'oidc.token.issued',
@@ -213,8 +236,55 @@ export class OidcTokenService {
         token_type: 'Bearer',
         expires_in: client.accessTokenTtlSeconds,
         id_token: idToken,
+        ...(refreshToken ? { refresh_token: refreshToken.refreshToken } : {}),
         scope,
       };
+    });
+  }
+
+  async refreshAccessToken(input: TokenRequestInput): Promise<TokenResponse> {
+    const refreshToken = normalizeRequired(input.refreshToken, 'refresh_token');
+    const clientIdentifier = normalizeRequired(input.clientId, 'client_id');
+    const now = input.now ?? new Date();
+    const rotatedToken = await this.refreshTokenService.rotateTokenForClient({
+      refreshToken,
+      clientIdentifier,
+      clientSecret: input.clientSecret,
+      now,
+    });
+    const signingKey = await this.getOrCreateActiveSigningKey();
+    const issuedAtSeconds = Math.floor(now.getTime() / 1000);
+    const scope = 'openid offline_access';
+    const accessToken = signJwt(
+      {
+        iss: this.issuer,
+        aud: rotatedToken.client.clientId,
+        sub: rotatedToken.token.userId,
+        iat: issuedAtSeconds,
+        exp: issuedAtSeconds + rotatedToken.client.accessTokenTtlSeconds,
+        scope,
+        token_use: 'access',
+      },
+      signingKey,
+      this.signingSecret,
+    );
+
+    return {
+      access_token: accessToken,
+      token_type: 'Bearer',
+      expires_in: rotatedToken.client.accessTokenTtlSeconds,
+      refresh_token: rotatedToken.refreshToken,
+      scope,
+    };
+  }
+
+  async revokeToken(input: RevokeTokenInput): Promise<void> {
+    const token = normalizeRequired(input.token, 'token');
+
+    await this.refreshTokenService.revokePresentedToken({
+      refreshToken: token,
+      reason: 'client_revocation',
+      now: input.now,
     });
   }
 
@@ -332,6 +402,21 @@ function assertClientAuthentication(
   if (hashSecret(clientSecret) !== client.clientSecretHash) {
     throw new UnauthorizedException('Client authentication failed.');
   }
+}
+
+function shouldIssueRefreshToken(
+  client: OidcClientEntity,
+  scope: string,
+): client is OidcClientEntity & {
+  refreshTokenIdleTtlSeconds: number;
+  refreshTokenAbsoluteTtlSeconds: number;
+} {
+  return (
+    scope.split(' ').includes('offline_access') &&
+    client.allowRefreshTokens &&
+    client.refreshTokenIdleTtlSeconds !== null &&
+    client.refreshTokenAbsoluteTtlSeconds !== null
+  );
 }
 
 function verifyS256Pkce(verifier: string, challenge: string): boolean {
