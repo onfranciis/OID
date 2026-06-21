@@ -40,15 +40,16 @@ changes.
 
 ## Browser And Admin Security
 
-| Requirement                                                 | Status  | Coverage                                            |
-| ----------------------------------------------------------- | ------- | --------------------------------------------------- |
-| Login CSRF protection.                                      | Covered | `src/authentication/authentication.service.spec.ts` |
-| Admin CSRF protection.                                      | Covered | `src/admin/admin-csrf.guard.spec.ts`                |
-| Recent authentication for sensitive admin routes.           | Covered | `src/admin/admin-recent-auth.guard.spec.ts`         |
-| Admin authorization requires active admin group membership. | Covered | `src/admin/admin-access.service.spec.ts`            |
-| SSR output escapes user-controlled content.                 | Covered | Login/admin page service tests.                     |
-| Security headers are emitted.                               | Covered | `src/common/security-headers.middleware.spec.ts`    |
-| Request logs include request ID and service context.        | Covered | `src/common/structured-logger.middleware.spec.ts`   |
+| Requirement                                                 | Status  | Coverage                                                                       |
+| ----------------------------------------------------------- | ------- | ------------------------------------------------------------------------------ |
+| Login CSRF protection.                                      | Covered | `src/authentication/authentication.service.spec.ts`                            |
+| Admin CSRF protection.                                      | Covered | `src/admin/admin-csrf.guard.spec.ts`                                           |
+| Recent authentication for sensitive admin routes.           | Covered | `src/admin/admin-recent-auth.guard.spec.ts`                                    |
+| Admin authorization requires active admin group membership. | Covered | `src/admin/admin-access.service.spec.ts`                                       |
+| Confidential client secret rotation is guarded and audited. | Covered | `src/admin/admin.controller.spec.ts`, `src/admin/admin-client.service.spec.ts` |
+| SSR output escapes user-controlled content.                 | Covered | Login/admin page service tests.                                                |
+| Security headers are emitted.                               | Covered | `src/common/security-headers.middleware.spec.ts`                               |
+| Request logs include request ID and service context.        | Covered | `src/common/structured-logger.middleware.spec.ts`                              |
 
 ## Audit And Secrets
 
