@@ -53,15 +53,16 @@ Admins can:
 - Update allowed scopes, allowed claims, owner team, TTLs, and refresh-token
   policy.
 - Disable or reactivate clients.
+- Rotate confidential-client secrets. The raw secret is returned once and only
+  the hash is stored.
 - Add and remove exact redirect URIs.
 
 Important constraints:
 
 - Redirect URIs are exact matches only.
 - Dynamic public client registration is not exposed.
-- Confidential-client secret management is currently bootstrap-driven for the
-  sample client through `BOOTSTRAP_CLIENT_SECRET`; a dedicated admin rotation UI
-  remains future work.
+- Confidential-client secrets can be seeded through `BOOTSTRAP_CLIENT_SECRET`
+  or rotated through the guarded admin route.
 
 ## Audit
 

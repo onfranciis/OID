@@ -195,6 +195,18 @@ export class AdminController {
     );
   }
 
+  @Post('clients/:clientRecordId/secret/rotate')
+  @UseGuards(AdminRecentAuthGuard, AdminCsrfGuard)
+  rotateClientSecret(
+    @Req() req: AdminRequest,
+    @Param('clientRecordId') clientRecordId: string,
+  ) {
+    return this.adminClientService.rotateClientSecret(
+      clientRecordId,
+      buildMutationContext(req),
+    );
+  }
+
   @Post('clients/:clientRecordId/redirect-uris')
   @UseGuards(AdminRecentAuthGuard, AdminCsrfGuard)
   addRedirectUri(

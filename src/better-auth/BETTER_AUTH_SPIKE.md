@@ -46,18 +46,18 @@ local wrappers and route guards.
 
 ## Spike answers
 
-| ID | Question | Status | Finding |
-| --- | --- | --- | --- |
-| P3-01 | Can Better Auth run cleanly inside NestJS? | Done | Yes. The Better Auth runtime can be created in a Nest provider and mounted through a dedicated controller. |
-| P3-02 | Can Better Auth use PostgreSQL with the chosen adapter? | Done | Yes. Better Auth full mode accepts a Kysely PostgreSQL dialect. It also expects its own schema footprint, which must be reconciled with Internal ID ownership rules. |
-| P3-03 | Can OAuth Provider expose OIDC discovery? | Done | Yes. The OIDC plugin exposes discovery metadata and allows metadata overrides. |
-| P3-04 | Can unsupported response types be rejected? | In Progress | Wrapper validation now rejects unsupported authorize shapes before they reach Better Auth, but broader end-to-end negative tests are still needed. |
-| P3-05 | Can unsupported grant types be rejected? | In Progress | Wrapper validation now rejects unsupported token grants and blocks dynamic registration, but broader end-to-end negative tests are still needed. |
-| P3-06 | Can PKCE be required for all clients? | Done | Yes, with caveat. `requirePKCE` can be set true, but `plain` must also be disabled explicitly. |
-| P3-07 | Can dynamic registration be disabled? | Done | Yes, configuration can disable it, but the registration surface should still be blocked at the Internal ID boundary. |
-| P3-08 | Can refresh token rotation behavior satisfy this guide? | In Progress | Internal ID now has local family/replay wrapper behavior and controller integration, but full route-level proof is still pending. |
-| P3-09 | Can claims be shaped by client policy? | Done | Internal ID now constrains additional claims and filters the mounted public userinfo payload by client policy. |
-| P3-10 | Can audit hooks capture security events? | In Progress | Local audit capture now exists for Better Auth session creation plus authorize, token, and blocked registration traffic, but refresh and revocation coverage is still unproven. |
+| ID    | Question                                                | Status | Finding                                                                                                                                                              |
+| ----- | ------------------------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| P3-01 | Can Better Auth run cleanly inside NestJS?              | Done   | Yes. The Better Auth runtime can be created in a Nest provider and mounted through a dedicated controller.                                                           |
+| P3-02 | Can Better Auth use PostgreSQL with the chosen adapter? | Done   | Yes. Better Auth full mode accepts a Kysely PostgreSQL dialect. It also expects its own schema footprint, which must be reconciled with Internal ID ownership rules. |
+| P3-03 | Can OAuth Provider expose OIDC discovery?               | Done   | Yes. The OIDC plugin exposes discovery metadata and allows metadata overrides.                                                                                       |
+| P3-04 | Can unsupported response types be rejected?             | Done   | Wrapper validation and Internal ID `/oauth/authorize` tests reject unsupported authorize shapes before they reach Better Auth.                                       |
+| P3-05 | Can unsupported grant types be rejected?                | Done   | Wrapper validation and Internal ID `/oauth/token` tests reject unsupported token grants and block dynamic registration.                                              |
+| P3-06 | Can PKCE be required for all clients?                   | Done   | Yes, with caveat. `requirePKCE` can be set true, but `plain` must also be disabled explicitly.                                                                       |
+| P3-07 | Can dynamic registration be disabled?                   | Done   | Yes, configuration can disable it, but the registration surface should still be blocked at the Internal ID boundary.                                                 |
+| P3-08 | Can refresh token rotation behavior satisfy this guide? | Done   | Internal ID owns local family/replay wrapper behavior, row-lock protected rotation, controller integration, and audit coverage.                                      |
+| P3-09 | Can claims be shaped by client policy?                  | Done   | Internal ID now constrains additional claims and filters the mounted public userinfo payload by client policy.                                                       |
+| P3-10 | Can audit hooks capture security events?                | Done   | Local audit capture exists for Better Auth session creation plus authorize, token, refresh, revocation, blocked registration, and admin mutation traffic.            |
 
 ## Risks that remain
 
@@ -67,10 +67,8 @@ local wrappers and route guards.
   final public `/oauth/...` contract required by Internal ID.
 - Better Auth-managed schema tables are separate from the Internal ID-owned
   entities already committed in Phase 2.
-- Better Auth refresh-token rotation is visible in package source, but family
-  tracking and replay handling still appear weaker than the roadmap requires.
-- The library surface is too permissive by default for Internal ID. Discovery,
-  authorize, token, registration, and refresh behavior still need wrapper tests.
+- The library surface is too permissive by default for Internal ID, so local
+  wrappers and guardrail tests must remain in place during upgrades.
 - Full HTTP route tests could not be kept in the current sandbox because the
   available test path still triggers a socket listen attempt. Controller-level
   boundary tests are in place, but full route execution should be re-run in a
@@ -80,8 +78,7 @@ local wrappers and route guards.
 
 1. Run `pnpm better-auth:inspect` and capture the Better Auth-owned schema
    tables that would be introduced.
-2. Add end-to-end protocol-negative tests around discovery, authorize, token,
-   registration, and userinfo behavior before adopting Better Auth endpoints as
-   public contract routes.
-3. Prove deeper refresh and revocation behavior against a live mounted app in a
-   less restricted environment.
+2. Re-run the protocol-negative and mounted Better Auth boundary suites after
+   Better Auth upgrades.
+3. Keep Internal ID `/oauth/*` routes as the public protocol contract unless a
+   deliberate migration replaces the local wrappers.

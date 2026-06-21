@@ -200,6 +200,56 @@ describe('AdminClientService', () => {
     );
   });
 
+  it('rotates confidential client secrets once without auditing the raw secret', async () => {
+    findClient.mockResolvedValueOnce({
+      id: 'cli_target',
+      clientId: 'internal-web',
+      type: OidcClientType.CONFIDENTIAL,
+      clientSecretHash: null,
+    });
+
+    const result = await service.rotateClientSecret('cli_target', context);
+
+    expect(result).toMatchObject({
+      clientId: 'internal-web',
+    });
+    expect(result.clientSecret).toMatch(/^oidc_secret_/);
+    const savedClient = saveClient.mock.calls[0]?.[0] as
+      | { clientSecretHash?: unknown }
+      | undefined;
+
+    expect(savedClient?.clientSecretHash).toEqual(
+      expect.stringMatching(/^[a-f0-9]{64}$/),
+    );
+    expect(savedClient?.clientSecretHash).not.toBe(result.clientSecret);
+    expect(record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: 'client.secret.rotated',
+        severity: AuditSeverity.WARNING,
+        metadata: {
+          clientId: 'internal-web',
+        },
+      }),
+    );
+    expect(JSON.stringify(record.mock.calls[0]?.[0])).not.toContain(
+      result.clientSecret,
+    );
+  });
+
+  it('rejects secret rotation for public clients', async () => {
+    findClient.mockResolvedValueOnce({
+      id: 'cli_target',
+      clientId: 'public-web',
+      type: OidcClientType.PUBLIC,
+    });
+
+    await expect(
+      service.rotateClientSecret('cli_target', context),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(saveClient).not.toHaveBeenCalled();
+  });
+
   it('adds exact redirect URIs and audits the addition', async () => {
     findClient.mockResolvedValueOnce({
       id: 'cli_target',

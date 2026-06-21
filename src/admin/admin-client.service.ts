@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { createHash, randomBytes } from 'node:crypto';
 import { Repository } from 'typeorm';
 import { monotonicFactory } from 'ulid';
 import { AuditService } from '../audit/audit.service';
@@ -57,6 +58,11 @@ export interface AdminUpdateClientInput {
 
 export interface AdminRedirectUriInput {
   uri: string;
+}
+
+export interface AdminRotateClientSecretResult {
+  clientId: string;
+  clientSecret: string;
 }
 
 @Injectable()
@@ -227,6 +233,39 @@ export class AdminClientService {
     return savedClient;
   }
 
+  async rotateClientSecret(
+    clientRecordId: string,
+    context: AdminMutationContext,
+  ): Promise<AdminRotateClientSecretResult> {
+    const client = await this.getExistingClient(clientRecordId);
+
+    if (client.type !== OidcClientType.CONFIDENTIAL) {
+      throw new BadRequestException(
+        'Only confidential clients can have client secrets.',
+      );
+    }
+
+    const clientSecret = generateClientSecret();
+    client.clientSecretHash = hashSecret(clientSecret);
+
+    const savedClient = await this.clientRepository.save(client);
+
+    await this.auditClientMutation(
+      'client.secret.rotated',
+      savedClient,
+      context,
+      {
+        clientId: savedClient.clientId,
+      },
+      AuditSeverity.WARNING,
+    );
+
+    return {
+      clientId: savedClient.clientId,
+      clientSecret,
+    };
+  }
+
   async addRedirectUri(
     clientRecordId: string,
     input: AdminRedirectUriInput,
@@ -330,10 +369,11 @@ export class AdminClientService {
     client: OidcClientEntity,
     context: AdminMutationContext,
     metadata: Record<string, unknown>,
+    severity: AuditSeverity = AuditSeverity.INFO,
   ): Promise<string> {
     return this.auditService.record({
       eventType,
-      severity: AuditSeverity.INFO,
+      severity,
       actorUserId: context.principal.user.id,
       clientId: client.id,
       providerSessionId: context.principal.providerSession.id,
@@ -447,4 +487,12 @@ function normalizeRedirectUri(uri: string): string {
   }
 
   return normalizedUri;
+}
+
+function generateClientSecret(): string {
+  return `oidc_secret_${randomBytes(32).toString('base64url')}`;
+}
+
+function hashSecret(secret: string): string {
+  return createHash('sha256').update(secret).digest('hex');
 }
