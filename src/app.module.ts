@@ -2,6 +2,7 @@ import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { AppConfigModule } from './config/app-config.module';
 import { RequestContextMiddleware } from './common/request-context.middleware';
 import { SecurityHeadersMiddleware } from './common/security-headers.middleware';
+import { StructuredLoggerMiddleware } from './common/structured-logger.middleware';
 import { MetricsMiddleware } from './metrics/metrics.middleware';
 import { MetricsModule } from './metrics/metrics.module';
 import { IdentityModule } from './identity/identity.module';
@@ -37,6 +38,7 @@ export class AppModule implements NestModule {
       .apply(
         SecurityHeadersMiddleware,
         RequestContextMiddleware,
+        StructuredLoggerMiddleware,
         MetricsMiddleware,
       )
       .forRoutes('*');

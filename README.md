@@ -48,3 +48,6 @@ checklists.
 
 Client integration guidance lives in `docs/CLIENT_INTEGRATION.md`, including the
 sample app, required ID token checks, session boundary, and logout behavior.
+
+Admin guidance lives in `docs/ADMIN_GUIDE.md`; the security coverage matrix
+lives in `docs/SECURITY_TEST_MATRIX.md`.

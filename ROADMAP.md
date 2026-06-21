@@ -25,15 +25,15 @@ Client applications decide what that user can do.
 
 ## 2. Current Status
 
-| Area                    | Status      | Notes                                                                                                                                                                           |
-| ----------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Architecture guide      | Done        | `INTERNAL_OIDC_IDENTITY_PROVIDER_GUIDE.md` exists and is the main design reference.                                                                                             |
-| Roadmap                 | In Progress | This file defines implementation tracking.                                                                                                                                      |
-| Application code        | In Progress | NestJS scaffold, module boundaries, config shell, and health route now exist.                                                                                                   |
-| Database schema         | Done        | Internal ID-owned entities, reviewed migrations, rollback verification, and bootstrap seed strategy now exist.                                                                  |
-| Better Auth integration | In Progress | Better Auth mounts inside NestJS, guardrails block unsupported registration/request shapes, and schema coexistence is documented; deeper protocol and audit proof remains open. |
-| Tests                   | In Progress | Vitest and Playwright commands are wired with initial placeholder coverage.                                                                                                     |
-| Deployment              | Done        | Docker, Compose, CI, metrics, cleanup jobs, and operations runbooks now exist.                                                                                                  |
+| Area                    | Status      | Notes                                                                                                                                                    |
+| ----------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Architecture guide      | Done        | `INTERNAL_OIDC_IDENTITY_PROVIDER_GUIDE.md` exists and is the main design reference.                                                                      |
+| Roadmap                 | In Progress | This file defines implementation tracking.                                                                                                               |
+| Application code        | Done        | Modular NestJS identity provider, admin surface, OIDC endpoints, sample client, and operations paths now exist.                                          |
+| Database schema         | Done        | Internal ID-owned entities, reviewed migrations, rollback verification, and bootstrap seed strategy now exist.                                           |
+| Better Auth integration | Done        | Better Auth mounts inside NestJS, guardrails block unsupported request shapes, schema coexistence is documented, and local protocol wrappers are tested. |
+| Tests                   | Done        | Unit, protocol, security, sample-client, lint, typecheck, build, audit, and CI commands are wired.                                                       |
+| Deployment              | Done        | Docker, Compose, CI, metrics, cleanup jobs, and operations runbooks now exist.                                                                           |
 
 ## 3. Locked Decisions
 
@@ -154,6 +154,8 @@ The project is drifting if:
 | `.github/workflows/ci.yml`                                               | CI verification for build, typecheck, lint, tests, migrations, and dependency audit.             |
 | `docs/OPERATIONS.md`                                                     | Deployment, environment, backup, cleanup, metrics, alerting, key rotation, and incident runbook. |
 | `docs/CLIENT_INTEGRATION.md`                                             | Internal application integration guide for OIDC, local sessions, and logout boundaries.          |
+| `docs/ADMIN_GUIDE.md`                                                    | Admin guide for access model, users, groups, clients, audit, and operational actions.            |
+| `docs/SECURITY_TEST_MATRIX.md`                                           | Security test coverage matrix and explicit residual gaps.                                        |
 
 When code exists, update this table with entrypoints such as `src/app.module.ts`,
 `src/better-auth/better-auth.config.ts`, and `src/database/data-source.ts`.
@@ -173,20 +175,20 @@ Use these labels when updating task status.
 
 ## 9. Phase Gate Summary
 
-| Phase | Name                          | Status      | Primary Exit Gate                                                                                                              |
-| ----- | ----------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| 0     | Project Setup Decisions       | Done        | Stack, package manager, Better Auth feasibility, and repo conventions are locked.                                              |
-| 1     | NestJS Foundation             | Done        | App boots with NestJS, TypeORM, PostgreSQL, Better Auth integration shell, and health check.                                   |
-| 2     | Data Model And Migrations     | Done        | Initial PostgreSQL schema is created by TypeORM migrations and verified with rollback on a disposable database.                |
-| 3     | Better Auth Integration Spike | In Progress | Better Auth mounts in NestJS and PostgreSQL-backed schema inspection works; protocol hardening and ownership decisions remain. |
-| 4     | Authentication And Sessions   | Not Started | Active users can log in and receive secure provider sessions.                                                                  |
-| 5     | Admin Bootstrap               | Done        | Admins can manage users, groups, clients, and audit-relevant state.                                                            |
-| 6     | OIDC Authorization            | Done        | Valid auth requests issue one-time authorization codes; invalid requests are rejected safely.                                  |
-| 7     | Token Issuance And JWKS       | Done        | Code exchange issues verifiable ID/access tokens and UserInfo works.                                                           |
-| 8     | Refresh Tokens And Revocation | Done        | Refresh rotation, replay detection, and revocation work transactionally.                                                       |
-| 9     | Security Hardening            | Done        | Negative protocol tests, rate limits, CSRF, XSS protections, and audit coverage are in place.                                  |
-| 10    | Operations And Deployment     | Done        | Local and production-like deployment paths exist with backups, logging, metrics, and cleanup jobs.                             |
-| 11    | Client Integration Readiness  | Done        | A sample internal client can complete the full Authorization Code + PKCE flow.                                                 |
+| Phase | Name                          | Status | Primary Exit Gate                                                                                                        |
+| ----- | ----------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------ |
+| 0     | Project Setup Decisions       | Done   | Stack, package manager, Better Auth feasibility, and repo conventions are locked.                                        |
+| 1     | NestJS Foundation             | Done   | App boots with NestJS, TypeORM, PostgreSQL, Better Auth integration shell, and health check.                             |
+| 2     | Data Model And Migrations     | Done   | Initial PostgreSQL schema is created by TypeORM migrations and verified with rollback on a disposable database.          |
+| 3     | Better Auth Integration Spike | Done   | Better Auth mounts in NestJS, PostgreSQL-backed schema inspection works, and local wrappers enforce protocol boundaries. |
+| 4     | Authentication And Sessions   | Done   | Active users can log in and receive secure provider sessions.                                                            |
+| 5     | Admin Bootstrap               | Done   | Admins can manage users, groups, clients, and audit-relevant state.                                                      |
+| 6     | OIDC Authorization            | Done   | Valid auth requests issue one-time authorization codes; invalid requests are rejected safely.                            |
+| 7     | Token Issuance And JWKS       | Done   | Code exchange issues verifiable ID/access tokens and UserInfo works.                                                     |
+| 8     | Refresh Tokens And Revocation | Done   | Refresh rotation, replay detection, and revocation work transactionally.                                                 |
+| 9     | Security Hardening            | Done   | Negative protocol tests, rate limits, CSRF, XSS protections, and audit coverage are in place.                            |
+| 10    | Operations And Deployment     | Done   | Local and production-like deployment paths exist with backups, logging, metrics, and cleanup jobs.                       |
+| 11    | Client Integration Readiness  | Done   | A sample internal client can complete the full Authorization Code + PKCE flow.                                           |
 
 ## 10. Execution Plan
 
@@ -354,22 +356,22 @@ src/
 
 ### Tasks
 
-| ID    | Task                         | Status      | Acceptance Criteria                                                    |
-| ----- | ---------------------------- | ----------- | ---------------------------------------------------------------------- |
-| P1-01 | Scaffold NestJS app          | Done        | App starts locally and exposes a basic route.                          |
-| P1-02 | Add TypeScript strictness    | Done        | `tsconfig` enables strict checks appropriate for NestJS.               |
-| P1-03 | Add config module            | Done        | Env vars are validated at startup.                                     |
-| P1-04 | Add PostgreSQL config        | Done        | Database URL and pool settings are loaded from config.                 |
-| P1-05 | Add TypeORM module           | Done        | NestJS can initialize TypeORM against PostgreSQL.                      |
-| P1-06 | Add TypeORM data source      | Done        | CLI migrations can run using the same config model.                    |
-| P1-07 | Add Better Auth module shell | Done        | Better Auth config is isolated in `src/better-auth`.                   |
-| P1-08 | Add domain modules           | Done        | Identity, auth, OIDC, clients, tokens, admin, and audit modules exist. |
-| P1-09 | Add request context          | In Progress | Request ID can be attached to logs and audit events.                   |
-| P1-10 | Add structured logging       | Not Started | Logs include timestamp, level, request ID, and service context.        |
-| P1-11 | Add health endpoint          | Done        | Health check reports app and database status without leaking secrets.  |
-| P1-12 | Add lint and format commands | Done        | Commands exist and run cleanly on scaffold.                            |
-| P1-13 | Add unit test command        | Done        | Empty or sample test suite passes.                                     |
-| P1-14 | Add e2e test command         | Done        | Empty or sample e2e test suite passes.                                 |
+| ID    | Task                         | Status | Acceptance Criteria                                                    |
+| ----- | ---------------------------- | ------ | ---------------------------------------------------------------------- |
+| P1-01 | Scaffold NestJS app          | Done   | App starts locally and exposes a basic route.                          |
+| P1-02 | Add TypeScript strictness    | Done   | `tsconfig` enables strict checks appropriate for NestJS.               |
+| P1-03 | Add config module            | Done   | Env vars are validated at startup.                                     |
+| P1-04 | Add PostgreSQL config        | Done   | Database URL and pool settings are loaded from config.                 |
+| P1-05 | Add TypeORM module           | Done   | NestJS can initialize TypeORM against PostgreSQL.                      |
+| P1-06 | Add TypeORM data source      | Done   | CLI migrations can run using the same config model.                    |
+| P1-07 | Add Better Auth module shell | Done   | Better Auth config is isolated in `src/better-auth`.                   |
+| P1-08 | Add domain modules           | Done   | Identity, auth, OIDC, clients, tokens, admin, and audit modules exist. |
+| P1-09 | Add request context          | Done   | Request ID can be attached to logs and audit events.                   |
+| P1-10 | Add structured logging       | Done   | Logs include timestamp, level, request ID, and service context.        |
+| P1-11 | Add health endpoint          | Done   | Health check reports app and database status without leaking secrets.  |
+| P1-12 | Add lint and format commands | Done   | Commands exist and run cleanly on scaffold.                            |
+| P1-13 | Add unit test command        | Done   | Empty or sample test suite passes.                                     |
+| P1-14 | Add e2e test command         | Done   | Empty or sample e2e test suite passes.                                 |
 
 ### Phase 1 Exit Criteria
 
@@ -447,18 +449,18 @@ Objective: prove Better Auth can be used without widening Internal ID scope.
 
 ### Required Spike Questions
 
-| ID    | Question                                                | Status      | Required Outcome                                                                                           |
-| ----- | ------------------------------------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------- |
-| P3-01 | Can Better Auth run cleanly inside NestJS?              | Done        | Working module integration exists.                                                                         |
-| P3-02 | Can Better Auth use PostgreSQL with the chosen adapter? | Done        | Tables are created or mapped.                                                                              |
-| P3-03 | Can OAuth Provider expose OIDC discovery?               | Done        | Discovery metadata can be controlled.                                                                      |
-| P3-04 | Can unsupported response types be rejected?             | In Progress | `token`, `id_token`, and hybrid flows fail.                                                                |
-| P3-05 | Can unsupported grant types be rejected?                | In Progress | `password`, `client_credentials`, and device grants fail.                                                  |
-| P3-06 | Can PKCE be required for all clients?                   | Done        | Missing PKCE and `plain` are rejected.                                                                     |
-| P3-07 | Can dynamic registration be disabled?                   | Done        | No self-service client registration is exposed.                                                            |
-| P3-08 | Can refresh token rotation behavior satisfy this guide? | In Progress | Local family/replay semantics and token-path integration exist, and the remaining gap is end-to-end proof. |
-| P3-09 | Can claims be shaped by client policy?                  | Done        | Additional claims and mounted userinfo output are constrained by client policy.                            |
-| P3-10 | Can audit hooks capture security events?                | In Progress | Boundary audit capture exists, and deeper login/refresh/revocation coverage remains.                       |
+| ID    | Question                                                | Status | Required Outcome                                                                               |
+| ----- | ------------------------------------------------------- | ------ | ---------------------------------------------------------------------------------------------- |
+| P3-01 | Can Better Auth run cleanly inside NestJS?              | Done   | Working module integration exists.                                                             |
+| P3-02 | Can Better Auth use PostgreSQL with the chosen adapter? | Done   | Tables are created or mapped.                                                                  |
+| P3-03 | Can OAuth Provider expose OIDC discovery?               | Done   | Discovery metadata can be controlled.                                                          |
+| P3-04 | Can unsupported response types be rejected?             | Done   | `token`, `id_token`, and hybrid flows fail.                                                    |
+| P3-05 | Can unsupported grant types be rejected?                | Done   | `password`, `client_credentials`, and device grants fail.                                      |
+| P3-06 | Can PKCE be required for all clients?                   | Done   | Missing PKCE and `plain` are rejected.                                                         |
+| P3-07 | Can dynamic registration be disabled?                   | Done   | No self-service client registration is exposed.                                                |
+| P3-08 | Can refresh token rotation behavior satisfy this guide? | Done   | Local family/replay semantics and token-path integration exist.                                |
+| P3-09 | Can claims be shaped by client policy?                  | Done   | Additional claims and mounted userinfo output are constrained by client policy.                |
+| P3-10 | Can audit hooks capture security events?                | Done   | Boundary, login, authorization, token, refresh, revocation, and admin audit paths are covered. |
 
 ### Better Auth Integration Rules
 
@@ -931,40 +933,40 @@ current user status
 
 Run this checklist after initial integration and after every Better Auth upgrade.
 
-| Check                                                           | Status      |
-| --------------------------------------------------------------- | ----------- |
-| Discovery advertises only `response_types_supported: ["code"]`. | Not Started |
-| Discovery advertises only allowed grant types.                  | Not Started |
-| Dynamic client registration route is absent or blocked.         | Not Started |
-| Password grant fails.                                           | Not Started |
-| Client credentials grant fails.                                 | Not Started |
-| Device flow fails.                                              | Not Started |
-| Implicit flow fails.                                            | Not Started |
-| Hybrid flow fails.                                              | Not Started |
-| PKCE is required.                                               | Not Started |
-| `plain` PKCE fails.                                             | Not Started |
-| Redirect URI matching is exact.                                 | Not Started |
-| Refresh token storage does not expose raw tokens.               | Not Started |
-| Claim release can be constrained per client.                    | Not Started |
-| Audit hooks are available or wrapped.                           | Not Started |
+| Check                                                           | Status |
+| --------------------------------------------------------------- | ------ |
+| Discovery advertises only `response_types_supported: ["code"]`. | Done   |
+| Discovery advertises only allowed grant types.                  | Done   |
+| Dynamic client registration route is absent or blocked.         | Done   |
+| Password grant fails.                                           | Done   |
+| Client credentials grant fails.                                 | Done   |
+| Device flow fails.                                              | Done   |
+| Implicit flow fails.                                            | Done   |
+| Hybrid flow fails.                                              | Done   |
+| PKCE is required.                                               | Done   |
+| `plain` PKCE fails.                                             | Done   |
+| Redirect URI matching is exact.                                 | Done   |
+| Refresh token storage does not expose raw tokens.               | Done   |
+| Claim release can be constrained per client.                    | Done   |
+| Audit hooks are available or wrapped.                           | Done   |
 
 ## 27. Data And Transaction Checklist
 
 Use this checklist before accepting token/session-related work.
 
-| Check                                                                      | Status      |
-| -------------------------------------------------------------------------- | ----------- |
-| Authorization code lookup uses hash, not raw code.                         | Not Started |
-| Authorization code consumption is atomic.                                  | Not Started |
-| Consumed authorization code cannot be reused under concurrency.            | Not Started |
-| Refresh token lookup uses hash, not raw token.                             | Not Started |
-| Refresh token rotation locks the current row.                              | Not Started |
-| Refresh token replay revokes the token family.                             | Not Started |
-| User deactivation revokes sessions and refresh tokens.                     | Not Started |
-| Client disable blocks new authorization immediately.                       | Not Started |
-| Client disable blocks token exchange immediately.                          | Not Started |
-| Signing key activation/retirement is tracked.                              | Not Started |
-| Audit event writes are included in sensitive transactions where practical. | Not Started |
+| Check                                                                      | Status       |
+| -------------------------------------------------------------------------- | ------------ |
+| Authorization code lookup uses hash, not raw code.                         | Done         |
+| Authorization code consumption is atomic.                                  | Done         |
+| Consumed authorization code cannot be reused under concurrency.            | Needs Review |
+| Refresh token lookup uses hash, not raw token.                             | Done         |
+| Refresh token rotation locks the current row.                              | Needs Review |
+| Refresh token replay revokes the token family.                             | Done         |
+| User deactivation revokes sessions and refresh tokens.                     | Needs Review |
+| Client disable blocks new authorization immediately.                       | Done         |
+| Client disable blocks token exchange immediately.                          | Done         |
+| Signing key activation/retirement is tracked.                              | Done         |
+| Audit event writes are included in sensitive transactions where practical. | Done         |
 
 ## 28. Documentation Deliverables
 
@@ -975,9 +977,9 @@ Use this checklist before accepting token/session-related work.
 | Local development guide         | Done        | How to run app, Postgres, migrations, and tests.            |
 | Environment variables reference | Done        | Required config and safe defaults.                          |
 | Client integration guide        | Done        | How internal apps use OIDC safely.                          |
-| Admin guide                     | Not Started | How admins manage users, groups, clients, and sessions.     |
+| Admin guide                     | Done        | How admins manage users, groups, clients, and sessions.     |
 | Operations runbook              | Done        | Deployment, backups, cleanup jobs, key rotation, incidents. |
-| Security test matrix            | Not Started | Required conformance and negative tests.                    |
+| Security test matrix            | Done        | Required conformance and negative tests.                    |
 
 ## 29. Definition Of Done
 
