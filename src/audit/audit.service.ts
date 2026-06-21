@@ -26,7 +26,7 @@ export class AuditService {
       providerSessionId: input.providerSessionId ?? null,
       ipAddress: input.ipAddress ?? null,
       userAgent: input.userAgent ?? null,
-      metadataJson: input.metadata ?? null,
+      metadataJson: redactMetadata(input.metadata),
     });
 
     await this.auditEventRepository.save(auditEvent);
@@ -41,4 +41,40 @@ export class AuditService {
 
     return eventId;
   }
+}
+
+const sensitiveMetadataKeyPattern =
+  /(authorization|bearer|code|cookie|password|secret|token)/i;
+
+function redactMetadata(
+  metadata: Record<string, unknown> | null | undefined,
+): Record<string, unknown> | null {
+  if (!metadata) {
+    return null;
+  }
+
+  return redactValue(metadata) as Record<string, unknown>;
+}
+
+function redactValue(value: unknown, key?: string): unknown {
+  if (key && sensitiveMetadataKeyPattern.test(key)) {
+    return '[REDACTED]';
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => redactValue(item));
+  }
+
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(
+        ([childKey, childValue]) => [
+          childKey,
+          redactValue(childValue, childKey),
+        ],
+      ),
+    );
+  }
+
+  return value;
 }

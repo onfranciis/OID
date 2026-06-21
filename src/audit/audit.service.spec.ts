@@ -72,4 +72,46 @@ describe('AuditService', () => {
       }),
     );
   });
+
+  it('redacts sensitive metadata before persistence', async () => {
+    await service.record({
+      eventType: 'oidc.token.issued',
+      severity: AuditSeverity.INFO,
+      metadata: {
+        tokenId: 'rtk_123',
+        refreshToken: 'raw-refresh-token',
+        password: 'raw-password',
+        nested: {
+          authorizationHeader: 'Bearer raw-token',
+          safeValue: 'kept',
+        },
+        attempts: [
+          {
+            codeVerifier: 'raw-verifier',
+            clientId: 'cli_public',
+          },
+        ],
+      },
+    });
+
+    expect(createAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadataJson: {
+          tokenId: '[REDACTED]',
+          refreshToken: '[REDACTED]',
+          password: '[REDACTED]',
+          nested: {
+            authorizationHeader: '[REDACTED]',
+            safeValue: 'kept',
+          },
+          attempts: [
+            {
+              codeVerifier: '[REDACTED]',
+              clientId: 'cli_public',
+            },
+          ],
+        },
+      }),
+    );
+  });
 });

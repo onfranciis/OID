@@ -1,6 +1,16 @@
-import { Body, Controller, Get, Post, Query, Req, Res } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Query,
+  Req,
+  Res,
+  UseFilters,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Request, Response } from 'express';
+import { OAuthErrorFilter } from './oauth-error.filter';
 import { OidcAuthorizationService } from './oidc-authorization.service';
 import { OidcTokenService } from './oidc-token.service';
 import { TokenRateLimitService } from './token-rate-limit.service';
@@ -32,6 +42,7 @@ interface RevokeBody {
 }
 
 @Controller()
+@UseFilters(OAuthErrorFilter)
 export class OidcController {
   private readonly issuer: string;
   private readonly providerSessionCookieName: string;

@@ -737,8 +737,8 @@ Objective: make the provider safe enough for internal production use.
 | P9-03 | Add XSS escaping tests | Done | User/client/group strings render escaped in SSR pages. |
 | P9-04 | Add login rate limits | Done | Account and IP limits are enforced. |
 | P9-05 | Add token endpoint rate limits | Done | Abuse is slowed without leaking sensitive details. |
-| P9-06 | Add generic OAuth errors | Not Started | Errors do not expose secrets or internal state. |
-| P9-07 | Add secret redaction | Not Started | Logs redact tokens, passwords, secrets, keys, and codes. |
+| P9-06 | Add generic OAuth errors | Done | Errors do not expose secrets or internal state. |
+| P9-07 | Add secret redaction | Done | Logs redact tokens, passwords, secrets, keys, and codes. |
 | P9-08 | Add dependency audit workflow | Not Started | Dependency risk can be checked in CI. |
 | P9-09 | Add protocol conformance tests | Done | Unsupported flows remain rejected. |
 | P9-10 | Add migration tests | Not Started | Migrations can run from empty database in CI. |
