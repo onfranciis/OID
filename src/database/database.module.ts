@@ -44,6 +44,9 @@ import { createTypeOrmOptions } from './typeorm.config';
             providerSessionAbsoluteTtlSeconds: configService.getOrThrow<number>(
               'authentication.providerSessionAbsoluteTtlSeconds',
             ),
+            adminRecentAuthWindowSeconds: configService.getOrThrow<number>(
+              'authentication.adminRecentAuthWindowSeconds',
+            ),
             loginRateLimitWindowSeconds: configService.getOrThrow<number>(
               'authentication.loginRateLimitWindowSeconds',
             ),

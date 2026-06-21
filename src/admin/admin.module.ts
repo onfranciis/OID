@@ -16,6 +16,7 @@ import { AdminController } from './admin.controller';
 import { AdminGroupService } from './admin-group.service';
 import { AdminGuard } from './admin.guard';
 import { AdminPageService } from './admin-page.service';
+import { AdminRecentAuthGuard } from './admin-recent-auth.guard';
 import { AdminUserService } from './admin-user.service';
 
 @Module({
@@ -40,6 +41,7 @@ import { AdminUserService } from './admin-user.service';
     AdminGroupService,
     AdminGuard,
     AdminPageService,
+    AdminRecentAuthGuard,
     AdminUserService,
   ],
 })

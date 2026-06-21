@@ -50,6 +50,9 @@ export class BetterAuthService implements OnModuleDestroy {
         providerSessionAbsoluteTtlSeconds: configService.getOrThrow<number>(
           'authentication.providerSessionAbsoluteTtlSeconds',
         ),
+        adminRecentAuthWindowSeconds: configService.getOrThrow<number>(
+          'authentication.adminRecentAuthWindowSeconds',
+        ),
         loginRateLimitWindowSeconds: configService.getOrThrow<number>(
           'authentication.loginRateLimitWindowSeconds',
         ),

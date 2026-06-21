@@ -59,6 +59,10 @@ export function configuration(): AppEnvironment {
         process.env.AUTHENTICATION_PROVIDER_SESSION_ABSOLUTE_TTL_SECONDS,
         604800,
       ),
+      adminRecentAuthWindowSeconds: parseNumber(
+        process.env.AUTHENTICATION_ADMIN_RECENT_AUTH_WINDOW_SECONDS,
+        600,
+      ),
       loginRateLimitWindowSeconds: parseNumber(
         process.env.AUTHENTICATION_LOGIN_RATE_LIMIT_WINDOW_SECONDS,
         600,

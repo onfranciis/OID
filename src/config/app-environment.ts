@@ -23,6 +23,7 @@ export interface AppEnvironment {
     providerSessionCookieName: string;
     providerSessionIdleTtlSeconds: number;
     providerSessionAbsoluteTtlSeconds: number;
+    adminRecentAuthWindowSeconds: number;
     loginRateLimitWindowSeconds: number;
     loginRateLimitIpMaxAttempts: number;
     loginRateLimitAccountMaxAttempts: number;

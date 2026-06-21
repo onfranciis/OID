@@ -171,7 +171,7 @@ Use these labels when updating task status.
 | 2 | Data Model And Migrations | Done | Initial PostgreSQL schema is created by TypeORM migrations and verified with rollback on a disposable database. |
 | 3 | Better Auth Integration Spike | In Progress | Better Auth mounts in NestJS and PostgreSQL-backed schema inspection works; protocol hardening and ownership decisions remain. |
 | 4 | Authentication And Sessions | Not Started | Active users can log in and receive secure provider sessions. |
-| 5 | Admin Bootstrap | Not Started | Admins can manage users, groups, clients, and audit-relevant state. |
+| 5 | Admin Bootstrap | Done | Admins can manage users, groups, clients, and audit-relevant state. |
 | 6 | OIDC Authorization | Not Started | Valid auth requests issue one-time authorization codes; invalid requests are rejected safely. |
 | 7 | Token Issuance And JWKS | Not Started | Code exchange issues verifiable ID/access tokens and UserInfo works. |
 | 8 | Refresh Tokens And Revocation | Not Started | Refresh rotation, replay detection, and revocation work transactionally. |
@@ -529,7 +529,7 @@ Objective: trusted admins can manage the initial internal identity system.
 | --- | --- | --- | --- |
 | P5-01 | Define admin authorization model | Done | Provider-local admin rule is documented. |
 | P5-02 | Add admin guard | Done | Non-admin users cannot access admin routes. |
-| P5-03 | Add recent-auth guard | Not Started | Sensitive actions require recent authentication. |
+| P5-03 | Add recent-auth guard | Done | Sensitive actions require recent authentication. |
 | P5-04 | Build admin shell | Done | SSR admin pages render safely. |
 | P5-05 | User create/edit | Done | Admin can create and update users. |
 | P5-06 | User status changes | Done | Admin can suspend, reactivate, and deactivate users. |

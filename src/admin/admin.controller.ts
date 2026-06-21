@@ -28,6 +28,7 @@ import {
 } from './admin-group.service';
 import { AdminGuard } from './admin.guard';
 import { AdminPageService } from './admin-page.service';
+import { AdminRecentAuthGuard } from './admin-recent-auth.guard';
 import { OidcClientStatus } from '../database/entities/oidc-client.entity';
 import {
   AdminUserService,
@@ -66,11 +67,13 @@ export class AdminController {
   }
 
   @Post('users')
+  @UseGuards(AdminRecentAuthGuard)
   createUser(@Req() req: AdminRequest, @Body() body: AdminCreateUserInput) {
     return this.adminUserService.createUser(body, buildMutationContext(req));
   }
 
   @Post('users/:userId')
+  @UseGuards(AdminRecentAuthGuard)
   updateUser(
     @Req() req: AdminRequest,
     @Param('userId') userId: string,
@@ -84,6 +87,7 @@ export class AdminController {
   }
 
   @Post('users/:userId/status')
+  @UseGuards(AdminRecentAuthGuard)
   setUserStatus(
     @Req() req: AdminRequest,
     @Param('userId') userId: string,
@@ -97,11 +101,13 @@ export class AdminController {
   }
 
   @Post('groups')
+  @UseGuards(AdminRecentAuthGuard)
   createGroup(@Req() req: AdminRequest, @Body() body: AdminCreateGroupInput) {
     return this.adminGroupService.createGroup(body, buildMutationContext(req));
   }
 
   @Post('groups/:groupId')
+  @UseGuards(AdminRecentAuthGuard)
   updateGroup(
     @Req() req: AdminRequest,
     @Param('groupId') groupId: string,
@@ -115,6 +121,7 @@ export class AdminController {
   }
 
   @Post('groups/:groupId/members/:userId')
+  @UseGuards(AdminRecentAuthGuard)
   addGroupMembership(
     @Req() req: AdminRequest,
     @Param('groupId') groupId: string,
@@ -128,6 +135,7 @@ export class AdminController {
   }
 
   @Post('groups/:groupId/members/:userId/remove')
+  @UseGuards(AdminRecentAuthGuard)
   removeGroupMembership(
     @Req() req: AdminRequest,
     @Param('groupId') groupId: string,
@@ -141,6 +149,7 @@ export class AdminController {
   }
 
   @Post('clients')
+  @UseGuards(AdminRecentAuthGuard)
   createClient(@Req() req: AdminRequest, @Body() body: AdminCreateClientInput) {
     return this.adminClientService.createClient(
       body,
@@ -149,6 +158,7 @@ export class AdminController {
   }
 
   @Post('clients/:clientRecordId')
+  @UseGuards(AdminRecentAuthGuard)
   updateClient(
     @Req() req: AdminRequest,
     @Param('clientRecordId') clientRecordId: string,
@@ -162,6 +172,7 @@ export class AdminController {
   }
 
   @Post('clients/:clientRecordId/status')
+  @UseGuards(AdminRecentAuthGuard)
   setClientStatus(
     @Req() req: AdminRequest,
     @Param('clientRecordId') clientRecordId: string,
@@ -175,6 +186,7 @@ export class AdminController {
   }
 
   @Post('clients/:clientRecordId/redirect-uris')
+  @UseGuards(AdminRecentAuthGuard)
   addRedirectUri(
     @Req() req: AdminRequest,
     @Param('clientRecordId') clientRecordId: string,
@@ -188,6 +200,7 @@ export class AdminController {
   }
 
   @Post('clients/:clientRecordId/redirect-uris/:redirectUriId/remove')
+  @UseGuards(AdminRecentAuthGuard)
   removeRedirectUri(
     @Req() req: AdminRequest,
     @Param('clientRecordId') clientRecordId: string,
