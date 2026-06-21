@@ -172,7 +172,7 @@ Use these labels when updating task status.
 | 3 | Better Auth Integration Spike | In Progress | Better Auth mounts in NestJS and PostgreSQL-backed schema inspection works; protocol hardening and ownership decisions remain. |
 | 4 | Authentication And Sessions | Not Started | Active users can log in and receive secure provider sessions. |
 | 5 | Admin Bootstrap | Done | Admins can manage users, groups, clients, and audit-relevant state. |
-| 6 | OIDC Authorization | Not Started | Valid auth requests issue one-time authorization codes; invalid requests are rejected safely. |
+| 6 | OIDC Authorization | Done | Valid auth requests issue one-time authorization codes; invalid requests are rejected safely. |
 | 7 | Token Issuance And JWKS | Not Started | Code exchange issues verifiable ID/access tokens and UserInfo works. |
 | 8 | Refresh Tokens And Revocation | Not Started | Refresh rotation, replay detection, and revocation work transactionally. |
 | 9 | Security Hardening | Not Started | Negative protocol tests, rate limits, CSRF, XSS protections, and audit coverage are in place. |
@@ -570,22 +570,22 @@ code_challenge_method=S256
 
 | ID | Task | Status | Acceptance Criteria |
 | --- | --- | --- | --- |
-| P6-01 | Implement discovery route | Not Started | Metadata advertises only supported capabilities. |
-| P6-02 | Implement authorize route mount/wrapper | Not Started | Better Auth route is exposed through Internal ID contract. |
-| P6-03 | Validate client status | Not Started | Disabled or unknown clients cannot authorize. |
-| P6-04 | Validate redirect URI | Not Started | Exact-match registered URI only. |
-| P6-05 | Validate response type | Not Started | Anything other than `code` is rejected. |
-| P6-06 | Validate scope | Not Started | `openid` is required and scopes must be client-allowed. |
-| P6-07 | Require state | Not Started | Missing state is rejected. |
-| P6-08 | Require PKCE | Not Started | Missing challenge is rejected. |
-| P6-09 | Reject `plain` PKCE | Not Started | Only `S256` is accepted. |
-| P6-10 | Handle unauthenticated users | Not Started | User is sent to provider login and auth request state is preserved safely. |
-| P6-11 | Handle existing provider session | Not Started | User can continue without re-entering password. |
-| P6-12 | Support `prompt=login` | Not Started | Reauthentication is forced. |
-| P6-13 | Support `prompt=none` | Not Started | No UI is shown; error is returned if not authenticated. |
-| P6-14 | Issue authorization code | Not Started | Code is high entropy, hashed server-side, short-lived, one-time-use. |
-| P6-15 | Redirect with code and state | Not Started | Successful authorization redirects only to validated URI. |
-| P6-16 | Audit code issuance | Not Started | Safe audit event is written. |
+| P6-01 | Implement discovery route | Done | Metadata advertises only supported capabilities. |
+| P6-02 | Implement authorize route mount/wrapper | Done | Better Auth route is exposed through Internal ID contract. |
+| P6-03 | Validate client status | Done | Disabled or unknown clients cannot authorize. |
+| P6-04 | Validate redirect URI | Done | Exact-match registered URI only. |
+| P6-05 | Validate response type | Done | Anything other than `code` is rejected. |
+| P6-06 | Validate scope | Done | `openid` is required and scopes must be client-allowed. |
+| P6-07 | Require state | Done | Missing state is rejected. |
+| P6-08 | Require PKCE | Done | Missing challenge is rejected. |
+| P6-09 | Reject `plain` PKCE | Done | Only `S256` is accepted. |
+| P6-10 | Handle unauthenticated users | Done | User is sent to provider login and auth request state is preserved safely. |
+| P6-11 | Handle existing provider session | Done | User can continue without re-entering password. |
+| P6-12 | Support `prompt=login` | Done | Reauthentication is forced. |
+| P6-13 | Support `prompt=none` | Done | No UI is shown; error is returned if not authenticated. |
+| P6-14 | Issue authorization code | Done | Code is high entropy, hashed server-side, short-lived, one-time-use. |
+| P6-15 | Redirect with code and state | Done | Successful authorization redirects only to validated URI. |
+| P6-16 | Audit code issuance | Done | Safe audit event is written. |
 
 ### Phase 6 Tests
 
