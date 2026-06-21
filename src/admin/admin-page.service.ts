@@ -4,6 +4,7 @@ import { join } from 'node:path';
 
 export interface AdminIndexModel {
   displayName: string;
+  csrfToken: string;
 }
 
 @Injectable()

@@ -6,6 +6,7 @@ describe('AdminPageService', () => {
     const service = new AdminPageService();
     const html = service.renderIndex({
       displayName: '<script>alert("admin")</script>',
+      csrfToken: 'csrf-token',
     });
 
     expect(html).not.toContain('<script>');

@@ -13,6 +13,8 @@ import { AdminAccessService } from './admin-access.service';
 import { AdminAuditService } from './admin-audit.service';
 import { AdminClientService } from './admin-client.service';
 import { AdminController } from './admin.controller';
+import { AdminCsrfGuard } from './admin-csrf.guard';
+import { AdminCsrfService } from './admin-csrf.service';
 import { AdminGroupService } from './admin-group.service';
 import { AdminGuard } from './admin.guard';
 import { AdminPageService } from './admin-page.service';
@@ -38,6 +40,8 @@ import { AdminUserService } from './admin-user.service';
     AdminAccessService,
     AdminAuditService,
     AdminClientService,
+    AdminCsrfGuard,
+    AdminCsrfService,
     AdminGroupService,
     AdminGuard,
     AdminPageService,

@@ -21,6 +21,8 @@ import {
   type AdminRedirectUriInput,
   type AdminUpdateClientInput,
 } from './admin-client.service';
+import { AdminCsrfGuard } from './admin-csrf.guard';
+import { AdminCsrfService } from './admin-csrf.service';
 import {
   AdminGroupService,
   type AdminCreateGroupInput,
@@ -48,15 +50,23 @@ export class AdminController {
     private readonly adminPageService: AdminPageService,
     private readonly adminAuditService: AdminAuditService,
     private readonly adminClientService: AdminClientService,
+    private readonly adminCsrfService: AdminCsrfService,
     private readonly adminGroupService: AdminGroupService,
     private readonly adminUserService: AdminUserService,
   ) {}
 
   @Get()
   index(@Req() req: AdminRequest, @Res() res: Response): void {
+    const csrfToken = this.adminCsrfService.generateToken();
+
+    res.setHeader(
+      'set-cookie',
+      this.adminCsrfService.buildCookieHeader(csrfToken),
+    );
     res.type('html').send(
       this.adminPageService.renderIndex({
         displayName: req.adminPrincipal.user.displayName,
+        csrfToken,
       }),
     );
   }
@@ -67,13 +77,13 @@ export class AdminController {
   }
 
   @Post('users')
-  @UseGuards(AdminRecentAuthGuard)
+  @UseGuards(AdminRecentAuthGuard, AdminCsrfGuard)
   createUser(@Req() req: AdminRequest, @Body() body: AdminCreateUserInput) {
     return this.adminUserService.createUser(body, buildMutationContext(req));
   }
 
   @Post('users/:userId')
-  @UseGuards(AdminRecentAuthGuard)
+  @UseGuards(AdminRecentAuthGuard, AdminCsrfGuard)
   updateUser(
     @Req() req: AdminRequest,
     @Param('userId') userId: string,
@@ -87,7 +97,7 @@ export class AdminController {
   }
 
   @Post('users/:userId/status')
-  @UseGuards(AdminRecentAuthGuard)
+  @UseGuards(AdminRecentAuthGuard, AdminCsrfGuard)
   setUserStatus(
     @Req() req: AdminRequest,
     @Param('userId') userId: string,
@@ -101,13 +111,13 @@ export class AdminController {
   }
 
   @Post('groups')
-  @UseGuards(AdminRecentAuthGuard)
+  @UseGuards(AdminRecentAuthGuard, AdminCsrfGuard)
   createGroup(@Req() req: AdminRequest, @Body() body: AdminCreateGroupInput) {
     return this.adminGroupService.createGroup(body, buildMutationContext(req));
   }
 
   @Post('groups/:groupId')
-  @UseGuards(AdminRecentAuthGuard)
+  @UseGuards(AdminRecentAuthGuard, AdminCsrfGuard)
   updateGroup(
     @Req() req: AdminRequest,
     @Param('groupId') groupId: string,
@@ -121,7 +131,7 @@ export class AdminController {
   }
 
   @Post('groups/:groupId/members/:userId')
-  @UseGuards(AdminRecentAuthGuard)
+  @UseGuards(AdminRecentAuthGuard, AdminCsrfGuard)
   addGroupMembership(
     @Req() req: AdminRequest,
     @Param('groupId') groupId: string,
@@ -135,7 +145,7 @@ export class AdminController {
   }
 
   @Post('groups/:groupId/members/:userId/remove')
-  @UseGuards(AdminRecentAuthGuard)
+  @UseGuards(AdminRecentAuthGuard, AdminCsrfGuard)
   removeGroupMembership(
     @Req() req: AdminRequest,
     @Param('groupId') groupId: string,
@@ -149,7 +159,7 @@ export class AdminController {
   }
 
   @Post('clients')
-  @UseGuards(AdminRecentAuthGuard)
+  @UseGuards(AdminRecentAuthGuard, AdminCsrfGuard)
   createClient(@Req() req: AdminRequest, @Body() body: AdminCreateClientInput) {
     return this.adminClientService.createClient(
       body,
@@ -158,7 +168,7 @@ export class AdminController {
   }
 
   @Post('clients/:clientRecordId')
-  @UseGuards(AdminRecentAuthGuard)
+  @UseGuards(AdminRecentAuthGuard, AdminCsrfGuard)
   updateClient(
     @Req() req: AdminRequest,
     @Param('clientRecordId') clientRecordId: string,
@@ -172,7 +182,7 @@ export class AdminController {
   }
 
   @Post('clients/:clientRecordId/status')
-  @UseGuards(AdminRecentAuthGuard)
+  @UseGuards(AdminRecentAuthGuard, AdminCsrfGuard)
   setClientStatus(
     @Req() req: AdminRequest,
     @Param('clientRecordId') clientRecordId: string,
@@ -186,7 +196,7 @@ export class AdminController {
   }
 
   @Post('clients/:clientRecordId/redirect-uris')
-  @UseGuards(AdminRecentAuthGuard)
+  @UseGuards(AdminRecentAuthGuard, AdminCsrfGuard)
   addRedirectUri(
     @Req() req: AdminRequest,
     @Param('clientRecordId') clientRecordId: string,
@@ -200,7 +210,7 @@ export class AdminController {
   }
 
   @Post('clients/:clientRecordId/redirect-uris/:redirectUriId/remove')
-  @UseGuards(AdminRecentAuthGuard)
+  @UseGuards(AdminRecentAuthGuard, AdminCsrfGuard)
   removeRedirectUri(
     @Req() req: AdminRequest,
     @Param('clientRecordId') clientRecordId: string,

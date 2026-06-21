@@ -175,7 +175,7 @@ Use these labels when updating task status.
 | 6 | OIDC Authorization | Done | Valid auth requests issue one-time authorization codes; invalid requests are rejected safely. |
 | 7 | Token Issuance And JWKS | Done | Code exchange issues verifiable ID/access tokens and UserInfo works. |
 | 8 | Refresh Tokens And Revocation | Done | Refresh rotation, replay detection, and revocation work transactionally. |
-| 9 | Security Hardening | Not Started | Negative protocol tests, rate limits, CSRF, XSS protections, and audit coverage are in place. |
+| 9 | Security Hardening | Done | Negative protocol tests, rate limits, CSRF, XSS protections, and audit coverage are in place. |
 | 10 | Operations And Deployment | Not Started | Local and production-like deployment paths exist with backups, logging, metrics, and cleanup jobs. |
 | 11 | Client Integration Readiness | Not Started | A sample internal client can complete the full Authorization Code + PKCE flow. |
 
@@ -732,16 +732,16 @@ Objective: make the provider safe enough for internal production use.
 
 | ID | Task | Status | Acceptance Criteria |
 | --- | --- | --- | --- |
-| P9-01 | Add CSRF protection to forms | Not Started | Login and admin forms reject invalid CSRF. |
+| P9-01 | Add CSRF protection to forms | Done | Login and admin forms reject invalid CSRF. |
 | P9-02 | Add strict security headers | Done | HSTS, CSP, Referrer-Policy, and nosniff are set appropriately. |
 | P9-03 | Add XSS escaping tests | Done | User/client/group strings render escaped in SSR pages. |
 | P9-04 | Add login rate limits | Done | Account and IP limits are enforced. |
 | P9-05 | Add token endpoint rate limits | Done | Abuse is slowed without leaking sensitive details. |
 | P9-06 | Add generic OAuth errors | Done | Errors do not expose secrets or internal state. |
 | P9-07 | Add secret redaction | Done | Logs redact tokens, passwords, secrets, keys, and codes. |
-| P9-08 | Add dependency audit workflow | Not Started | Dependency risk can be checked in CI. |
+| P9-08 | Add dependency audit workflow | Done | Dependency risk can be checked in CI. |
 | P9-09 | Add protocol conformance tests | Done | Unsupported flows remain rejected. |
-| P9-10 | Add migration tests | Not Started | Migrations can run from empty database in CI. |
+| P9-10 | Add migration tests | Done | Migrations can run from empty database in CI. |
 | P9-11 | Add authorization tests | Done | Admin and recent-auth guards are tested. |
 | P9-12 | Add audit coverage tests | Done | Sensitive actions produce audit events. |
 
