@@ -50,10 +50,10 @@ local wrappers and route guards.
 | ----- | ------------------------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | P3-01 | Can Better Auth run cleanly inside NestJS?              | Done   | Yes. The Better Auth runtime can be created in a Nest provider and mounted through a dedicated controller.                                                           |
 | P3-02 | Can Better Auth use PostgreSQL with the chosen adapter? | Done   | Yes. Better Auth full mode accepts a Kysely PostgreSQL dialect. It also expects its own schema footprint, which must be reconciled with Internal ID ownership rules. |
-| P3-03 | Can OAuth Provider expose OIDC discovery?               | Done   | Yes. The OIDC plugin exposes discovery metadata and allows metadata overrides.                                                                                       |
+| P3-03 | Can OAuth Provider expose OIDC discovery?               | Done   | Yes. The OAuth provider plugin exposes OIDC discovery metadata and allows advertised metadata overrides.                                                             |
 | P3-04 | Can unsupported response types be rejected?             | Done   | Wrapper validation and Internal ID `/oauth/authorize` tests reject unsupported authorize shapes before they reach Better Auth.                                       |
 | P3-05 | Can unsupported grant types be rejected?                | Done   | Wrapper validation and Internal ID `/oauth/token` tests reject unsupported token grants and block dynamic registration.                                              |
-| P3-06 | Can PKCE be required for all clients?                   | Done   | Yes, with caveat. `requirePKCE` can be set true, but `plain` must also be disabled explicitly.                                                                       |
+| P3-06 | Can PKCE be required for all clients?                   | Done   | Yes. The OAuth provider plugin defaults to PKCE for authorization-code flows and does not support `plain` challenges.                                                |
 | P3-07 | Can dynamic registration be disabled?                   | Done   | Yes, configuration can disable it, but the registration surface should still be blocked at the Internal ID boundary.                                                 |
 | P3-08 | Can refresh token rotation behavior satisfy this guide? | Done   | Internal ID owns local family/replay wrapper behavior, row-lock protected rotation, controller integration, and audit coverage.                                      |
 | P3-09 | Can claims be shaped by client policy?                  | Done   | Internal ID now constrains additional claims and filters the mounted public userinfo payload by client policy.                                                       |
@@ -61,8 +61,9 @@ local wrappers and route guards.
 
 ## Risks that remain
 
-- The published `oidc-provider` plugin is deprecated in favor of a newer OAuth
-  provider path, so upgrades may force a migration.
+- The deprecated `oidc-provider` plugin has been replaced with
+  `@better-auth/oauth-provider`, but Better Auth-managed schema changes still
+  need to be reviewed during upgrades.
 - The Better Auth OIDC route layout is mounted under `/api/auth/...`, not the
   final public `/oauth/...` contract required by Internal ID.
 - Better Auth-managed schema tables are separate from the Internal ID-owned

@@ -30,6 +30,9 @@ import { createTypeOrmOptions } from './typeorm.config';
             ),
             secret: configService.getOrThrow<string>('betterAuth.secret'),
             loginPath: configService.getOrThrow<string>('betterAuth.loginPath'),
+            consentPath: configService.getOrThrow<string>(
+              'betterAuth.consentPath',
+            ),
           },
           authentication: {
             csrfCookieName: configService.getOrThrow<string>(

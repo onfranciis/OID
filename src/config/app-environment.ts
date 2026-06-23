@@ -17,6 +17,7 @@ export interface AppEnvironment {
     cookieName: string;
     secret: string;
     loginPath: string;
+    consentPath: string;
   };
   authentication: {
     csrfCookieName: string;

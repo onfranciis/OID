@@ -1,6 +1,6 @@
 # Better Auth Ownership Decision
 
-Last updated: 2026-06-11
+Last updated: 2026-06-23
 
 This file records the current coexistence decision between Better Auth-managed
 tables and Internal ID-owned tables during the spike phase.
@@ -29,9 +29,21 @@ During the spike:
 - `account`
 - `verification`
 - `jwks`
-- `oauthApplication`
+- `oauthClient`
+- `oauthRefreshToken`
 - `oauthAccessToken`
 - `oauthConsent`
+
+After replacing the deprecated `oidc-provider` plugin with
+`@better-auth/oauth-provider`, inspection also reported:
+
+- New tables to create: `oauthClient`, `oauthRefreshToken`.
+- New fields to add to `oauthAccessToken`: `token`, `sessionId`,
+  `referenceId`, `refreshId`, `expiresAt`.
+- New field to add to `oauthConsent`: `referenceId`.
+- Existing `oauthAccessToken.scopes` and `oauthConsent.scopes` columns are
+  currently `text` in the local database, while the supported provider expects
+  `string[]`.
 
 ## Internal ID-owned schema already committed
 

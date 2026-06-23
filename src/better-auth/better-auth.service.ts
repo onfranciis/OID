@@ -36,6 +36,7 @@ export class BetterAuthService implements OnModuleDestroy {
         cookieName: configService.getOrThrow<string>('betterAuth.cookieName'),
         secret: configService.getOrThrow<string>('betterAuth.secret'),
         loginPath: configService.getOrThrow<string>('betterAuth.loginPath'),
+        consentPath: configService.getOrThrow<string>('betterAuth.consentPath'),
       },
       authentication: {
         csrfCookieName: configService.getOrThrow<string>(

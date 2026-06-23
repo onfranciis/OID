@@ -44,6 +44,7 @@ export function configuration(): AppEnvironment {
         process.env.BETTER_AUTH_SECRET ??
         'development-only-better-auth-secret-change-me',
       loginPath: process.env.BETTER_AUTH_LOGIN_PATH ?? '/login',
+      consentPath: process.env.BETTER_AUTH_CONSENT_PATH ?? '/consent',
     },
     authentication: {
       csrfCookieName:

@@ -1,28 +1,26 @@
 # Better Auth Compatibility Notes
 
-Last updated: 2026-06-11
+Last updated: 2026-06-23
 
 This file records the current compatibility findings for the open Better Auth
 spike questions around refresh-token behavior and audit-event capture.
 
 ## Refresh-token behavior
 
-Current conclusion: partial match only. Better Auth rotates refresh tokens, but
-the published `oidc-provider` implementation does not yet prove the Internal ID
-requirements around token family tracking, replay detection, or Internal
-ID-owned audit semantics.
+Current conclusion: partial match only. Better Auth rotates refresh tokens, and
+the supported `@better-auth/oauth-provider` package now stores refresh tokens in
+a dedicated `oauthRefreshToken` table. Internal ID still owns token family
+tracking, replay detection, and Internal ID-owned audit semantics.
 
 Evidence captured from the installed package:
 
-- `node_modules/better-auth/dist/plugins/oidc-provider/index.mjs` creates a new
-  `oauthAccessToken` row and returns a new refresh token when
-  `grant_type=refresh_token`.
-- The same implementation looks up the presented refresh token by exact value
-  from `oauthAccessToken.refreshToken`.
-- `node_modules/better-auth/dist/plugins/oidc-provider/schema.d.mts` shows the
-  Better Auth token table has:
-  `accessToken`, `refreshToken`, `accessTokenExpiresAt`,
-  `refreshTokenExpiresAt`, `clientId`, `userId`, `scopes`, and timestamps.
+- `node_modules/@better-auth/oauth-provider/dist/oauth-D74mBkw6.d.mts` shows
+  separate `oauthAccessToken` and `oauthRefreshToken` schema models.
+- The supported provider stores access-token values under `oauthAccessToken.token`
+  and refresh-token values under `oauthRefreshToken.token`.
+- Both token models include `clientId`, `userId`, `sessionId`, `expiresAt`,
+  `createdAt`, and `scopes`; refresh tokens also include `revoked` and
+  `authTime`.
 - The discovered Better Auth token schema does not expose Internal ID roadmap
   fields such as `family_id`, `parent_token_id`, `rotated_to_token_id`, or a
   revocation / replay marker.
@@ -30,9 +28,8 @@ Evidence captured from the installed package:
 What this means for Internal ID:
 
 - Refresh-token rotation exists, so the base capability is not missing.
-- Replay detection is not proven from the published schema or spike tests.
-- Family-wide revocation semantics are not proven from the published schema or
-  spike tests.
+- Replay detection is still Internal ID-owned.
+- Family-wide revocation semantics are still Internal ID-owned.
 - Internal ID should keep its `refresh_tokens` wrapper table until replay,
   family tracking, and audit requirements are either implemented locally or
   explicitly proven against Better Auth behavior.
@@ -50,9 +47,8 @@ Evidence captured from the installed package:
 
 - `node_modules/better-auth/dist/plugins/admin/admin.d.mts` exposes
   `databaseHooks` for `user.create.before` and `session.create.before`.
-- `node_modules/better-auth/dist/plugins/oidc-provider/index.d.mts` exposes
-  plugin `hooks.after`, which can observe endpoint traffic after Better Auth
-  route execution.
+- `@better-auth/oauth-provider` exposes the OAuth/OIDC endpoint surface, while
+  Internal ID records security-relevant events at the Nest controller boundary.
 - Internal ID now uses Better Auth `session.create.after` to emit
   `user.login.succeeded` through the local `AuditService` write boundary.
 - The installed package surface does not yet prove a complete, typed audit hook
@@ -96,9 +92,8 @@ Evidence captured in repo:
   `userinfo` payload using the current access token's client and scope context.
 - The current implementation constrains Internal ID-managed claims:
   `preferred_username`, `profile_type`, and `groups`.
-- `node_modules/better-auth/dist/plugins/oidc-provider/index.mjs` shows the
-  `userinfo` endpoint merges `baseUserClaims` with any additional claims, which
-  is why Internal ID now filters the final public `userinfo` response itself.
+- `@better-auth/oauth-provider` exposes `customUserInfoClaims`, and Internal ID
+  also filters the final public `userinfo` response itself.
 
 What this means for Internal ID:
 

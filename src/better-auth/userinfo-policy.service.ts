@@ -41,7 +41,7 @@ export class UserInfoPolicyService {
         FROM "oauthAccessToken" oat
         LEFT JOIN "oidc_clients" oc
           ON oc.client_id = oat."clientId"
-        WHERE oat."accessToken" = $1
+        WHERE oat."token" = $1
         LIMIT 1
       `,
       [accessToken],
@@ -56,10 +56,7 @@ export class UserInfoPolicyService {
 
     return {
       clientId: row.client_id,
-      scopes:
-        typeof row.scopes === 'string'
-          ? row.scopes.split(' ').filter(Boolean)
-          : [],
+      scopes: parseScopes(row.scopes),
       allowedClaims: Array.isArray(row.allowed_claims)
         ? row.allowed_claims.filter(
             (value): value is string => typeof value === 'string',
@@ -67,6 +64,18 @@ export class UserInfoPolicyService {
         : [],
     };
   }
+}
+
+function parseScopes(scopes: unknown): string[] {
+  if (Array.isArray(scopes)) {
+    return scopes.filter((value): value is string => typeof value === 'string');
+  }
+
+  if (typeof scopes === 'string') {
+    return scopes.split(' ').filter(Boolean);
+  }
+
+  return [];
 }
 
 export function filterUserInfoPayload(

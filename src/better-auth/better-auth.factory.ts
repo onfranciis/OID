@@ -1,7 +1,7 @@
 import { betterAuth } from 'better-auth';
 import type { BetterAuthOptions } from 'better-auth';
+import { oauthProvider } from '@better-auth/oauth-provider';
 import { jwt } from 'better-auth/plugins/jwt';
-import { oidcProvider } from 'better-auth/plugins/oidc-provider';
 import { Kysely, PostgresDialect } from 'kysely';
 import { Pool } from 'pg';
 import type { AuditEventRecordInput } from '../audit/audit.types';
@@ -23,6 +23,12 @@ export interface BetterAuthRuntime {
 
 export interface BetterAuthRuntimeOptions {
   recordAuditEvent?: (input: AuditEventRecordInput) => Promise<string>;
+}
+
+interface OAuthProviderJwtPayload {
+  aud?: string | string[];
+  azp?: string;
+  client_id?: string;
 }
 
 export function createBetterAuthRuntime(
@@ -67,21 +73,29 @@ export function createBetterAuthRuntime(
           expirationTime: '15m',
         },
       }),
-      oidcProvider({
-        __skipDeprecationWarning: true,
+      oauthProvider({
         loginPage: appEnvironment.betterAuth.loginPath,
+        consentPage: appEnvironment.betterAuth.consentPath,
         allowDynamicClientRegistration: false,
-        requirePKCE: true,
-        allowPlainCodeChallengeMethod: false,
-        useJWTPlugin: true,
-        defaultScope: 'openid',
         scopes: ['openid', 'profile', 'email', 'groups', 'offline_access'],
+        grantTypes: ['authorization_code', 'refresh_token'],
         accessTokenExpiresIn: 900,
         refreshTokenExpiresIn: 604800,
         codeExpiresIn: 600,
-        getAdditionalUserInfoClaim: async (user, scopes, client) =>
-          getAdditionalUserInfoClaims(db, user, scopes, client),
-        metadata: {
+        silenceWarnings: {
+          oauthAuthServerConfig: true,
+          openidConfig: true,
+        },
+        customUserInfoClaims: async ({ user, scopes, jwt: jwtPayload }) => {
+          const clientId = getJwtClientIdentifier(jwtPayload);
+
+          if (!clientId) {
+            return {};
+          }
+
+          return getAdditionalUserInfoClaims(db, user, scopes, { clientId });
+        },
+        advertisedMetadata: {
           response_types_supported: ['code'],
           grant_types_supported: ['authorization_code', 'refresh_token'],
           code_challenge_methods_supported: ['S256'],
@@ -126,4 +140,22 @@ export function createBetterAuthRuntime(
     pool,
     db,
   };
+}
+
+function getJwtClientIdentifier(
+  jwtPayload: OAuthProviderJwtPayload,
+): string | null {
+  if (typeof jwtPayload.azp === 'string') {
+    return jwtPayload.azp;
+  }
+
+  if (typeof jwtPayload.client_id === 'string') {
+    return jwtPayload.client_id;
+  }
+
+  if (typeof jwtPayload.aud === 'string') {
+    return jwtPayload.aud;
+  }
+
+  return null;
 }
