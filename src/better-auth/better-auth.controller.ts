@@ -1,6 +1,7 @@
 import { All, Controller, Get, Post, Req, Res } from '@nestjs/common';
 import type { Request, Response as ExpressResponse } from 'express';
 import { AuditService } from '../audit/audit.service';
+import { AuditEventTypes, type AuditEventType } from '../audit/audit.types';
 import { AuditSeverity } from '../database/entities/audit-event.entity';
 import { RefreshTokenService } from '../tokens/refresh-token.service';
 import { BetterAuthService } from './better-auth.service';
@@ -29,7 +30,7 @@ export class BetterAuthController {
       assertSupportedAuthorizationRequest(req.query);
     } catch (error) {
       await this.recordAuditEvent(
-        'oidc.authorize.request.rejected',
+        AuditEventTypes.OidcAuthorizeRequestRejected,
         AuditSeverity.WARNING,
         req,
         {
@@ -42,7 +43,7 @@ export class BetterAuthController {
 
     await this.betterAuthService.handle(req, res);
     await this.recordAuditEvent(
-      'oidc.authorize.request.accepted',
+      AuditEventTypes.OidcAuthorizeRequestAccepted,
       AuditSeverity.INFO,
       req,
       {
@@ -61,7 +62,7 @@ export class BetterAuthController {
       assertSupportedTokenRequest(req.body);
     } catch (error) {
       await this.recordAuditEvent(
-        'oidc.token.request.rejected',
+        AuditEventTypes.OidcTokenRequestRejected,
         AuditSeverity.WARNING,
         req,
         {
@@ -79,7 +80,7 @@ export class BetterAuthController {
 
     await sendFetchResponse(res, response);
     await this.recordAuditEvent(
-      'oidc.token.request.accepted',
+      AuditEventTypes.OidcTokenRequestAccepted,
       AuditSeverity.INFO,
       req,
       {
@@ -93,7 +94,7 @@ export class BetterAuthController {
   @All('oauth2/register')
   async blockRegister(@Req() req: Request): Promise<never> {
     await this.recordAuditEvent(
-      'client.registration.blocked',
+      AuditEventTypes.ClientRegistrationBlocked,
       AuditSeverity.WARNING,
       req,
       {
@@ -146,7 +147,7 @@ export class BetterAuthController {
   }
 
   private recordAuditEvent(
-    eventType: string,
+    eventType: AuditEventType,
     severity: AuditSeverity,
     req: Request,
     metadata: Record<string, unknown>,

@@ -7,6 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { Repository } from 'typeorm';
 import { AuditService } from '../audit/audit.service';
+import { AuditEventTypes } from '../audit/audit.types';
 import { BetterAuthService } from '../better-auth/better-auth.service';
 import { AppConfigService } from '../config/app-config.service';
 import { AuditSeverity } from '../database/entities/audit-event.entity';
@@ -142,7 +143,7 @@ export class AuthenticationService {
 
     if (authPayload.user?.id !== localUser.id) {
       await this.auditService.record({
-        eventType: 'user.login.rejected',
+        eventType: AuditEventTypes.UserLoginRejected,
         severity: AuditSeverity.CRITICAL,
         actorUserId: localUser.id,
         targetUserId: localUser.id,
@@ -167,7 +168,7 @@ export class AuthenticationService {
     });
 
     await this.auditService.record({
-      eventType: 'provider.session.issued',
+      eventType: AuditEventTypes.ProviderSessionIssued,
       severity: AuditSeverity.INFO,
       actorUserId: localUser.id,
       targetUserId: localUser.id,
@@ -206,7 +207,7 @@ export class AuthenticationService {
 
       if (revokedSession) {
         await this.auditService.record({
-          eventType: 'user.logout.succeeded',
+          eventType: AuditEventTypes.UserLogoutSucceeded,
           severity: AuditSeverity.INFO,
           actorUserId: revokedSession.userId,
           targetUserId: revokedSession.userId,
@@ -244,7 +245,7 @@ export class AuthenticationService {
     this.rateLimitService.recordFailure(context.ipAddress, normalizedEmail);
 
     await this.auditService.record({
-      eventType: 'user.login.rejected',
+      eventType: AuditEventTypes.UserLoginRejected,
       severity: AuditSeverity.WARNING,
       targetUserId,
       ipAddress: context.ipAddress,

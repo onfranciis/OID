@@ -9,6 +9,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import { Repository } from 'typeorm';
 import { monotonicFactory } from 'ulid';
 import { AuditService } from '../audit/audit.service';
+import { AuditEventTypes, type AuditEventType } from '../audit/audit.types';
 import { AuditSeverity } from '../database/entities/audit-event.entity';
 import {
   OidcClientEntity,
@@ -109,7 +110,7 @@ export class AdminClientService {
     const savedClient = await this.clientRepository.save(client);
 
     await this.auditClientMutation(
-      'admin.client.created',
+      AuditEventTypes.AdminClientCreated,
       savedClient,
       context,
       {
@@ -192,7 +193,7 @@ export class AdminClientService {
     const savedClient = await this.clientRepository.save(client);
 
     await this.auditClientMutation(
-      'admin.client.updated',
+      AuditEventTypes.AdminClientUpdated,
       savedClient,
       context,
       {
@@ -221,7 +222,7 @@ export class AdminClientService {
     const savedClient = await this.clientRepository.save(client);
 
     await this.auditClientMutation(
-      'admin.client.status_changed',
+      AuditEventTypes.AdminClientStatusChanged,
       savedClient,
       context,
       {
@@ -251,7 +252,7 @@ export class AdminClientService {
     const savedClient = await this.clientRepository.save(client);
 
     await this.auditClientMutation(
-      'client.secret.rotated',
+      AuditEventTypes.ClientSecretRotated,
       savedClient,
       context,
       {
@@ -293,7 +294,7 @@ export class AdminClientService {
     const savedRedirectUri = await this.redirectUriRepository.save(redirectUri);
 
     await this.auditClientMutation(
-      'admin.client.redirect_uri_added',
+      AuditEventTypes.AdminClientRedirectUriAdded,
       client,
       context,
       {
@@ -325,7 +326,7 @@ export class AdminClientService {
 
     await this.redirectUriRepository.remove(redirectUri);
     await this.auditClientMutation(
-      'admin.client.redirect_uri_removed',
+      AuditEventTypes.AdminClientRedirectUriRemoved,
       client,
       context,
       {
@@ -365,7 +366,7 @@ export class AdminClientService {
   }
 
   private auditClientMutation(
-    eventType: string,
+    eventType: AuditEventType,
     client: OidcClientEntity,
     context: AdminMutationContext,
     metadata: Record<string, unknown>,

@@ -8,6 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { monotonicFactory } from 'ulid';
 import { IsNull, Repository } from 'typeorm';
 import { AuditService } from '../audit/audit.service';
+import { AuditEventTypes, type AuditEventType } from '../audit/audit.types';
 import { AuditSeverity } from '../database/entities/audit-event.entity';
 import { OidcProviderSessionEntity } from '../database/entities/oidc-provider-session.entity';
 import { OidcRefreshTokenEntity } from '../database/entities/oidc-refresh-token.entity';
@@ -87,11 +88,16 @@ export class AdminUserService {
     });
     const savedUser = await this.userRepository.save(user);
 
-    await this.auditAdminMutation('admin.user.created', savedUser, context, {
-      normalizedEmail,
-      profileType: savedUser.profileType,
-      status: savedUser.status,
-    });
+    await this.auditAdminMutation(
+      AuditEventTypes.AdminUserCreated,
+      savedUser,
+      context,
+      {
+        normalizedEmail,
+        profileType: savedUser.profileType,
+        status: savedUser.status,
+      },
+    );
 
     return savedUser;
   }
@@ -145,11 +151,16 @@ export class AdminUserService {
 
     const savedUser = await this.userRepository.save(user);
 
-    await this.auditAdminMutation('admin.user.updated', savedUser, context, {
-      normalizedEmail: savedUser.normalizedEmail,
-      normalizedUsername: savedUser.normalizedUsername,
-      profileType: savedUser.profileType,
-    });
+    await this.auditAdminMutation(
+      AuditEventTypes.AdminUserUpdated,
+      savedUser,
+      context,
+      {
+        normalizedEmail: savedUser.normalizedEmail,
+        normalizedUsername: savedUser.normalizedUsername,
+        profileType: savedUser.profileType,
+      },
+    );
 
     return savedUser;
   }
@@ -172,7 +183,7 @@ export class AdminUserService {
         : {};
 
     await this.auditAdminMutation(
-      'admin.user.status_changed',
+      AuditEventTypes.AdminUserStatusChanged,
       savedUser,
       context,
       {
@@ -237,7 +248,7 @@ export class AdminUserService {
   }
 
   private auditAdminMutation(
-    eventType: string,
+    eventType: AuditEventType,
     targetUser: UserEntity,
     context: AdminMutationContext,
     metadata: Record<string, unknown>,

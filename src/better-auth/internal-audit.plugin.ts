@@ -1,5 +1,8 @@
 import { AuditSeverity } from '../database/entities/audit-event.entity';
-import type { AuditEventRecordInput } from '../audit/audit.types';
+import {
+  AuditEventTypes,
+  type AuditEventRecordInput,
+} from '../audit/audit.types';
 
 export interface InternalAuditPluginOptions {
   recordAuditEvent: (input: AuditEventRecordInput) => Promise<string>;
@@ -60,7 +63,7 @@ export function createInternalAuditPlugin(
                   }
 
                   await options.recordAuditEvent({
-                    eventType: 'user.login.succeeded',
+                    eventType: AuditEventTypes.UserLoginSucceeded,
                     severity: AuditSeverity.INFO,
                     actorUserId: session.userId,
                     ipAddress: session.ipAddress ?? null,

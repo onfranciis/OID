@@ -17,6 +17,7 @@ import {
 import { DataSource, Repository } from 'typeorm';
 import { monotonicFactory } from 'ulid';
 import { AuditService } from '../audit/audit.service';
+import { AuditEventTypes } from '../audit/audit.types';
 import { AppConfigService } from '../config/app-config.service';
 import { AuditSeverity } from '../database/entities/audit-event.entity';
 import { OidcAuthorizationCodeEntity } from '../database/entities/oidc-authorization-code.entity';
@@ -219,7 +220,7 @@ export class OidcTokenService {
         : null;
 
       await this.auditService.record({
-        eventType: 'oidc.token.issued',
+        eventType: AuditEventTypes.OidcTokenIssued,
         severity: AuditSeverity.INFO,
         actorUserId: user.id,
         targetUserId: user.id,

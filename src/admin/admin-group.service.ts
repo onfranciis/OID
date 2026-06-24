@@ -8,6 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { monotonicFactory } from 'ulid';
 import { Repository } from 'typeorm';
 import { AuditService } from '../audit/audit.service';
+import { AuditEventTypes, type AuditEventType } from '../audit/audit.types';
 import { AuditSeverity } from '../database/entities/audit-event.entity';
 import { GroupMembershipEntity } from '../database/entities/group-membership.entity';
 import { GroupEntity } from '../database/entities/group.entity';
@@ -59,9 +60,14 @@ export class AdminGroupService {
     });
     const savedGroup = await this.groupRepository.save(group);
 
-    await this.auditGroupMutation('admin.group.created', savedGroup, context, {
-      slug: savedGroup.slug,
-    });
+    await this.auditGroupMutation(
+      AuditEventTypes.AdminGroupCreated,
+      savedGroup,
+      context,
+      {
+        slug: savedGroup.slug,
+      },
+    );
 
     return savedGroup;
   }
@@ -93,9 +99,14 @@ export class AdminGroupService {
 
     const savedGroup = await this.groupRepository.save(group);
 
-    await this.auditGroupMutation('admin.group.updated', savedGroup, context, {
-      slug: savedGroup.slug,
-    });
+    await this.auditGroupMutation(
+      AuditEventTypes.AdminGroupUpdated,
+      savedGroup,
+      context,
+      {
+        slug: savedGroup.slug,
+      },
+    );
 
     return savedGroup;
   }
@@ -127,7 +138,7 @@ export class AdminGroupService {
     const savedMembership = await this.membershipRepository.save(membership);
 
     await this.auditGroupMutation(
-      'admin.group.membership_added',
+      AuditEventTypes.AdminGroupMembershipAdded,
       group,
       context,
       {
@@ -158,7 +169,7 @@ export class AdminGroupService {
 
     await this.membershipRepository.remove(membership);
     await this.auditGroupMutation(
-      'admin.group.membership_removed',
+      AuditEventTypes.AdminGroupMembershipRemoved,
       group,
       context,
       {
@@ -207,7 +218,7 @@ export class AdminGroupService {
   }
 
   private auditGroupMutation(
-    eventType: string,
+    eventType: AuditEventType,
     group: GroupEntity,
     context: AdminMutationContext,
     metadata: Record<string, unknown>,

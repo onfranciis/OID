@@ -15,6 +15,7 @@ import {
 import { ulid } from 'ulid';
 import { DataSource, Repository } from 'typeorm';
 import { AuditService } from '../audit/audit.service';
+import { AuditEventTypes } from '../audit/audit.types';
 import { AppConfigService } from '../config/app-config.service';
 import { AuditSeverity } from '../database/entities/audit-event.entity';
 import {
@@ -111,7 +112,7 @@ export class RefreshTokenService {
 
       await manager.save(entity);
       await this.auditService.record({
-        eventType: 'oidc.refresh_token.rotated',
+        eventType: AuditEventTypes.OidcRefreshTokenRotated,
         severity: AuditSeverity.INFO,
         actorUserId: input.userId,
         clientId: input.clientId,
@@ -160,7 +161,7 @@ export class RefreshTokenService {
           'replay_detected',
         );
         await this.auditService.record({
-          eventType: 'oidc.refresh_token.replay_detected',
+          eventType: AuditEventTypes.OidcRefreshTokenReplayDetected,
           severity: AuditSeverity.CRITICAL,
           actorUserId: currentToken.userId,
           clientId: currentToken.clientId,
@@ -226,7 +227,7 @@ export class RefreshTokenService {
           'replay_detected',
         );
         await this.auditService.record({
-          eventType: 'oidc.refresh_token.replay_detected',
+          eventType: AuditEventTypes.OidcRefreshTokenReplayDetected,
           severity: AuditSeverity.CRITICAL,
           actorUserId: currentToken.userId,
           clientId: currentToken.clientId,
@@ -276,7 +277,7 @@ export class RefreshTokenService {
       await repository.save(successor);
       await repository.save(currentToken);
       await this.auditService.record({
-        eventType: 'oidc.refresh_token.rotated',
+        eventType: AuditEventTypes.OidcRefreshTokenRotated,
         severity: AuditSeverity.INFO,
         actorUserId: currentToken.userId,
         clientId: currentToken.clientId,
@@ -325,7 +326,7 @@ export class RefreshTokenService {
           'replay_detected',
         );
         await this.auditService.record({
-          eventType: 'oidc.refresh_token.replay_detected',
+          eventType: AuditEventTypes.OidcRefreshTokenReplayDetected,
           severity: AuditSeverity.CRITICAL,
           actorUserId: currentToken.userId,
           clientId: currentToken.clientId,
@@ -403,7 +404,7 @@ export class RefreshTokenService {
       await repository.save(successor);
       await repository.save(currentToken);
       await this.auditService.record({
-        eventType: 'oidc.refresh_token.rotated',
+        eventType: AuditEventTypes.OidcRefreshTokenRotated,
         severity: AuditSeverity.INFO,
         actorUserId: currentToken.userId,
         clientId: currentToken.clientId,
@@ -454,7 +455,7 @@ export class RefreshTokenService {
       }
 
       await this.auditService.record({
-        eventType: 'oidc.refresh_token.revoked',
+        eventType: AuditEventTypes.OidcRefreshTokenRevoked,
         severity: AuditSeverity.INFO,
         actorUserId: sampleToken.userId,
         clientId: sampleToken.clientId,
@@ -495,7 +496,7 @@ export class RefreshTokenService {
       );
 
       await this.auditService.record({
-        eventType: 'oidc.refresh_token.revoked',
+        eventType: AuditEventTypes.OidcRefreshTokenRevoked,
         severity: AuditSeverity.INFO,
         actorUserId: token.userId,
         clientId: token.clientId,

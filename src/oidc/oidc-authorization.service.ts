@@ -8,6 +8,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import { Repository } from 'typeorm';
 import { monotonicFactory } from 'ulid';
 import { AuditService } from '../audit/audit.service';
+import { AuditEventTypes } from '../audit/audit.types';
 import { AppConfigService } from '../config/app-config.service';
 import { AuditSeverity } from '../database/entities/audit-event.entity';
 import {
@@ -167,7 +168,7 @@ export class OidcAuthorizationService {
       await this.authorizationCodeRepository.save(authorizationCode);
 
     await this.auditService.record({
-      eventType: 'oidc.authorization_code.issued',
+      eventType: AuditEventTypes.OidcAuthorizationCodeIssued,
       severity: AuditSeverity.INFO,
       actorUserId: user.id,
       targetUserId: user.id,
