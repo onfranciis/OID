@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuditModule } from '../audit/audit.module';
+import { AppConfigModule } from '../config/app-config.module';
 import { OidcAuthorizationCodeEntity } from '../database/entities/oidc-authorization-code.entity';
 import { OidcClientEntity } from '../database/entities/oidc-client.entity';
 import { OidcProviderSessionEntity } from '../database/entities/oidc-provider-session.entity';
@@ -16,7 +16,7 @@ import { TokenRateLimitService } from './token-rate-limit.service';
 
 @Module({
   imports: [
-    ConfigModule,
+    AppConfigModule,
     AuditModule,
     TokensModule,
     TypeOrmModule.forFeature([

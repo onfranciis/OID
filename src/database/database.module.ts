@@ -1,11 +1,13 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AppConfigModule } from '../config/app-config.module';
 import { AppConfigService } from '../config/app-config.service';
 import { createTypeOrmOptions } from './typeorm.config';
 
 @Module({
   imports: [
     TypeOrmModule.forRootAsync({
+      imports: [AppConfigModule],
       inject: [AppConfigService],
       useFactory: (configService: AppConfigService) =>
         createTypeOrmOptions({
