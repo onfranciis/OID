@@ -1,9 +1,9 @@
 import { ForbiddenException, UnauthorizedException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { createHash } from 'node:crypto';
-import { AdminAccessService } from './admin-access.service';
+import { AppConfigService } from '../config/app-config.service';
 import { UserStatus } from '../database/entities/user.entity';
+import { AdminAccessService } from './admin-access.service';
 
 describe('AdminAccessService', () => {
   const now = new Date('2026-06-21T12:00:00.000Z');
@@ -13,8 +13,8 @@ describe('AdminAccessService', () => {
   const findProviderSession = vi.fn();
   const service = new AdminAccessService(
     {
-      getOrThrow: vi.fn(() => 'internal-id-admins'),
-    } as unknown as ConfigService,
+      get: vi.fn(() => 'internal-id-admins'),
+    } as unknown as AppConfigService,
     { findOne: findUser } as never,
     { findOne: findGroup } as never,
     { findOne: findMembership } as never,

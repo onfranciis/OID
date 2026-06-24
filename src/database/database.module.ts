@@ -1,102 +1,76 @@
 import { Module } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import type { AppEnvironment } from '../config/app-environment';
+import { AppConfigService } from '../config/app-config.service';
 import { createTypeOrmOptions } from './typeorm.config';
 
 @Module({
   imports: [
     TypeOrmModule.forRootAsync({
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) =>
+      inject: [AppConfigService],
+      useFactory: (configService: AppConfigService) =>
         createTypeOrmOptions({
           app: {
-            name: configService.getOrThrow<string>('app.name'),
-            env: configService.getOrThrow<AppEnvironment['app']['env']>(
-              'app.env',
-            ),
-            host: configService.getOrThrow<string>('app.host'),
-            port: configService.getOrThrow<number>('app.port'),
-            baseUrl: configService.getOrThrow<string>('app.baseUrl'),
+            name: configService.get('app.name'),
+            env: configService.get('app.env'),
+            host: configService.get('app.host'),
+            port: configService.get('app.port'),
+            baseUrl: configService.get('app.baseUrl'),
           },
           database: {
-            url: configService.getOrThrow<string>('database.url'),
-            logging: configService.get<boolean>('database.logging') ?? false,
+            url: configService.get('database.url'),
+            logging: configService.get('database.logging'),
           },
           betterAuth: {
-            basePath: configService.getOrThrow<string>('betterAuth.basePath'),
-            cookieName: configService.getOrThrow<string>(
-              'betterAuth.cookieName',
-            ),
-            secret: configService.getOrThrow<string>('betterAuth.secret'),
-            loginPath: configService.getOrThrow<string>('betterAuth.loginPath'),
-            consentPath: configService.getOrThrow<string>(
-              'betterAuth.consentPath',
-            ),
+            basePath: configService.get('betterAuth.basePath'),
+            cookieName: configService.get('betterAuth.cookieName'),
+            secret: configService.get('betterAuth.secret'),
+            loginPath: configService.get('betterAuth.loginPath'),
+            consentPath: configService.get('betterAuth.consentPath'),
           },
           authentication: {
-            csrfCookieName: configService.getOrThrow<string>(
-              'authentication.csrfCookieName',
-            ),
-            providerSessionCookieName: configService.getOrThrow<string>(
+            csrfCookieName: configService.get('authentication.csrfCookieName'),
+            providerSessionCookieName: configService.get(
               'authentication.providerSessionCookieName',
             ),
-            providerSessionIdleTtlSeconds: configService.getOrThrow<number>(
+            providerSessionIdleTtlSeconds: configService.get(
               'authentication.providerSessionIdleTtlSeconds',
             ),
-            providerSessionAbsoluteTtlSeconds: configService.getOrThrow<number>(
+            providerSessionAbsoluteTtlSeconds: configService.get(
               'authentication.providerSessionAbsoluteTtlSeconds',
             ),
-            adminRecentAuthWindowSeconds: configService.getOrThrow<number>(
+            adminRecentAuthWindowSeconds: configService.get(
               'authentication.adminRecentAuthWindowSeconds',
             ),
-            loginRateLimitWindowSeconds: configService.getOrThrow<number>(
+            loginRateLimitWindowSeconds: configService.get(
               'authentication.loginRateLimitWindowSeconds',
             ),
-            loginRateLimitIpMaxAttempts: configService.getOrThrow<number>(
+            loginRateLimitIpMaxAttempts: configService.get(
               'authentication.loginRateLimitIpMaxAttempts',
             ),
-            loginRateLimitAccountMaxAttempts: configService.getOrThrow<number>(
+            loginRateLimitAccountMaxAttempts: configService.get(
               'authentication.loginRateLimitAccountMaxAttempts',
             ),
-            tokenRateLimitWindowSeconds: configService.getOrThrow<number>(
+            tokenRateLimitWindowSeconds: configService.get(
               'authentication.tokenRateLimitWindowSeconds',
             ),
-            tokenRateLimitIpMaxAttempts: configService.getOrThrow<number>(
+            tokenRateLimitIpMaxAttempts: configService.get(
               'authentication.tokenRateLimitIpMaxAttempts',
             ),
           },
           bootstrap: {
-            adminEmail: configService.getOrThrow<string>(
-              'bootstrap.adminEmail',
-            ),
-            adminDisplayName: configService.getOrThrow<string>(
-              'bootstrap.adminDisplayName',
-            ),
-            adminGivenName:
-              configService.get<string>('bootstrap.adminGivenName') ?? null,
-            adminFamilyName:
-              configService.get<string>('bootstrap.adminFamilyName') ?? null,
-            adminUsername:
-              configService.get<string>('bootstrap.adminUsername') ?? null,
-            adminPassword:
-              configService.get<string>('bootstrap.adminPassword') ?? null,
-            adminGroupSlug: configService.getOrThrow<string>(
-              'bootstrap.adminGroupSlug',
-            ),
-            adminGroupName: configService.getOrThrow<string>(
-              'bootstrap.adminGroupName',
-            ),
-            clientId: configService.getOrThrow<string>('bootstrap.clientId'),
-            clientName: configService.getOrThrow<string>(
-              'bootstrap.clientName',
-            ),
-            clientSecret:
-              configService.get<string>('bootstrap.clientSecret') ?? null,
-            clientRedirectUri: configService.getOrThrow<string>(
-              'bootstrap.clientRedirectUri',
-            ),
-            clientPostLogoutRedirectUri: configService.getOrThrow<string>(
+            adminEmail: configService.get('bootstrap.adminEmail'),
+            adminDisplayName: configService.get('bootstrap.adminDisplayName'),
+            adminGivenName: configService.get('bootstrap.adminGivenName'),
+            adminFamilyName: configService.get('bootstrap.adminFamilyName'),
+            adminUsername: configService.get('bootstrap.adminUsername'),
+            adminPassword: configService.get('bootstrap.adminPassword'),
+            adminGroupSlug: configService.get('bootstrap.adminGroupSlug'),
+            adminGroupName: configService.get('bootstrap.adminGroupName'),
+            clientId: configService.get('bootstrap.clientId'),
+            clientName: configService.get('bootstrap.clientName'),
+            clientSecret: configService.get('bootstrap.clientSecret'),
+            clientRedirectUri: configService.get('bootstrap.clientRedirectUri'),
+            clientPostLogoutRedirectUri: configService.get(
               'bootstrap.clientPostLogoutRedirectUri',
             ),
           },

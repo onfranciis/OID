@@ -4,8 +4,8 @@ import {
   ForbiddenException,
   Injectable,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import type { Request } from 'express';
+import { AppConfigService } from '../config/app-config.service';
 import type { AdminPrincipal } from './admin-access.service';
 
 interface AdminRequest extends Request {
@@ -16,8 +16,8 @@ interface AdminRequest extends Request {
 export class AdminRecentAuthGuard implements CanActivate {
   private readonly recentAuthWindowSeconds: number;
 
-  constructor(configService: ConfigService) {
-    this.recentAuthWindowSeconds = configService.getOrThrow<number>(
+  constructor(configService: AppConfigService) {
+    this.recentAuthWindowSeconds = configService.get(
       'authentication.adminRecentAuthWindowSeconds',
     );
   }

@@ -1,5 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { AppConfigService } from '../config/app-config.service';
 
 interface RateLimitBucket {
   count: number;
@@ -12,12 +12,10 @@ export class TokenRateLimitService {
   private readonly windowMs: number;
   private readonly ipMaxAttempts: number;
 
-  constructor(configService: ConfigService) {
+  constructor(configService: AppConfigService) {
     this.windowMs =
-      configService.getOrThrow<number>(
-        'authentication.tokenRateLimitWindowSeconds',
-      ) * 1000;
-    this.ipMaxAttempts = configService.getOrThrow<number>(
+      configService.get('authentication.tokenRateLimitWindowSeconds') * 1000;
+    this.ipMaxAttempts = configService.get(
       'authentication.tokenRateLimitIpMaxAttempts',
     );
   }

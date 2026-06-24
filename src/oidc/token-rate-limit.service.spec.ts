@@ -1,6 +1,6 @@
 import { HttpException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { AppConfigService } from '../config/app-config.service';
 import { TokenRateLimitService } from './token-rate-limit.service';
 
 describe('TokenRateLimitService', () => {
@@ -10,7 +10,7 @@ describe('TokenRateLimitService', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-06-21T12:00:00.000Z'));
     service = new TokenRateLimitService({
-      getOrThrow: vi.fn((key: string) => {
+      get: vi.fn((key: string) => {
         if (key === 'authentication.tokenRateLimitWindowSeconds') {
           return 60;
         }
@@ -21,7 +21,7 @@ describe('TokenRateLimitService', () => {
 
         throw new Error(`Unexpected config key: ${key}`);
       }),
-    } as unknown as ConfigService);
+    } as unknown as AppConfigService);
   });
 
   it('allows requests under the IP limit', () => {

@@ -1,7 +1,7 @@
 import { BadRequestException, UnauthorizedException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { createHash } from 'node:crypto';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { AppConfigService } from '../config/app-config.service';
 import { AuditSeverity } from '../database/entities/audit-event.entity';
 import {
   OidcClientStatus,
@@ -92,7 +92,7 @@ describe('OidcTokenService', () => {
   const revokePresentedToken = vi.fn(() => Promise.resolve());
   const service = new OidcTokenService(
     {
-      getOrThrow: vi.fn((key: string) => {
+      get: vi.fn((key: string) => {
         if (key === 'app.baseUrl') {
           return 'https://auth.company.com';
         }
@@ -103,7 +103,7 @@ describe('OidcTokenService', () => {
 
         throw new Error(`Unexpected config key: ${key}`);
       }),
-    } as unknown as ConfigService,
+    } as unknown as AppConfigService,
     dataSource as never,
     signingRepository as never,
     topLevelUserRepository as never,

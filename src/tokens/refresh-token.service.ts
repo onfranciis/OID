@@ -13,9 +13,9 @@ import {
   randomBytes,
 } from 'node:crypto';
 import { ulid } from 'ulid';
-import { ConfigService } from '@nestjs/config';
 import { DataSource, Repository } from 'typeorm';
 import { AuditService } from '../audit/audit.service';
+import { AppConfigService } from '../config/app-config.service';
 import { AuditSeverity } from '../database/entities/audit-event.entity';
 import {
   OidcClientEntity,
@@ -45,7 +45,7 @@ export class RefreshTokenService {
     @InjectDataSource()
     private readonly dataSource: DataSource,
     private readonly auditService: AuditService,
-    private readonly configService: ConfigService,
+    private readonly configService: AppConfigService,
   ) {}
 
   async issueTokenForClient(
@@ -542,7 +542,7 @@ export class RefreshTokenService {
   private encryptUpstreamRefreshToken(refreshToken: string): string {
     const iv = randomBytes(12);
     const key = createHash('sha256')
-      .update(this.configService.getOrThrow<string>('betterAuth.secret'))
+      .update(this.configService.get('betterAuth.secret'))
       .digest();
     const cipher = createCipheriv('aes-256-gcm', key, iv);
     const ciphertext = Buffer.concat([
@@ -566,7 +566,7 @@ export class RefreshTokenService {
     }
 
     const key = createHash('sha256')
-      .update(this.configService.getOrThrow<string>('betterAuth.secret'))
+      .update(this.configService.get('betterAuth.secret'))
       .digest();
     const decipher = createDecipheriv(
       'aes-256-gcm',

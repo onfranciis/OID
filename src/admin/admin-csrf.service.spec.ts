@@ -1,11 +1,11 @@
 import { ForbiddenException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { describe, expect, it, vi } from 'vitest';
+import { AppConfigService } from '../config/app-config.service';
 import { AdminCsrfService } from './admin-csrf.service';
 
 describe('AdminCsrfService', () => {
   const service = new AdminCsrfService({
-    getOrThrow: vi.fn((key: string) => {
+    get: vi.fn((key: string) => {
       if (key === 'authentication.csrfCookieName') {
         return 'internal_id_login_csrf';
       }
@@ -16,7 +16,7 @@ describe('AdminCsrfService', () => {
 
       throw new Error(`Unexpected config key: ${key}`);
     }),
-  } as unknown as ConfigService);
+  } as unknown as AppConfigService);
 
   it('generates verifiable CSRF tokens and scoped cookie headers', () => {
     const token = service.generateToken();

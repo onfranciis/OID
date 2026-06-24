@@ -1,5 +1,5 @@
-import { ConfigService } from '@nestjs/config';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { AppConfigService } from '../config/app-config.service';
 import { OidcController } from './oidc.controller';
 import type { OidcAuthorizationService } from './oidc-authorization.service';
 import type { OidcTokenService } from './oidc-token.service';
@@ -14,7 +14,7 @@ describe('OidcController', () => {
   const assertAllowed = vi.fn();
   const controller = new OidcController(
     {
-      getOrThrow: vi.fn((key: string) => {
+      get: vi.fn((key: string) => {
         if (key === 'app.baseUrl') {
           return 'https://auth.company.com';
         }
@@ -25,7 +25,7 @@ describe('OidcController', () => {
 
         throw new Error(`Unexpected config key: ${key}`);
       }),
-    } as unknown as ConfigService,
+    } as unknown as AppConfigService,
     {
       authorize,
     } as never,

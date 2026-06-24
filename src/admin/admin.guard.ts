@@ -1,6 +1,6 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import type { Request } from 'express';
+import { AppConfigService } from '../config/app-config.service';
 import {
   AdminAccessService,
   type AdminPrincipal,
@@ -15,10 +15,10 @@ export class AdminGuard implements CanActivate {
   private readonly providerSessionCookieName: string;
 
   constructor(
-    configService: ConfigService,
+    configService: AppConfigService,
     private readonly adminAccessService: AdminAccessService,
   ) {
-    this.providerSessionCookieName = configService.getOrThrow<string>(
+    this.providerSessionCookieName = configService.get(
       'authentication.providerSessionCookieName',
     );
   }

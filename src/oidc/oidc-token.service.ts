@@ -3,7 +3,6 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import {
   createCipheriv,
@@ -18,6 +17,7 @@ import {
 import { DataSource, Repository } from 'typeorm';
 import { monotonicFactory } from 'ulid';
 import { AuditService } from '../audit/audit.service';
+import { AppConfigService } from '../config/app-config.service';
 import { AuditSeverity } from '../database/entities/audit-event.entity';
 import { OidcAuthorizationCodeEntity } from '../database/entities/oidc-authorization-code.entity';
 import {
@@ -71,7 +71,7 @@ export class OidcTokenService {
   private readonly signingSecret: string;
 
   constructor(
-    configService: ConfigService,
+    configService: AppConfigService,
     @InjectDataSource()
     private readonly dataSource: DataSource,
     @InjectRepository(SigningKeyEntity)
@@ -83,8 +83,8 @@ export class OidcTokenService {
     private readonly auditService: AuditService,
     private readonly refreshTokenService: RefreshTokenService,
   ) {
-    this.issuer = configService.getOrThrow<string>('app.baseUrl');
-    this.signingSecret = configService.getOrThrow<string>('betterAuth.secret');
+    this.issuer = configService.get('app.baseUrl');
+    this.signingSecret = configService.get('betterAuth.secret');
   }
 
   async jwks(): Promise<{ keys: Record<string, unknown>[] }> {

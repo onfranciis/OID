@@ -1,23 +1,23 @@
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { AppConfigService } from '../config/app-config.service';
 
 @Injectable()
 export class BetterAuthConfigService {
-  constructor(private readonly configService: ConfigService) {}
+  constructor(private readonly configService: AppConfigService) {}
 
   get basePath(): string {
-    return this.configService.getOrThrow<string>('betterAuth.basePath');
+    return this.configService.get('betterAuth.basePath');
   }
 
   get cookieName(): string {
-    return this.configService.getOrThrow<string>('betterAuth.cookieName');
+    return this.configService.get('betterAuth.cookieName');
   }
 
   get secret(): string {
-    return this.configService.getOrThrow<string>('betterAuth.secret');
+    return this.configService.get('betterAuth.secret');
   }
 
   get loginPath(): string {
-    return this.configService.getOrThrow<string>('betterAuth.loginPath');
+    return this.configService.get('betterAuth.loginPath');
   }
 }

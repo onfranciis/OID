@@ -1,12 +1,12 @@
 import { ForbiddenException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { AppConfigService } from '../config/app-config.service';
 import { AdminRecentAuthGuard } from './admin-recent-auth.guard';
 
 describe('AdminRecentAuthGuard', () => {
   const guard = new AdminRecentAuthGuard({
-    getOrThrow: vi.fn(() => 600),
-  } as unknown as ConfigService);
+    get: vi.fn(() => 600),
+  } as unknown as AppConfigService);
 
   beforeEach(() => {
     vi.useFakeTimers();

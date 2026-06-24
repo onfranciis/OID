@@ -1,17 +1,15 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
+import { AppConfigService } from '../config/app-config.service';
 
 @Injectable()
 export class AdminCsrfService {
   private readonly cookieName: string;
   private readonly csrfSecret: string;
 
-  constructor(configService: ConfigService) {
-    this.cookieName = configService.getOrThrow<string>(
-      'authentication.csrfCookieName',
-    );
-    this.csrfSecret = configService.getOrThrow<string>('betterAuth.secret');
+  constructor(configService: AppConfigService) {
+    this.cookieName = configService.get('authentication.csrfCookieName');
+    this.csrfSecret = configService.get('betterAuth.secret');
   }
 
   generateToken(): string {

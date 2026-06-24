@@ -3,10 +3,10 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { createHash } from 'node:crypto';
 import { Repository } from 'typeorm';
+import { AppConfigService } from '../config/app-config.service';
 import { GroupEntity } from '../database/entities/group.entity';
 import { GroupMembershipEntity } from '../database/entities/group-membership.entity';
 import { OidcProviderSessionEntity } from '../database/entities/oidc-provider-session.entity';
@@ -27,7 +27,7 @@ export class AdminAccessService {
   private readonly adminGroupSlug: string;
 
   constructor(
-    configService: ConfigService,
+    configService: AppConfigService,
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
     @InjectRepository(GroupEntity)
@@ -37,9 +37,7 @@ export class AdminAccessService {
     @InjectRepository(OidcProviderSessionEntity)
     private readonly providerSessionRepository: Repository<OidcProviderSessionEntity>,
   ) {
-    this.adminGroupSlug = configService.getOrThrow<string>(
-      'bootstrap.adminGroupSlug',
-    );
+    this.adminGroupSlug = configService.get('bootstrap.adminGroupSlug');
   }
 
   async requireAdminAccess(

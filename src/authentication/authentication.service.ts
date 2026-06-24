@@ -3,12 +3,12 @@ import {
   ForbiddenException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { Repository } from 'typeorm';
 import { AuditService } from '../audit/audit.service';
 import { BetterAuthService } from '../better-auth/better-auth.service';
+import { AppConfigService } from '../config/app-config.service';
 import { AuditSeverity } from '../database/entities/audit-event.entity';
 import { UserEntity, UserStatus } from '../database/entities/user.entity';
 import { LoginPageService } from './login-page.service';
@@ -52,7 +52,7 @@ export class AuthenticationService {
   private readonly absoluteTtlSeconds: number;
 
   constructor(
-    configService: ConfigService,
+    configService: AppConfigService,
     private readonly loginPageService: LoginPageService,
     private readonly betterAuthService: BetterAuthService,
     private readonly auditService: AuditService,
@@ -61,11 +61,9 @@ export class AuthenticationService {
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
   ) {
-    this.csrfCookieName = configService.getOrThrow<string>(
-      'authentication.csrfCookieName',
-    );
-    this.csrfSecret = configService.getOrThrow<string>('betterAuth.secret');
-    this.absoluteTtlSeconds = configService.getOrThrow<number>(
+    this.csrfCookieName = configService.get('authentication.csrfCookieName');
+    this.csrfSecret = configService.get('betterAuth.secret');
+    this.absoluteTtlSeconds = configService.get(
       'authentication.providerSessionAbsoluteTtlSeconds',
     );
   }

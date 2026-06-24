@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { randomBytes, createHash } from 'node:crypto';
 import { monotonicFactory } from 'ulid';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
+import { AppConfigService } from '../config/app-config.service';
 import { OidcProviderSessionEntity } from '../database/entities/oidc-provider-session.entity';
 
 const nextUlid = monotonicFactory();
@@ -35,17 +35,17 @@ export class ProviderSessionService {
   private readonly cookieName: string;
 
   constructor(
-    configService: ConfigService,
+    configService: AppConfigService,
     @InjectRepository(OidcProviderSessionEntity)
     private readonly sessionRepository: Repository<OidcProviderSessionEntity>,
   ) {
-    this.idleTtlSeconds = configService.getOrThrow<number>(
+    this.idleTtlSeconds = configService.get(
       'authentication.providerSessionIdleTtlSeconds',
     );
-    this.absoluteTtlSeconds = configService.getOrThrow<number>(
+    this.absoluteTtlSeconds = configService.get(
       'authentication.providerSessionAbsoluteTtlSeconds',
     );
-    this.cookieName = configService.getOrThrow<string>(
+    this.cookieName = configService.get(
       'authentication.providerSessionCookieName',
     );
   }

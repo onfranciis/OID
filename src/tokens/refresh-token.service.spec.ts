@@ -26,7 +26,7 @@ describe('RefreshTokenService', () => {
         record: auditRecord,
       } as never,
       {
-        getOrThrow: () => 'test-better-auth-secret',
+        get: () => 'test-better-auth-secret',
       } as never,
     );
 
@@ -74,7 +74,7 @@ describe('RefreshTokenService', () => {
         record: auditRecord,
       } as never,
       {
-        getOrThrow: () => 'test-better-auth-secret',
+        get: () => 'test-better-auth-secret',
       } as never,
     );
 
@@ -131,7 +131,7 @@ describe('RefreshTokenService', () => {
         record: auditRecord,
       } as never,
       {
-        getOrThrow: () => 'test-better-auth-secret',
+        get: () => 'test-better-auth-secret',
       } as never,
     );
 
@@ -171,7 +171,7 @@ describe('RefreshTokenService', () => {
         record: vi.fn(() => Promise.resolve('evt_123')),
       } as never,
       {
-        getOrThrow: () => 'test-better-auth-secret',
+        get: () => 'test-better-auth-secret',
       } as never,
     );
 
@@ -231,7 +231,7 @@ describe('RefreshTokenService', () => {
         record: vi.fn(() => Promise.resolve('evt_123')),
       } as never,
       {
-        getOrThrow: () => 'test-better-auth-secret',
+        get: () => 'test-better-auth-secret',
       } as never,
     );
 
@@ -270,7 +270,7 @@ describe('RefreshTokenService', () => {
         record: vi.fn(() => Promise.resolve('evt_123')),
       } as never,
       {
-        getOrThrow: () => 'test-better-auth-secret',
+        get: () => 'test-better-auth-secret',
       } as never,
     );
 
@@ -307,7 +307,7 @@ describe('RefreshTokenService', () => {
         record: vi.fn(() => Promise.resolve('evt_123')),
       } as never,
       {
-        getOrThrow: () => 'test-better-auth-secret',
+        get: () => 'test-better-auth-secret',
       } as never,
     );
 
@@ -332,7 +332,7 @@ describe('RefreshTokenService', () => {
         record: auditRecord,
       } as never,
       {
-        getOrThrow: () => 'test-better-auth-secret',
+        get: () => 'test-better-auth-secret',
       } as never,
     );
 

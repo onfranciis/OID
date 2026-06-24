@@ -8,8 +8,8 @@ import {
   Res,
   UseFilters,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import type { Request, Response } from 'express';
+import { AppConfigService } from '../config/app-config.service';
 import { OAuthErrorFilter } from './oauth-error.filter';
 import { OidcAuthorizationService } from './oidc-authorization.service';
 import { OidcTokenService } from './oidc-token.service';
@@ -48,13 +48,13 @@ export class OidcController {
   private readonly providerSessionCookieName: string;
 
   constructor(
-    configService: ConfigService,
+    configService: AppConfigService,
     private readonly authorizationService: OidcAuthorizationService,
     private readonly tokenService: OidcTokenService,
     private readonly tokenRateLimitService: TokenRateLimitService,
   ) {
-    this.issuer = configService.getOrThrow<string>('app.baseUrl');
-    this.providerSessionCookieName = configService.getOrThrow<string>(
+    this.issuer = configService.get('app.baseUrl');
+    this.providerSessionCookieName = configService.get(
       'authentication.providerSessionCookieName',
     );
   }

@@ -1,7 +1,7 @@
 import { BadRequestException, UnauthorizedException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { createHash } from 'node:crypto';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { AppConfigService } from '../config/app-config.service';
 import { AuditSeverity } from '../database/entities/audit-event.entity';
 import { PkceChallengeMethod } from '../database/entities/oidc-authorization-code.entity';
 import { OidcClientStatus } from '../database/entities/oidc-client.entity';
@@ -27,8 +27,8 @@ describe('OidcAuthorizationService', () => {
   );
   const service = new OidcAuthorizationService(
     {
-      getOrThrow: vi.fn(() => '/login'),
-    } as unknown as ConfigService,
+      get: vi.fn(() => '/login'),
+    } as unknown as AppConfigService,
     {
       findOne: findClient,
     } as never,

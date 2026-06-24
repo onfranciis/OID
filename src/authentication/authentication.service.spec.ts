@@ -4,14 +4,14 @@ import {
   HttpStatus,
   UnauthorizedException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { BetterAuthService } from '../better-auth/better-auth.service';
+import { AppConfigService } from '../config/app-config.service';
+import { AuditSeverity } from '../database/entities/audit-event.entity';
+import { UserStatus } from '../database/entities/user.entity';
 import { AuthenticationService } from './authentication.service';
 import { LoginPageService } from './login-page.service';
 import { ProviderSessionService } from './provider-session.service';
-import { BetterAuthService } from '../better-auth/better-auth.service';
-import { AuditSeverity } from '../database/entities/audit-event.entity';
-import { UserStatus } from '../database/entities/user.entity';
 
 describe('AuthenticationService', () => {
   const renderLoginPage = vi.fn<(model: unknown) => string>(() => '<html />');
@@ -94,7 +94,7 @@ describe('AuthenticationService', () => {
 
   const service = new AuthenticationService(
     {
-      getOrThrow: vi.fn((key: string) => {
+      get: vi.fn((key: string) => {
         switch (key) {
           case 'authentication.csrfCookieName':
             return 'internal_id_login_csrf';
@@ -106,7 +106,7 @@ describe('AuthenticationService', () => {
             throw new Error(`Unexpected config key: ${key}`);
         }
       }),
-    } as unknown as ConfigService,
+    } as unknown as AppConfigService,
     {
       renderLoginPage,
     } as unknown as LoginPageService,

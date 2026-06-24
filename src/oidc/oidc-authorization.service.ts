@@ -3,12 +3,12 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { createHash, randomBytes } from 'node:crypto';
 import { Repository } from 'typeorm';
 import { monotonicFactory } from 'ulid';
 import { AuditService } from '../audit/audit.service';
+import { AppConfigService } from '../config/app-config.service';
 import { AuditSeverity } from '../database/entities/audit-event.entity';
 import {
   OidcAuthorizationCodeEntity,
@@ -55,7 +55,7 @@ export class OidcAuthorizationService {
   private readonly loginPath: string;
 
   constructor(
-    configService: ConfigService,
+    configService: AppConfigService,
     @InjectRepository(OidcClientEntity)
     private readonly clientRepository: Repository<OidcClientEntity>,
     @InjectRepository(OidcRedirectUriEntity)
@@ -68,7 +68,7 @@ export class OidcAuthorizationService {
     private readonly authorizationCodeRepository: Repository<OidcAuthorizationCodeEntity>,
     private readonly auditService: AuditService,
   ) {
-    this.loginPath = configService.getOrThrow<string>('betterAuth.loginPath');
+    this.loginPath = configService.get('betterAuth.loginPath');
   }
 
   async authorize(
