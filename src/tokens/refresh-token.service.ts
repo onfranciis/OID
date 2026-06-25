@@ -36,6 +36,20 @@ import type {
   RevokePresentedRefreshTokenInput,
 } from './refresh-token.types';
 
+type RefreshTokenRelationKey =
+  | 'user'
+  | 'client'
+  | 'providerSession'
+  | 'parentToken'
+  | 'rotatedToToken';
+
+type NewRefreshTokenEntityInput = {
+  [Key in Exclude<
+    keyof OidcRefreshTokenEntity,
+    RefreshTokenRelationKey
+  >]: OidcRefreshTokenEntity[Key];
+};
+
 @Injectable()
 export class RefreshTokenService {
   constructor(
@@ -88,7 +102,7 @@ export class RefreshTokenService {
       const rawRefreshToken = generateOpaqueRefreshToken();
       const tokenId = `rtk_${ulid().toLowerCase()}`;
       const familyId = `rtf_${ulid().toLowerCase()}`;
-      const entity = manager.create(OidcRefreshTokenEntity, {
+      const entityInput: NewRefreshTokenEntityInput = {
         id: tokenId,
         tokenHash: hashRefreshToken(rawRefreshToken),
         upstreamRefreshTokenCiphertext: input.upstreamRefreshToken
@@ -106,7 +120,8 @@ export class RefreshTokenService {
         absoluteExpiresAt: addSeconds(now, input.absoluteTtlSeconds),
         revokedAt: null,
         revocationReason: null,
-      });
+      };
+      const entity = manager.create(OidcRefreshTokenEntity, entityInput);
 
       await manager.save(entity);
       await this.auditService.record({
@@ -244,7 +259,7 @@ export class RefreshTokenService {
 
       const successorRawToken = generateOpaqueRefreshToken();
       const successorId = `rtk_${ulid().toLowerCase()}`;
-      const successor = repository.create({
+      const successorInput: NewRefreshTokenEntityInput = {
         id: successorId,
         tokenHash: hashRefreshToken(successorRawToken),
         upstreamRefreshTokenCiphertext: input.upstreamRefreshToken
@@ -265,7 +280,8 @@ export class RefreshTokenService {
         ),
         revokedAt: null,
         revocationReason: null,
-      });
+      };
+      const successor = repository.create(successorInput);
 
       currentToken.lastUsedAt = now;
       currentToken.rotatedToTokenId = successorId;
@@ -372,7 +388,7 @@ export class RefreshTokenService {
 
       const successorRawToken = generateOpaqueRefreshToken();
       const successorId = `rtk_${ulid().toLowerCase()}`;
-      const successor = repository.create({
+      const successorInput: NewRefreshTokenEntityInput = {
         id: successorId,
         tokenHash: hashRefreshToken(successorRawToken),
         upstreamRefreshTokenCiphertext:
@@ -392,7 +408,8 @@ export class RefreshTokenService {
         ),
         revokedAt: null,
         revocationReason: null,
-      });
+      };
+      const successor = repository.create(successorInput);
 
       currentToken.lastUsedAt = now;
       currentToken.rotatedToTokenId = successorId;
