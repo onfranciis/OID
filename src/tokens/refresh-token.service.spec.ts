@@ -15,7 +15,6 @@ describe('RefreshTokenService', () => {
     const savedEntities: OidcRefreshTokenEntity[] = [];
     const service = new RefreshTokenService(
       {} as never,
-      {} as never,
       createDataSourceStub({
         save: (entity) => {
           savedEntities.push(entity as OidcRefreshTokenEntity);
@@ -56,7 +55,6 @@ describe('RefreshTokenService', () => {
     const auditRecord = vi.fn(() => Promise.resolve('evt_123'));
     const findOne = vi.fn(() => Promise.resolve(currentToken));
     const service = new RefreshTokenService(
-      {} as never,
       {} as never,
       createDataSourceStub({
         findOne,
@@ -121,7 +119,6 @@ describe('RefreshTokenService', () => {
     const auditRecord = vi.fn(() => Promise.resolve('evt_123'));
     const service = new RefreshTokenService(
       {} as never,
-      {} as never,
       createDataSourceStub({
         findOne: () => Promise.resolve(replayedToken),
         find: () => Promise.resolve(familyMembers),
@@ -163,7 +160,6 @@ describe('RefreshTokenService', () => {
     });
     const service = new RefreshTokenService(
       {} as never,
-      {} as never,
       createDataSourceStub({
         findOne: () => Promise.resolve(expiredToken),
       }) as never,
@@ -189,7 +185,6 @@ describe('RefreshTokenService', () => {
     const currentToken = createRefreshTokenEntity();
     const savedEntities: OidcRefreshTokenEntity[] = [];
     const service = new RefreshTokenService(
-      {} as never,
       {} as never,
       createDataSourceStub({
         findOne: (criteria) => {
@@ -252,7 +247,6 @@ describe('RefreshTokenService', () => {
     const currentToken = createRefreshTokenEntity();
     const serviceWithDisabledClient = new RefreshTokenService(
       {} as never,
-      {} as never,
       createDataSourceStub({
         findOne: () => Promise.resolve(currentToken),
         findClient: () =>
@@ -283,7 +277,6 @@ describe('RefreshTokenService', () => {
     ).rejects.toBeInstanceOf(UnauthorizedException);
 
     const serviceWithInactiveUser = new RefreshTokenService(
-      {} as never,
       {} as never,
       createDataSourceStub({
         findOne: () => Promise.resolve(currentToken),
@@ -323,7 +316,6 @@ describe('RefreshTokenService', () => {
   it('returns success for unknown revocation tokens without disclosure', async () => {
     const auditRecord = vi.fn(() => Promise.resolve('evt_123'));
     const service = new RefreshTokenService(
-      {} as never,
       {} as never,
       createDataSourceStub({
         findOne: () => Promise.resolve(null),

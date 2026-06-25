@@ -39,8 +39,6 @@ import type {
 @Injectable()
 export class RefreshTokenService {
   constructor(
-    @InjectRepository(OidcRefreshTokenEntity)
-    private readonly refreshTokenRepository: Repository<OidcRefreshTokenEntity>,
     @InjectRepository(OidcClientEntity)
     private readonly clientRepository: Repository<OidcClientEntity>,
     @InjectDataSource()
