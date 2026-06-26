@@ -139,6 +139,8 @@ The project is drifting if:
 | `src/database/typeorm.config.ts`                                         | Shared TypeORM configuration factory.                                                            |
 | `src/database/entities/`                                                 | Internal ID-owned TypeORM entity definitions.                                                    |
 | `src/database/migrations/1718107200000-create-internal-id-foundation.ts` | Initial reviewed PostgreSQL schema migration.                                                    |
+| `src/database/migrations/1718109000000-align-better-auth-oauth-provider-schema.ts` | Reviewed Better Auth OAuth Provider schema alignment for new tables, fields, and `scopes`. |
+| `src/database/migrations/1718109100000-repoint-better-auth-oauth-provider-client-fks.ts` | Reviewed FK alignment from old OAuth application tables to `oauthClient`. |
 | `src/database/scripts/bootstrap.ts`                                      | Idempotent bootstrap seed path for the first admin/group/client records.                         |
 | `src/database/scripts/cleanup-expired.ts`                                | Scheduled cleanup path for expired authorization codes, provider sessions, and refresh tokens.   |
 | `src/database/scripts/verify-migrations.ts`                              | Disposable migration run and rollback verification script.                                       |
@@ -255,8 +257,8 @@ from later phases.
 | Order | Task ID | Status      | Why It Comes Next                                                               | Expected Output                                                                 |
 | ----- | ------- | ----------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
 | 1     | B-01    | Done        | Refresh token rotation relies on database locking and replay handling.          | PostgreSQL-backed integration/concurrency tests for rotation, replay, and locks. |
-| 2     | B-02    | Not Started | The OAuth Provider plugin schema changed after replacing deprecated OIDC wiring. | Reviewed migration for `oauthClient`, `oauthRefreshToken`, and OAuth field deltas. |
-| 3     | B-03    | Not Started | Better Auth inspect reports `scopes` type drift from the provider expectation.   | Explicit decision and migration or adapter handling for OAuth `scopes` columns. |
+| 2     | B-02    | Done        | The OAuth Provider plugin schema changed after replacing deprecated OIDC wiring. | Reviewed migration for `oauthClient`, `oauthRefreshToken`, and OAuth field deltas. |
+| 3     | B-03    | Done        | Better Auth inspect reports `scopes` type drift from the provider expectation.   | OAuth `scopes` columns are migrated to Better Auth's current JSON array shape. |
 | 4     | B-04    | Not Started | Database and unexpected service failures should not leak internals to clients.   | Global exception filter with safe HTTP responses and useful server logs.        |
 | 5     | B-05    | Not Started | In-memory rate limiting and request metrics are single-instance friendly only.   | Redis-backed login rate limiting plan and proper Prometheus client evaluation.  |
 | 6     | B-06    | Not Started | OIDC edge behavior must stay strict as Better Auth evolves underneath us.        | Protocol tests for prompt handling, discovery metadata, offline access, and logout/consent edges. |
