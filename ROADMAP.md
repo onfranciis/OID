@@ -252,16 +252,16 @@ These are the next executable backend tasks based on the current implementation
 state. An agent should work from this queue before pulling lower-priority tasks
 from later phases.
 
-| Order | Task ID | Why It Comes Next                                                                 | Expected Output                                                                 |
-| ----- | ------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| 1     | B-01    | Refresh token rotation relies on database locking and replay handling.            | PostgreSQL-backed integration/concurrency tests for rotation, replay, and locks. |
-| 2     | B-02    | The OAuth Provider plugin schema changed after replacing deprecated OIDC wiring.   | Reviewed migration for `oauthClient`, `oauthRefreshToken`, and OAuth field deltas. |
-| 3     | B-03    | Better Auth inspect reports `scopes` type drift from the provider expectation.     | Explicit decision and migration or adapter handling for OAuth `scopes` columns. |
-| 4     | B-04    | Database and unexpected service failures should not leak internals to clients.     | Global exception filter with safe HTTP responses and useful server logs.        |
-| 5     | B-05    | In-memory rate limiting and request metrics are single-instance friendly only.     | Redis-backed login rate limiting plan and proper Prometheus client evaluation.  |
-| 6     | B-06    | OIDC edge behavior must stay strict as Better Auth evolves underneath us.          | Protocol tests for prompt handling, discovery metadata, offline access, and logout/consent edges. |
-| 7     | B-07    | Admin management will move to a standalone React app later.                        | Hardened `/admin/api/*` JSON contract with auth, CSRF/session posture, validation, pagination, and audit. |
-| 8     | B-08    | Placeholder modules currently preserve intended domain boundaries.                 | Leave empty `IdentityModule` and `ClientsModule` in place until their API shape is decided. |
+| Order | Task ID | Status      | Why It Comes Next                                                               | Expected Output                                                                 |
+| ----- | ------- | ----------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| 1     | B-01    | Done        | Refresh token rotation relies on database locking and replay handling.          | PostgreSQL-backed integration/concurrency tests for rotation, replay, and locks. |
+| 2     | B-02    | Not Started | The OAuth Provider plugin schema changed after replacing deprecated OIDC wiring. | Reviewed migration for `oauthClient`, `oauthRefreshToken`, and OAuth field deltas. |
+| 3     | B-03    | Not Started | Better Auth inspect reports `scopes` type drift from the provider expectation.   | Explicit decision and migration or adapter handling for OAuth `scopes` columns. |
+| 4     | B-04    | Not Started | Database and unexpected service failures should not leak internals to clients.   | Global exception filter with safe HTTP responses and useful server logs.        |
+| 5     | B-05    | Not Started | In-memory rate limiting and request metrics are single-instance friendly only.   | Redis-backed login rate limiting plan and proper Prometheus client evaluation.  |
+| 6     | B-06    | Not Started | OIDC edge behavior must stay strict as Better Auth evolves underneath us.        | Protocol tests for prompt handling, discovery metadata, offline access, and logout/consent edges. |
+| 7     | B-07    | Deferred    | Admin management will move to a standalone React app later.                      | Hardened `/admin/api/*` JSON contract with auth, CSRF/session posture, validation, pagination, and audit. |
+| 8     | B-08    | Done        | Placeholder modules currently preserve intended domain boundaries.               | Leave empty `IdentityModule` and `ClientsModule` in place until their API shape is decided. |
 
 ### 10.6 Decision Log For Phase 0
 

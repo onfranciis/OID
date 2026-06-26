@@ -28,6 +28,8 @@
     "src/**/*.ts",
     "test/**/*.ts",
     "sample-client/**/*.ts",
+    "vitest.config.mts",
+    "vitest.integration.config.mts",
     "playwright.config.ts"
   ]
 }

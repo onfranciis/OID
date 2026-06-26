@@ -151,7 +151,7 @@ export class RefreshTokenService {
     refreshToken: string,
     now = new Date(),
   ): Promise<ResolveRefreshGrantResult> {
-    const token = await this.dataSource.transaction(async (manager) => {
+    const result = await this.dataSource.transaction(async (manager) => {
       const repository = manager.getRepository(OidcRefreshTokenEntity);
       const currentToken = await repository.findOne({
         where: {
@@ -184,14 +184,18 @@ export class RefreshTokenService {
             familyId: currentToken.familyId,
           },
         });
-        throw new ConflictException(
-          'Refresh token replay detected. Token family revoked.',
-        );
+        return { replayDetected: true as const };
       }
 
       assertTokenIsUsable(currentToken, now);
-      return currentToken;
+      return { replayDetected: false as const, token: currentToken };
     });
+
+    if (result.replayDetected) {
+      throwRefreshTokenReplayConflict();
+    }
+
+    const token = result.token;
 
     if (!token.upstreamRefreshTokenCiphertext) {
       throw new InternalServerErrorException(
@@ -216,7 +220,7 @@ export class RefreshTokenService {
   async rotateToken(
     input: RotateRefreshTokenInput,
   ): Promise<IssueRefreshTokenResult> {
-    return this.dataSource.transaction(async (manager) => {
+    const result = await this.dataSource.transaction(async (manager) => {
       const now = input.now ?? new Date();
       const repository = manager.getRepository(OidcRefreshTokenEntity);
       const currentToken = await repository.findOne({
@@ -250,9 +254,7 @@ export class RefreshTokenService {
             familyId: currentToken.familyId,
           },
         });
-        throw new ConflictException(
-          'Refresh token replay detected. Token family revoked.',
-        );
+        return { replayDetected: true as const };
       }
 
       assertTokenIsUsable(currentToken, now);
@@ -304,19 +306,28 @@ export class RefreshTokenService {
       });
 
       return {
-        refreshToken: successorRawToken,
-        tokenId: successorId,
-        familyId: currentToken.familyId,
-        idleExpiresAt: successor.idleExpiresAt,
-        absoluteExpiresAt: successor.absoluteExpiresAt,
+        replayDetected: false as const,
+        result: {
+          refreshToken: successorRawToken,
+          tokenId: successorId,
+          familyId: currentToken.familyId,
+          idleExpiresAt: successor.idleExpiresAt,
+          absoluteExpiresAt: successor.absoluteExpiresAt,
+        },
       };
     });
+
+    if (result.replayDetected) {
+      throwRefreshTokenReplayConflict();
+    }
+
+    return result.result;
   }
 
   async rotateTokenForClient(
     input: RotateRefreshTokenForClientInput,
   ): Promise<RotateRefreshTokenForClientResult> {
-    return this.dataSource.transaction(async (manager) => {
+    const result = await this.dataSource.transaction(async (manager) => {
       const now = input.now ?? new Date();
       const repository = manager.getRepository(OidcRefreshTokenEntity);
       const currentToken = await repository.findOne({
@@ -350,9 +361,7 @@ export class RefreshTokenService {
             familyId: currentToken.familyId,
           },
         });
-        throw new ConflictException(
-          'Refresh token replay detected. Token family revoked.',
-        );
+        return { replayDetected: true as const };
       }
 
       assertTokenIsUsable(currentToken, now);
@@ -432,27 +441,36 @@ export class RefreshTokenService {
       });
 
       return {
-        refreshToken: successorRawToken,
-        tokenId: successorId,
-        familyId: currentToken.familyId,
-        idleExpiresAt: successor.idleExpiresAt,
-        absoluteExpiresAt: successor.absoluteExpiresAt,
-        token: {
-          id: successorId,
+        replayDetected: false as const,
+        result: {
+          refreshToken: successorRawToken,
+          tokenId: successorId,
           familyId: currentToken.familyId,
-          userId: currentToken.userId,
-          clientId: currentToken.clientId,
-          providerSessionId: currentToken.providerSessionId,
-        },
-        client: {
-          id: client.id,
-          clientId: client.clientId,
-          accessTokenTtlSeconds: client.accessTokenTtlSeconds,
-          idTokenTtlSeconds: client.idTokenTtlSeconds,
-          allowedClaims: client.allowedClaims,
+          idleExpiresAt: successor.idleExpiresAt,
+          absoluteExpiresAt: successor.absoluteExpiresAt,
+          token: {
+            id: successorId,
+            familyId: currentToken.familyId,
+            userId: currentToken.userId,
+            clientId: currentToken.clientId,
+            providerSessionId: currentToken.providerSessionId,
+          },
+          client: {
+            id: client.id,
+            clientId: client.clientId,
+            accessTokenTtlSeconds: client.accessTokenTtlSeconds,
+            idTokenTtlSeconds: client.idTokenTtlSeconds,
+            allowedClaims: client.allowedClaims,
+          },
         },
       };
     });
+
+    if (result.replayDetected) {
+      throwRefreshTokenReplayConflict();
+    }
+
+    return result.result;
   }
 
   async revokeTokenFamily(
@@ -620,6 +638,12 @@ function assertTokenIsUsable(token: OidcRefreshTokenEntity, now: Date): void {
   if (token.idleExpiresAt <= now || token.absoluteExpiresAt <= now) {
     throw new UnauthorizedException('Refresh token has expired.');
   }
+}
+
+function throwRefreshTokenReplayConflict(): never {
+  throw new ConflictException(
+    'Refresh token replay detected. Token family revoked.',
+  );
 }
 
 function assertClientSecret(

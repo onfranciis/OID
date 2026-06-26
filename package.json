@@ -20,6 +20,7 @@
     "sample-client:start": "pnpm exec ts-node --transpile-only sample-client/src/server.ts",
     "lint": "eslint \"{src,apps,libs,test,sample-client}/**/*.ts\" --fix",
     "test": "vitest run",
+    "test:integration": "vitest run --config vitest.integration.config.mts",
     "test:migrations": "pnpm migration:verify",
     "test:watch": "vitest",
     "test:cov": "vitest run --coverage",
