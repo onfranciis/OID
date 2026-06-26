@@ -3,6 +3,11 @@
 The Internal ID admin surface is provider-local and protected by provider
 sessions, admin group membership, recent authentication, and CSRF checks.
 
+Admin management is moving toward a standalone React app later. The backend
+admin contract should therefore be treated as `/admin/api/*` JSON endpoints
+protected by the same provider-local rules. The current server-rendered admin
+pages are a temporary management surface, not the long-term UI boundary.
+
 ## Access Model
 
 An admin request must satisfy all of these checks:
@@ -13,6 +18,9 @@ An admin request must satisfy all of these checks:
 - The user belongs to the bootstrap admin group.
 - Sensitive mutation routes pass the recent-auth guard.
 - Mutation routes include a valid admin CSRF token.
+- Request bodies are validated before service code runs.
+- List endpoints use bounded pagination.
+- Mutations write audit events.
 
 The detailed authorization rule is documented in
 `src/admin/ADMIN_AUTHORIZATION.md`.
@@ -72,6 +80,9 @@ passwords, raw tokens, client secrets, private keys, CSRF tokens, or cookie
 values.
 
 Admins can query recent audit events through `/admin/audit-events`.
+
+Future React admin views should consume admin JSON endpoints rather than adding
+direct database access or bypassing the existing guards.
 
 ## Operational Actions
 

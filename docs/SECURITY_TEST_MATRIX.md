@@ -47,7 +47,8 @@ changes.
 | Recent authentication for sensitive admin routes.           | Covered | `src/admin/admin-recent-auth.guard.spec.ts`                                    |
 | Admin authorization requires active admin group membership. | Covered | `src/admin/admin-access.service.spec.ts`                                       |
 | Confidential client secret rotation is guarded and audited. | Covered | `src/admin/admin.controller.spec.ts`, `src/admin/admin-client.service.spec.ts` |
-| SSR output escapes user-controlled content.                 | Covered | Login/admin page service tests.                                                |
+| SSR output escapes user-controlled content.                 | Covered | Login page and temporary admin page service tests.                             |
+| Admin JSON APIs preserve provider-local protection.         | Planned | Add coverage as `/admin/api/*` endpoints are introduced for the React admin.   |
 | Security headers are emitted.                               | Covered | `src/common/security-headers.middleware.spec.ts`                               |
 | Request logs include request ID and service context.        | Covered | `src/common/structured-logger.middleware.spec.ts`                              |
 
@@ -68,4 +69,6 @@ changes.
 - Run the sample client flow locally with `pnpm sample-client:start`.
 - Add PostgreSQL-level concurrency stress tests before production if token paths
   show contention under load.
+- Before building the standalone React admin app, add API security tests for
+  auth, CSRF/session posture, validation, pagination, and audit.
 - Review production alerting and key rotation runbooks before go-live.

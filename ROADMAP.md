@@ -1,6 +1,6 @@
 # Internal ID Project Roadmap
 
-Last updated: 2026-06-11
+Last updated: 2026-06-26
 
 This roadmap is the implementation tracker for Internal ID.
 
@@ -54,6 +54,7 @@ These decisions should not be changed casually.
 | Initial sessions     | PostgreSQL-backed unless Better Auth requires a different internal representation |
 | Ephemeral store      | PostgreSQL first; Redis may be added later                                        |
 | Login UI             | Server-rendered pages owned by `auth.company.com`                                 |
+| Admin management UI  | Standalone React app later; backend must expose hardened admin JSON APIs first     |
 | Provider role        | Identity provider only                                                            |
 | App authorization    | Owned by client applications                                                      |
 
@@ -214,7 +215,7 @@ observable from the repo.
 | M2        | Phase 2  | Initial schema exists as reviewed migrations with rollback.                  | M0, M1                                      | Entities, migrations, ownership document, seed plan                     |
 | M3        | Phase 3  | Better Auth can be constrained to Internal ID rules.                         | M0, M1, M2                                  | Better Auth spike module, findings doc, failing/passing protocol checks |
 | M4        | Phase 4  | Users can log in and receive secure provider sessions.                       | M1, M2, M3                                  | Login/logout flow, session storage, auth audit events                   |
-| M5        | Phase 5  | Admin bootstrap path exists for users, groups, and clients.                  | M2, M4                                      | Initial admin bootstrap, admin SSR pages/controllers, audit trail       |
+| M5        | Phase 5  | Admin bootstrap path exists for users, groups, and clients.                  | M2, M4                                      | Initial admin bootstrap, temporary admin pages/controllers, audit trail |
 | M6        | Phase 6  | Authorization endpoint contract works for code + PKCE only.                  | M3, M4, M5                                  | Discovery route, authorize flow, negative tests                         |
 | M7        | Phase 7  | Token exchange, JWKS, and UserInfo work with signed ID tokens.               | M3, M6                                      | Signing keys, token exchange, claim release, JWKS                       |
 | M8        | Phase 8  | Refresh rotation, replay detection, and revocation are transactional.        | M7                                          | Refresh token model, rotation logic, revocation endpoints               |
@@ -245,23 +246,22 @@ Each milestone is only `Done` when the repo contains all of the following:
 - Updated source-of-truth file table when new entrypoints are introduced.
 - Short implementation notes where a non-obvious Better Auth or OIDC constraint was discovered.
 
-### 10.5 Immediate Working Queue
+### 10.5 Current Backend Follow-Up Queue
 
-These are the next ten executable tasks in dependency order. An agent should
-work from this queue before pulling lower-priority tasks from later phases.
+These are the next executable backend tasks based on the current implementation
+state. An agent should work from this queue before pulling lower-priority tasks
+from later phases.
 
-| Order | Task ID | Why It Comes Next                                          | Expected Output                             |
-| ----- | ------- | ---------------------------------------------------------- | ------------------------------------------- |
-| 1     | P0-01   | Needed before lockfiles, scripts, and docs diverge.        | Package manager decision in repo docs       |
-| 2     | P0-02   | Needed before scaffolding and CI config.                   | Node version file                           |
-| 3     | P0-03   | Needed before Nest scaffold defaults are accepted blindly. | Test runner decision and scripts strategy   |
-| 4     | P0-04   | Better Auth compatibility affects Nest bootstrap.          | Express or Fastify decision                 |
-| 5     | P0-05   | Login/admin rendering choice affects app wiring.           | Template engine decision                    |
-| 6     | P0-06   | Local DB approach affects onboarding and scripts.          | Dev database strategy                       |
-| 7     | P0-08   | Table ownership must be known before migrations.           | Ownership notes in roadmap or companion doc |
-| 8     | P0-09   | Route ownership affects controller/module boundaries.      | Better Auth route mounting decision         |
-| 9     | P1-01   | Scaffolding can begin once the above decisions are locked. | Bootable NestJS app                         |
-| 10    | P1-03   | Config validation should land immediately after scaffold.  | Startup-safe env validation                 |
+| Order | Task ID | Why It Comes Next                                                                 | Expected Output                                                                 |
+| ----- | ------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| 1     | B-01    | Refresh token rotation relies on database locking and replay handling.            | PostgreSQL-backed integration/concurrency tests for rotation, replay, and locks. |
+| 2     | B-02    | The OAuth Provider plugin schema changed after replacing deprecated OIDC wiring.   | Reviewed migration for `oauthClient`, `oauthRefreshToken`, and OAuth field deltas. |
+| 3     | B-03    | Better Auth inspect reports `scopes` type drift from the provider expectation.     | Explicit decision and migration or adapter handling for OAuth `scopes` columns. |
+| 4     | B-04    | Database and unexpected service failures should not leak internals to clients.     | Global exception filter with safe HTTP responses and useful server logs.        |
+| 5     | B-05    | In-memory rate limiting and request metrics are single-instance friendly only.     | Redis-backed login rate limiting plan and proper Prometheus client evaluation.  |
+| 6     | B-06    | OIDC edge behavior must stay strict as Better Auth evolves underneath us.          | Protocol tests for prompt handling, discovery metadata, offline access, and logout/consent edges. |
+| 7     | B-07    | Admin management will move to a standalone React app later.                        | Hardened `/admin/api/*` JSON contract with auth, CSRF/session posture, validation, pagination, and audit. |
+| 8     | B-08    | Placeholder modules currently preserve intended domain boundaries.                 | Leave empty `IdentityModule` and `ClientsModule` in place until their API shape is decided. |
 
 ### 10.6 Decision Log For Phase 0
 
@@ -302,6 +302,15 @@ The team should therefore optimize the first implementation wave around:
 - Scaffolding once.
 - Writing reviewed migrations once.
 - Running the Better Auth spike before deeper feature work.
+
+### 10.8 Placeholder Module Policy
+
+`IdentityModule` and `ClientsModule` are intentional placeholders for now.
+
+Do not delete, collapse, or force implementation into these modules simply
+because they are empty. Keep them as boundary markers until the standalone React
+admin app and the backend admin JSON contract make the required identity/client
+service shapes clearer.
 
 ## 11. Phase 0: Project Setup Decisions
 
@@ -541,7 +550,7 @@ Objective: trusted admins can manage the initial internal identity system.
 | P5-01 | Define admin authorization model | Done   | Provider-local admin rule is documented.             |
 | P5-02 | Add admin guard                  | Done   | Non-admin users cannot access admin routes.          |
 | P5-03 | Add recent-auth guard            | Done   | Sensitive actions require recent authentication.     |
-| P5-04 | Build admin shell                | Done   | SSR admin pages render safely.                       |
+| P5-04 | Build admin shell                | Done   | Temporary admin pages render safely.                 |
 | P5-05 | User create/edit                 | Done   | Admin can create and update users.                   |
 | P5-06 | User status changes              | Done   | Admin can suspend, reactivate, and deactivate users. |
 | P5-07 | Group management                 | Done   | Admin can create groups and manage memberships.      |
@@ -997,18 +1006,20 @@ A task is done only when:
 
 ## 30. First Implementation Slice
 
-The recommended first coding slice is:
+The first implementation slice is complete and should now be treated as
+historical context.
 
-1. Scaffold NestJS TypeScript app.
-2. Add PostgreSQL local dev setup.
-3. Add TypeORM config and empty migration flow.
-4. Add Better Auth module shell.
-5. Add health endpoint.
-6. Add lint, typecheck, unit test, and e2e test commands.
-7. Document local run commands.
+It established:
 
-Do not start token issuance before the Better Auth integration spike has proven
-that unsupported OAuth/OIDC features can be disabled or blocked.
+- NestJS TypeScript app structure.
+- PostgreSQL local dev setup.
+- TypeORM config and migration flow.
+- Better Auth integration boundary.
+- Health, metrics, lint, typecheck, test, and CI commands.
+- Bootstrap seed path for the initial admin and sample client.
+
+Current implementation work should follow the backend follow-up queue in
+section 10.5 rather than restarting the scaffold-era sequence.
 
 ## 31. Open Questions
 
@@ -1057,15 +1068,12 @@ When a future agent session works on this project:
 
 ## 34. Immediate Next Step
 
-Start implementing the chosen Phase 0 baseline.
+Continue from the current backend follow-up queue.
 
-The first concrete repo changes should be:
+The next concrete repo changes should be:
 
-- add `package.json` using `pnpm`
-- add `.nvmrc` for `Node.js 22`
-- scaffold NestJS on the Express adapter
-- add Docker Compose for PostgreSQL
-- wire Vitest and Playwright command placeholders into the scaffold
-- create the initial `src/better-auth` boundary module
-
-After those files exist, continue with Phase 1 config validation and TypeORM wiring.
+- add PostgreSQL-backed refresh-token rotation concurrency tests
+- materialize and review the Better Auth OAuth Provider schema deltas
+- decide how to handle OAuth `scopes` column type drift
+- add a global exception filter for safe database/service failure responses
+- keep `IdentityModule` and `ClientsModule` empty until their admin/API boundary is clearer

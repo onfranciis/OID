@@ -16,6 +16,11 @@ metrics, alerting, key rotation, and incident response for Internal ID.
 
 For a containerized app plus database, run `docker compose up --build`.
 
+After Better Auth or OAuth Provider plugin upgrades, run the schema inspection
+path and review the output before deploying. New provider tables, provider
+field additions, or column shape changes such as OAuth `scopes` must be handled
+as explicit migrations or documented adapter decisions.
+
 ## Deployment
 
 Build the production image from the repository root:
@@ -74,6 +79,8 @@ After restore, verify:
 
 - `pnpm migration:show` reports no pending internal migrations.
 - `pnpm better-auth:schema` reports the Better Auth schema is up to date.
+- Better Auth schema inspection does not report unreviewed OAuth Provider
+  deltas.
 - `/health` returns healthy status.
 - An admin can log in and view the admin dashboard.
 

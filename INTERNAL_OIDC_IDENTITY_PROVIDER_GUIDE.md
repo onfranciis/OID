@@ -425,13 +425,19 @@ Recommended Better Auth posture:
 
 - Use the OAuth Provider plugin with OIDC compatibility.
 - Use the JWT plugin for asymmetric JWT signing and JWKS support.
-- Use server-rendered Internal ID pages for login, consent or app disclosure,
-  and admin workflows.
+- Use server-rendered Internal ID pages for provider-owned login, consent, or
+  app disclosure flows.
+- Treat admin management as a backend API first. A standalone React admin app
+  can be added later, but it must call hardened Internal ID admin endpoints
+  rather than bypassing the provider-local authorization model.
 - Disable or block any Better Auth endpoint or grant that is outside the
   Internal ID contract.
 - Keep dynamic client registration disabled unless explicitly introduced later.
 - Configure all internal clients through the Internal ID admin surface or
   deployment-time seed data.
+- After Better Auth or OAuth Provider plugin upgrades, inspect and review
+  schema deltas before accepting them. Current follow-up work includes the
+  OAuth Provider tables/fields and the provider `scopes` column shape.
 
 The Better Auth configuration must enforce the Internal ID protocol surface:
 
@@ -730,6 +736,7 @@ Optional but useful:
 | `POST /login` | Provider login submission. |
 | `POST /logout` | First-party provider logout action. |
 | `GET /admin` | Admin UI entrypoint. |
+| `/admin/api/*` | Provider-local admin JSON API for the future standalone admin UI. |
 
 ### 5.2 Supported Response Types
 
@@ -2567,6 +2574,17 @@ Alert on:
 
 ## 21. Admin Surface
 
+The admin surface has two layers:
+
+- Provider-local backend routes that enforce session, admin membership, recent
+  authentication, CSRF/session posture, validation, pagination, and audit.
+- A standalone React admin app later, using those backend routes as its contract.
+
+The current server-rendered admin pages are acceptable as a temporary management
+surface, but they should not become the long-term UI constraint. The backend
+contract must remain usable by a separate admin frontend without weakening
+Internal ID's provider-local authorization rules.
+
 ### 21.1 Admin Responsibilities
 
 Admins need to manage:
@@ -2630,6 +2648,9 @@ Admin actions should require:
 - Active provider session.
 - Admin group or admin identity claim.
 - Recent authentication for sensitive operations.
+- CSRF protection for cookie-authenticated mutations.
+- Request validation and pagination for list/search endpoints.
+- Audit events for security-sensitive reads and all mutations.
 
 Although Internal ID avoids app-specific authorization, it still needs internal
 authorization for its own admin surface.
@@ -2867,6 +2888,8 @@ Build:
 - User deactivation flow.
 - Audit views.
 - Recent reauthentication for sensitive admin actions.
+- Hardened `/admin/api/*` JSON endpoints for future standalone React admin
+  management.
 
 Acceptance criteria:
 
@@ -2875,6 +2898,9 @@ Acceptance criteria:
 - Admin can revoke user sessions.
 - Deactivated user cannot authenticate or refresh.
 - Sensitive admin actions require recent authentication.
+- Admin API mutations enforce CSRF/session posture, validation, and audit.
+- `IdentityModule` and `ClientsModule` may remain empty placeholders until the
+  admin API shape makes their service boundaries concrete.
 
 ---
 
