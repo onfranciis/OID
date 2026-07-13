@@ -6,6 +6,8 @@ import { ClientsPage } from '../features/clients/clients-page';
 import { GroupsPage } from '../features/groups/groups-page';
 import { NotFoundPage } from '../features/not-found-page';
 import { OverviewPage } from '../features/overview/overview-page';
+import { UserCreatePage } from '../features/users/user-create-page';
+import { UserDetailPage } from '../features/users/user-detail-page';
 import { UsersPage } from '../features/users/users-page';
 import { ReauthProvider } from './reauth';
 import { SessionBoundary } from './session';
@@ -30,6 +32,8 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: <OverviewPage /> },
       { path: 'users', element: <UsersPage /> },
+      { path: 'users/new', element: <UserCreatePage /> },
+      { path: 'users/:userId', element: <UserDetailPage /> },
       { path: 'groups', element: <GroupsPage /> },
       { path: 'clients', element: <ClientsPage /> },
       { path: 'audit', element: <AuditPage /> },

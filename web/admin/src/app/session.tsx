@@ -27,10 +27,14 @@ export interface SessionInfo {
   user: SessionUser;
   isAdmin: boolean;
   csrfToken: string;
+  // Slug of the bootstrap admin group; the UI uses it for self-lockout guards
+  // (e.g. removing your own admin membership requires typed confirmation).
+  adminGroupSlug: string;
 }
 
 interface SessionContextValue {
   user: SessionUser;
+  adminGroupSlug: string;
   refreshSession: () => Promise<void>;
 }
 
@@ -122,7 +126,13 @@ export function SessionBoundary({ children }: { children: ReactNode }) {
   }
 
   return (
-    <SessionContext.Provider value={{ user: query.data.user, refreshSession }}>
+    <SessionContext.Provider
+      value={{
+        user: query.data.user,
+        adminGroupSlug: query.data.adminGroupSlug,
+        refreshSession,
+      }}
+    >
       {children}
     </SessionContext.Provider>
   );
