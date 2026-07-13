@@ -24,7 +24,7 @@ marketing or illustration.
 | Area                    | Status      | Notes                                                                                                     |
 | ----------------------- | ----------- | --------------------------------------------------------------------------------------------------------- |
 | Frontend roadmap        | In Progress | This file. Defines the admin UI build and tracking.                                                       |
-| Admin SPA               | In Progress | `web/admin/` scaffolded (F0 done): Vite + React + TS, Tailwind v4, Radix, TanStack Query, MSW installed.  |
+| Admin SPA               | In Progress | F0–F1 done: shell, routing, session boundary, CSRF-aware API client, re-auth flow, MSW dev mocks.         |
 | Backend admin JSON API  | Blocked     | Read/list endpoints do not exist. Tracked as `B-07` in `ROADMAP.md`. This UI depends on it (see Sec. 13). |
 | Existing admin surface  | Done        | Static SSR placeholder (`src/admin/views/index.njk`) with non-interactive tiles.                          |
 
@@ -297,7 +297,7 @@ The Vite build output is emitted to a path NestJS serves in Phase F6.
 | Phase | Name                             | Status      | Primary Exit Gate                                                                                  |
 | ----- | -------------------------------- | ----------- | --------------------------------------------------------------------------------------------------- |
 | F0    | Scaffolding And Toolchain        | Done        | App boots with `pnpm admin:dev`; lint, typecheck, and build pass.                                  |
-| F1    | Shell, Routing, Auth, Data Layer | Not Started | Unauthenticated load redirects; authenticated load renders shell + actor name against MSW.         |
+| F1    | Shell, Routing, Auth, Data Layer | Done        | Unauthenticated load redirects; authenticated load renders shell + actor name against MSW.         |
 | F2    | Users                            | Not Started | Full user list/detail/create/edit/status against MSW with cache invalidation and error surfacing.  |
 | F3    | Clients                          | Not Started | Full client management incl. reveal-once secret rotation and redirect URIs against MSW.            |
 | F4    | Groups                           | Not Started | Full group management incl. membership add/remove and lockout guards against MSW.                  |

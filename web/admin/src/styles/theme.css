@@ -11,6 +11,7 @@
   --color-surface: #ffffff;
   --color-page: #f4f7f5;
   --color-accent: #1d6f5f;
+  --color-danger: #a23b2e;
   --radius-card: 8px;
   --font-sans: ui-sans-serif, 'Aptos', 'Segoe UI', sans-serif;
 }
