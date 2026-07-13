@@ -24,7 +24,7 @@ marketing or illustration.
 | Area                    | Status      | Notes                                                                                                     |
 | ----------------------- | ----------- | --------------------------------------------------------------------------------------------------------- |
 | Frontend roadmap        | In Progress | This file. Defines the admin UI build and tracking.                                                       |
-| Admin SPA               | Not Started | No frontend tooling exists yet. Repo is a single NestJS app.                                               |
+| Admin SPA               | In Progress | `web/admin/` scaffolded (F0 done): Vite + React + TS, Tailwind v4, Radix, TanStack Query, MSW installed.  |
 | Backend admin JSON API  | Blocked     | Read/list endpoints do not exist. Tracked as `B-07` in `ROADMAP.md`. This UI depends on it (see Sec. 13). |
 | Existing admin surface  | Done        | Static SSR placeholder (`src/admin/views/index.njk`) with non-interactive tiles.                          |
 
@@ -251,8 +251,7 @@ Read-only forensic view. The only section whose read endpoint exists today.
 ```text
 web/admin/
   index.html
-  vite.config.ts
-  tailwind.config.ts
+  vite.config.ts        # base '/admin/', React + Tailwind v4 plugins, vitest config
   tsconfig.json
   src/
     main.tsx
@@ -272,8 +271,13 @@ web/admin/
       handlers.ts         # MSW handlers = executable spec of the contract
       browser.ts
     styles/
-      theme.css           # Tailwind theme tokens mirrored from index.njk palette
+      theme.css           # Tailwind v4 CSS-first @theme tokens mirrored from index.njk palette
 ```
+
+Tailwind v4 is configured CSS-first: theme tokens live in `styles/theme.css`
+via `@theme`; there is no `tailwind.config.ts`. The package is standalone
+(own `pnpm-lock.yaml`) so the backend lockfile is untouched; root
+`admin:*` scripts delegate with `pnpm -C web/admin`.
 
 The Vite build output is emitted to a path NestJS serves in Phase F6.
 
@@ -292,7 +296,7 @@ The Vite build output is emitted to a path NestJS serves in Phase F6.
 
 | Phase | Name                             | Status      | Primary Exit Gate                                                                                  |
 | ----- | -------------------------------- | ----------- | --------------------------------------------------------------------------------------------------- |
-| F0    | Scaffolding And Toolchain        | Not Started | App boots with `pnpm admin:dev`; lint, typecheck, and build pass.                                  |
+| F0    | Scaffolding And Toolchain        | Done        | App boots with `pnpm admin:dev`; lint, typecheck, and build pass.                                  |
 | F1    | Shell, Routing, Auth, Data Layer | Not Started | Unauthenticated load redirects; authenticated load renders shell + actor name against MSW.         |
 | F2    | Users                            | Not Started | Full user list/detail/create/edit/status against MSW with cache invalidation and error surfacing.  |
 | F3    | Clients                          | Not Started | Full client management incl. reveal-once secret rotation and redirect URIs against MSW.            |

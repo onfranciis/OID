@@ -1,0 +1,16 @@
+@import 'tailwindcss';
+
+/*
+ * Theme tokens mirrored from the provider-owned SSR pages
+ * (src/admin/views/index.njk) for visual continuity.
+ */
+@theme {
+  --color-ink: #17211d;
+  --color-muted: #61706a;
+  --color-line: #d8ded9;
+  --color-surface: #ffffff;
+  --color-page: #f4f7f5;
+  --color-accent: #1d6f5f;
+  --radius-card: 8px;
+  --font-sans: ui-sans-serif, 'Aptos', 'Segoe UI', sans-serif;
+}

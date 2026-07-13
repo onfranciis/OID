@@ -34,7 +34,13 @@
     "cleanup:expired": "pnpm exec ts-node --transpile-only src/database/scripts/cleanup-expired.ts",
     "seed:bootstrap": "pnpm exec ts-node --transpile-only src/database/scripts/bootstrap.ts",
     "better-auth:inspect": "pnpm exec ts-node --transpile-only src/better-auth/scripts/inspect.ts",
-    "better-auth:schema": "pnpm exec ts-node --transpile-only src/better-auth/scripts/materialize-schema.ts"
+    "better-auth:schema": "pnpm exec ts-node --transpile-only src/better-auth/scripts/materialize-schema.ts",
+    "admin:install": "pnpm -C web/admin install",
+    "admin:dev": "pnpm -C web/admin dev",
+    "admin:build": "pnpm -C web/admin build",
+    "admin:test": "pnpm -C web/admin test",
+    "admin:lint": "pnpm -C web/admin lint",
+    "admin:typecheck": "pnpm -C web/admin typecheck"
   },
   "dependencies": {
     "@better-auth/oauth-provider": "^1.6.20",
