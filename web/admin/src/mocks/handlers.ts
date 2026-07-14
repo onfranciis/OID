@@ -8,6 +8,7 @@ import type {
   OidcClientStatus,
   OidcClientType,
 } from '../features/clients/types';
+import type { GroupDetail, GroupSummary } from '../features/groups/types';
 import type {
   AdminCreateUserInput,
   AdminUpdateUserInput,
@@ -310,6 +311,34 @@ function toUserDetail(user: MockUser): UserDetail {
   };
 }
 
+function toGroupSummary(group: MockGroup): GroupSummary {
+  return {
+    id: group.id,
+    slug: group.slug,
+    displayName: group.displayName,
+    description: group.description,
+    createdAt: group.createdAt,
+    memberCount: db.users.filter((user) => user.groupIds.includes(group.id))
+      .length,
+  };
+}
+
+function toGroupDetail(group: MockGroup): GroupDetail {
+  return {
+    ...toGroupSummary(group),
+    // Groups are rarely mutated in the mock; reuse createdAt for updatedAt.
+    updatedAt: group.createdAt,
+    members: db.users
+      .filter((user) => user.groupIds.includes(group.id))
+      .map((user) => ({
+        id: user.id,
+        displayName: user.displayName,
+        email: user.email,
+        status: user.status,
+      })),
+  };
+}
+
 function toClientSummary(client: MockClient): ClientSummary {
   return {
     id: client.id,
@@ -559,16 +588,115 @@ export const handlers = [
     return HttpResponse.json(toUserDetail(user));
   }),
 
-  http.get('/admin/api/groups', () =>
-    HttpResponse.json({
-      items: db.groups.map((group) => ({
-        ...group,
-        memberCount: db.users.filter((user) => user.groupIds.includes(group.id))
-          .length,
-      })),
+  http.get('/admin/api/groups', ({ request }) => {
+    const url = new URL(request.url);
+    const q = url.searchParams.get('q')?.toLowerCase() ?? '';
+
+    const matches = q
+      ? db.groups.filter((group) =>
+          [group.slug, group.displayName].some((value) =>
+            value.toLowerCase().includes(q),
+          ),
+        )
+      : db.groups;
+
+    return HttpResponse.json({
+      items: matches.map(toGroupSummary),
       nextCursor: null,
-    }),
-  ),
+    });
+  }),
+
+  http.get('/admin/api/groups/:groupId', ({ params }) => {
+    const group = db.groups.find(
+      (candidate) => candidate.id === params.groupId,
+    );
+
+    if (!group) {
+      return errorResponse(404, 'Group not found.', 'Not Found');
+    }
+
+    return HttpResponse.json(toGroupDetail(group));
+  }),
+
+  http.post('/admin/api/groups', async ({ request }) => {
+    const csrfError = requireCsrf(request);
+
+    if (csrfError) {
+      return csrfError;
+    }
+
+    const input = (await request.json()) as {
+      slug?: string;
+      displayName?: string;
+      description?: string | null;
+    };
+    const slug = input.slug?.trim().toLowerCase();
+
+    if (!slug || !input.displayName?.trim()) {
+      return errorResponse(400, 'slug is required.', 'Bad Request');
+    }
+
+    if (db.groups.some((group) => group.slug === slug)) {
+      return errorResponse(409, 'Group slug is already in use.', 'Conflict');
+    }
+
+    db.counter += 1;
+    const group: MockGroup = {
+      id: `grp_new${String(db.counter).padStart(25, '0')}`,
+      slug,
+      displayName: input.displayName.trim(),
+      description: input.description?.trim() || null,
+      createdAt: new Date().toISOString(),
+    };
+    db.groups.push(group);
+
+    return HttpResponse.json(toGroupDetail(group));
+  }),
+
+  http.post('/admin/api/groups/:groupId', async ({ params, request }) => {
+    const csrfError = requireCsrf(request);
+
+    if (csrfError) {
+      return csrfError;
+    }
+
+    const group = db.groups.find(
+      (candidate) => candidate.id === params.groupId,
+    );
+
+    if (!group) {
+      return errorResponse(404, 'Group not found.', 'Not Found');
+    }
+
+    const input = (await request.json()) as {
+      slug?: string;
+      displayName?: string;
+      description?: string | null;
+    };
+
+    if (input.slug !== undefined) {
+      const slug = input.slug.trim().toLowerCase();
+
+      if (
+        slug !== group.slug &&
+        db.groups.some((candidate) => candidate.slug === slug)
+      ) {
+        return errorResponse(409, 'Group slug is already in use.', 'Conflict');
+      }
+
+      group.slug = slug;
+    }
+
+    if (input.displayName !== undefined) {
+      group.displayName = input.displayName.trim();
+    }
+
+    if (input.description !== undefined) {
+      group.description = input.description?.trim() || null;
+    }
+
+    return HttpResponse.json(toGroupDetail(group));
+  }),
 
   http.post(
     '/admin/api/groups/:groupId/members/:userId',

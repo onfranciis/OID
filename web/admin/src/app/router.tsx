@@ -5,6 +5,8 @@ import { AuditPage } from '../features/audit/audit-page';
 import { ClientCreatePage } from '../features/clients/client-create-page';
 import { ClientDetailPage } from '../features/clients/client-detail-page';
 import { ClientsPage } from '../features/clients/clients-page';
+import { GroupCreatePage } from '../features/groups/group-create-page';
+import { GroupDetailPage } from '../features/groups/group-detail-page';
 import { GroupsPage } from '../features/groups/groups-page';
 import { NotFoundPage } from '../features/not-found-page';
 import { OverviewPage } from '../features/overview/overview-page';
@@ -37,6 +39,8 @@ export const routes: RouteObject[] = [
       { path: 'users/new', element: <UserCreatePage /> },
       { path: 'users/:userId', element: <UserDetailPage /> },
       { path: 'groups', element: <GroupsPage /> },
+      { path: 'groups/new', element: <GroupCreatePage /> },
+      { path: 'groups/:groupId', element: <GroupDetailPage /> },
       { path: 'clients', element: <ClientsPage /> },
       { path: 'clients/new', element: <ClientCreatePage /> },
       { path: 'clients/:clientRecordId', element: <ClientDetailPage /> },

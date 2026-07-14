@@ -24,7 +24,7 @@ marketing or illustration.
 | Area                    | Status      | Notes                                                                                                     |
 | ----------------------- | ----------- | --------------------------------------------------------------------------------------------------------- |
 | Frontend roadmap        | In Progress | This file. Defines the admin UI build and tracking.                                                       |
-| Admin SPA               | In Progress | F0–F3 done: shell + auth plumbing, Users, and Clients (tabbed detail, reveal-once secret) on MSW.         |
+| Admin SPA               | In Progress | F0–F4 done: shell + auth plumbing, Users, Clients, and Groups (member picker, lockout guards) on MSW.     |
 | Backend admin JSON API  | Blocked     | Read/list endpoints do not exist. Tracked as `B-07` in `ROADMAP.md`. This UI depends on it (see Sec. 13). |
 | Existing admin surface  | Done        | Static SSR placeholder (`src/admin/views/index.njk`) with non-interactive tiles.                          |
 
@@ -300,7 +300,7 @@ The Vite build output is emitted to a path NestJS serves in Phase F6.
 | F1    | Shell, Routing, Auth, Data Layer | Done        | Unauthenticated load redirects; authenticated load renders shell + actor name against MSW.         |
 | F2    | Users                            | Done        | Full user list/detail/create/edit/status against MSW with cache invalidation and error surfacing.  |
 | F3    | Clients                          | Done        | Full client management incl. reveal-once secret rotation and redirect URIs against MSW.            |
-| F4    | Groups                           | Not Started | Full group management incl. membership add/remove and lockout guards against MSW.                  |
+| F4    | Groups                           | Done        | Full group management incl. membership add/remove and lockout guards against MSW.                  |
 | F5    | Audit And Overview               | Not Started | Filterable, paginated audit browsing against MSW and the real audit endpoint; Overview assembled.  |
 | F6    | Nest Integration (Same-Origin)   | Blocked     | `pnpm build && pnpm start` serves the SPA at `/admin`; real session + CSRF flow end-to-end.        |
 | F7    | Hardening And Tests              | Not Started | Green typecheck/lint/build/test/e2e; a11y pass; security review; docs updated.                    |
