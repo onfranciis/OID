@@ -1,6 +1,14 @@
 import { http, HttpResponse } from 'msw';
 import type { SessionInfo } from '../app/session';
 import type {
+  AdminCreateClientInput,
+  AdminUpdateClientInput,
+  ClientDetail,
+  ClientSummary,
+  OidcClientStatus,
+  OidcClientType,
+} from '../features/clients/types';
+import type {
   AdminCreateUserInput,
   AdminUpdateUserInput,
   UserDetail,
@@ -48,9 +56,31 @@ interface MockGroup {
   createdAt: string;
 }
 
+interface MockClient {
+  id: string;
+  clientId: string;
+  clientSecretHash: string | null;
+  name: string;
+  type: OidcClientType;
+  status: OidcClientStatus;
+  allowedScopes: string[];
+  allowedClaims: string[];
+  requirePkce: boolean;
+  allowRefreshTokens: boolean;
+  accessTokenTtlSeconds: number;
+  idTokenTtlSeconds: number;
+  refreshTokenIdleTtlSeconds: number | null;
+  refreshTokenAbsoluteTtlSeconds: number | null;
+  ownerTeam: string | null;
+  createdAt: string;
+  updatedAt: string;
+  redirectUris: Array<{ id: string; uri: string }>;
+}
+
 interface MockDb {
   users: MockUser[];
   groups: MockGroup[];
+  clients: MockClient[];
   counter: number;
 }
 
@@ -166,7 +196,80 @@ function createMockDb(): MockDb {
     }),
   ];
 
-  return { users, groups, counter: 0 };
+  const clients: MockClient[] = [
+    {
+      id: 'cli_sample000000000000000000000',
+      clientId: 'internal-id-sample-client',
+      clientSecretHash: 'seeded-hash',
+      name: 'Internal ID Sample Client',
+      type: 'confidential',
+      status: 'active',
+      allowedScopes: ['openid', 'profile', 'email'],
+      allowedClaims: ['sub', 'email', 'name'],
+      requirePkce: true,
+      allowRefreshTokens: true,
+      accessTokenTtlSeconds: 900,
+      idTokenTtlSeconds: 900,
+      refreshTokenIdleTtlSeconds: 60 * 60 * 24 * 7,
+      refreshTokenAbsoluteTtlSeconds: 60 * 60 * 24 * 30,
+      ownerTeam: 'Platform',
+      createdAt: isoDaysAgo(120),
+      updatedAt: isoDaysAgo(5),
+      redirectUris: [
+        {
+          id: 'rdu_sample0000000000000000000',
+          uri: 'http://localhost:4000/auth/callback',
+        },
+      ],
+    },
+    {
+      id: 'cli_spa00000000000000000000000',
+      clientId: 'internal-dashboard-spa',
+      clientSecretHash: null,
+      name: 'Internal Dashboard (SPA)',
+      type: 'public',
+      status: 'active',
+      allowedScopes: ['openid', 'profile'],
+      allowedClaims: ['sub'],
+      requirePkce: true,
+      allowRefreshTokens: false,
+      accessTokenTtlSeconds: 600,
+      idTokenTtlSeconds: 600,
+      refreshTokenIdleTtlSeconds: null,
+      refreshTokenAbsoluteTtlSeconds: null,
+      ownerTeam: 'Data',
+      createdAt: isoDaysAgo(60),
+      updatedAt: isoDaysAgo(2),
+      redirectUris: [
+        {
+          id: 'rdu_spa000000000000000000000',
+          uri: 'https://dashboard.company.com/callback',
+        },
+      ],
+    },
+    {
+      id: 'cli_legacy000000000000000000000',
+      clientId: 'legacy-intranet',
+      clientSecretHash: 'seeded-hash',
+      name: 'Legacy Intranet',
+      type: 'confidential',
+      status: 'disabled',
+      allowedScopes: ['openid'],
+      allowedClaims: ['sub'],
+      requirePkce: false,
+      allowRefreshTokens: false,
+      accessTokenTtlSeconds: 900,
+      idTokenTtlSeconds: 900,
+      refreshTokenIdleTtlSeconds: null,
+      refreshTokenAbsoluteTtlSeconds: null,
+      ownerTeam: null,
+      createdAt: isoDaysAgo(500),
+      updatedAt: isoDaysAgo(200),
+      redirectUris: [],
+    },
+  ];
+
+  return { users, groups, clients, counter: 0 };
 }
 
 let db = createMockDb();
@@ -204,6 +307,35 @@ function toUserDetail(user: MockUser): UserDetail {
         ? [{ id: group.id, slug: group.slug, displayName: group.displayName }]
         : [];
     }),
+  };
+}
+
+function toClientSummary(client: MockClient): ClientSummary {
+  return {
+    id: client.id,
+    clientId: client.clientId,
+    name: client.name,
+    type: client.type,
+    status: client.status,
+    ownerTeam: client.ownerTeam,
+    hasSecret: client.clientSecretHash !== null,
+    createdAt: client.createdAt,
+  };
+}
+
+function toClientDetail(client: MockClient): ClientDetail {
+  return {
+    ...toClientSummary(client),
+    allowedScopes: client.allowedScopes,
+    allowedClaims: client.allowedClaims,
+    requirePkce: client.requirePkce,
+    allowRefreshTokens: client.allowRefreshTokens,
+    accessTokenTtlSeconds: client.accessTokenTtlSeconds,
+    idTokenTtlSeconds: client.idTokenTtlSeconds,
+    refreshTokenIdleTtlSeconds: client.refreshTokenIdleTtlSeconds,
+    refreshTokenAbsoluteTtlSeconds: client.refreshTokenAbsoluteTtlSeconds,
+    updatedAt: client.updatedAt,
+    redirectUris: client.redirectUris,
   };
 }
 
@@ -487,4 +619,288 @@ export const handlers = [
       return HttpResponse.json({ userId: user.id, groupId: group.id });
     },
   ),
+
+  http.get('/admin/api/clients', ({ request }) => {
+    const url = new URL(request.url);
+    const q = url.searchParams.get('q')?.toLowerCase() ?? '';
+    const status = url.searchParams.get('status') ?? '';
+    const cursor = url.searchParams.get('cursor');
+    const limit = Number(url.searchParams.get('limit') ?? DEFAULT_PAGE_SIZE);
+
+    let matches = db.clients;
+
+    if (q) {
+      matches = matches.filter((client) =>
+        [client.clientId, client.name, client.ownerTeam ?? ''].some((value) =>
+          value.toLowerCase().includes(q),
+        ),
+      );
+    }
+
+    if (status) {
+      matches = matches.filter((client) => client.status === status);
+    }
+
+    const startIndex = cursor
+      ? matches.findIndex((client) => client.id === cursor) + 1
+      : 0;
+    const page = matches.slice(startIndex, startIndex + limit);
+    const nextCursor =
+      startIndex + limit < matches.length
+        ? (page[page.length - 1]?.id ?? null)
+        : null;
+
+    return HttpResponse.json({
+      items: page.map(toClientSummary),
+      nextCursor,
+    });
+  }),
+
+  http.get('/admin/api/clients/:recordId', ({ params }) => {
+    const client = db.clients.find(
+      (candidate) => candidate.id === params.recordId,
+    );
+
+    if (!client) {
+      return errorResponse(404, 'Client not found.', 'Not Found');
+    }
+
+    return HttpResponse.json(toClientDetail(client));
+  }),
+
+  http.post('/admin/api/clients', async ({ request }) => {
+    const csrfError = requireCsrf(request);
+
+    if (csrfError) {
+      return csrfError;
+    }
+
+    const input = (await request.json()) as AdminCreateClientInput;
+    const clientId = input.clientId?.trim();
+
+    if (!clientId || !input.name?.trim()) {
+      return errorResponse(400, 'clientId is required.', 'Bad Request');
+    }
+
+    if (db.clients.some((client) => client.clientId === clientId)) {
+      return errorResponse(409, 'Client ID is already in use.', 'Conflict');
+    }
+
+    db.counter += 1;
+    const now = new Date().toISOString();
+    const client: MockClient = {
+      id: `cli_new${String(db.counter).padStart(25, '0')}`,
+      clientId,
+      clientSecretHash: null,
+      name: input.name.trim(),
+      type: input.type ?? 'confidential',
+      status: 'active',
+      allowedScopes: input.allowedScopes ?? ['openid'],
+      allowedClaims: input.allowedClaims ?? ['sub'],
+      requirePkce: input.requirePkce ?? true,
+      allowRefreshTokens: input.allowRefreshTokens ?? false,
+      accessTokenTtlSeconds: input.accessTokenTtlSeconds ?? 900,
+      idTokenTtlSeconds: input.idTokenTtlSeconds ?? 900,
+      refreshTokenIdleTtlSeconds: input.allowRefreshTokens
+        ? (input.refreshTokenIdleTtlSeconds ?? 60 * 60 * 24 * 7)
+        : null,
+      refreshTokenAbsoluteTtlSeconds: input.allowRefreshTokens
+        ? (input.refreshTokenAbsoluteTtlSeconds ?? 60 * 60 * 24 * 30)
+        : null,
+      ownerTeam: input.ownerTeam ?? null,
+      createdAt: now,
+      updatedAt: now,
+      redirectUris: [],
+    };
+    db.clients.unshift(client);
+
+    return HttpResponse.json(toClientDetail(client));
+  }),
+
+  http.post(
+    '/admin/api/clients/:recordId/status',
+    async ({ params, request }) => {
+      const csrfError = requireCsrf(request);
+
+      if (csrfError) {
+        return csrfError;
+      }
+
+      const client = db.clients.find(
+        (candidate) => candidate.id === params.recordId,
+      );
+
+      if (!client) {
+        return errorResponse(404, 'Client not found.', 'Not Found');
+      }
+
+      const { status } = (await request.json()) as { status: OidcClientStatus };
+      client.status = status;
+      client.updatedAt = new Date().toISOString();
+
+      return HttpResponse.json(toClientDetail(client));
+    },
+  ),
+
+  http.post(
+    '/admin/api/clients/:recordId/secret/rotate',
+    ({ params, request }) => {
+      const csrfError = requireCsrf(request);
+
+      if (csrfError) {
+        return csrfError;
+      }
+
+      const client = db.clients.find(
+        (candidate) => candidate.id === params.recordId,
+      );
+
+      if (!client) {
+        return errorResponse(404, 'Client not found.', 'Not Found');
+      }
+
+      if (client.type !== 'confidential') {
+        return errorResponse(
+          400,
+          'Only confidential clients can have client secrets.',
+          'Bad Request',
+        );
+      }
+
+      db.counter += 1;
+      const clientSecret = `oidc_secret_mock_${db.counter}_${Math.random()
+        .toString(36)
+        .slice(2)}`;
+      client.clientSecretHash = 'rotated-hash';
+      client.updatedAt = new Date().toISOString();
+
+      return HttpResponse.json({ clientId: client.clientId, clientSecret });
+    },
+  ),
+
+  http.post(
+    '/admin/api/clients/:recordId/redirect-uris',
+    async ({ params, request }) => {
+      const csrfError = requireCsrf(request);
+
+      if (csrfError) {
+        return csrfError;
+      }
+
+      const client = db.clients.find(
+        (candidate) => candidate.id === params.recordId,
+      );
+
+      if (!client) {
+        return errorResponse(404, 'Client not found.', 'Not Found');
+      }
+
+      const { uri } = (await request.json()) as { uri: string };
+      const normalized = uri.trim();
+
+      if (client.redirectUris.some((entry) => entry.uri === normalized)) {
+        return errorResponse(
+          409,
+          'Redirect URI is already registered.',
+          'Conflict',
+        );
+      }
+
+      db.counter += 1;
+      const redirectUri = {
+        id: `rdu_new${String(db.counter).padStart(24, '0')}`,
+        uri: normalized,
+      };
+      client.redirectUris.push(redirectUri);
+      client.updatedAt = new Date().toISOString();
+
+      return HttpResponse.json(redirectUri);
+    },
+  ),
+
+  http.post(
+    '/admin/api/clients/:recordId/redirect-uris/:redirectUriId/remove',
+    ({ params, request }) => {
+      const csrfError = requireCsrf(request);
+
+      if (csrfError) {
+        return csrfError;
+      }
+
+      const client = db.clients.find(
+        (candidate) => candidate.id === params.recordId,
+      );
+      const redirectUri = client?.redirectUris.find(
+        (entry) => entry.id === params.redirectUriId,
+      );
+
+      if (!client || !redirectUri) {
+        return errorResponse(404, 'Redirect URI not found.', 'Not Found');
+      }
+
+      client.redirectUris = client.redirectUris.filter(
+        (entry) => entry.id !== redirectUri.id,
+      );
+      client.updatedAt = new Date().toISOString();
+
+      return HttpResponse.json({ id: redirectUri.id });
+    },
+  ),
+
+  http.post('/admin/api/clients/:recordId', async ({ params, request }) => {
+    const csrfError = requireCsrf(request);
+
+    if (csrfError) {
+      return csrfError;
+    }
+
+    const client = db.clients.find(
+      (candidate) => candidate.id === params.recordId,
+    );
+
+    if (!client) {
+      return errorResponse(404, 'Client not found.', 'Not Found');
+    }
+
+    const input = (await request.json()) as AdminUpdateClientInput;
+
+    if (input.name !== undefined) {
+      client.name = input.name.trim();
+    }
+    if (input.ownerTeam !== undefined) {
+      client.ownerTeam = input.ownerTeam;
+    }
+    if (input.allowedScopes !== undefined) {
+      client.allowedScopes = input.allowedScopes;
+    }
+    if (input.allowedClaims !== undefined) {
+      client.allowedClaims = input.allowedClaims;
+    }
+    if (input.requirePkce !== undefined) {
+      client.requirePkce = input.requirePkce;
+    }
+    if (input.allowRefreshTokens !== undefined) {
+      client.allowRefreshTokens = input.allowRefreshTokens;
+    }
+    if (input.accessTokenTtlSeconds !== undefined) {
+      client.accessTokenTtlSeconds = input.accessTokenTtlSeconds;
+    }
+    if (input.idTokenTtlSeconds !== undefined) {
+      client.idTokenTtlSeconds = input.idTokenTtlSeconds;
+    }
+    if (input.refreshTokenIdleTtlSeconds !== undefined) {
+      client.refreshTokenIdleTtlSeconds = client.allowRefreshTokens
+        ? input.refreshTokenIdleTtlSeconds
+        : null;
+    }
+    if (input.refreshTokenAbsoluteTtlSeconds !== undefined) {
+      client.refreshTokenAbsoluteTtlSeconds = client.allowRefreshTokens
+        ? input.refreshTokenAbsoluteTtlSeconds
+        : null;
+    }
+
+    client.updatedAt = new Date().toISOString();
+
+    return HttpResponse.json(toClientDetail(client));
+  }),
 ];

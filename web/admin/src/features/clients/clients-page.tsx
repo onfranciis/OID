@@ -1,11 +1,167 @@
-import { PagePlaceholder } from '../../components/page-placeholder';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { inputClass } from '../../components/form-field';
+import { StatusBadge } from '../../components/status-badge';
+import { formatDate } from '../../lib/format';
+import { useDebouncedValue } from '../../lib/use-debounced-value';
+import { useClientsList } from './api';
+import {
+  CLIENT_STATUSES,
+  clientStatusTone,
+  type OidcClientStatus,
+} from './types';
 
 export function ClientsPage() {
+  const navigate = useNavigate();
+  const [search, setSearch] = useState('');
+  const [status, setStatus] = useState<OidcClientStatus | ''>('');
+  const debouncedSearch = useDebouncedValue(search.trim());
+
+  const query = useClientsList({
+    q: debouncedSearch || undefined,
+    status: status || undefined,
+  });
+
+  const clients = query.data?.pages.flatMap((page) => page.items) ?? [];
+
   return (
-    <PagePlaceholder
-      title="Clients"
-      description="Configure redirect URIs, scopes, claims, and token policy."
-      phase="F3"
-    />
+    <section>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold">Clients</h1>
+          <p className="mt-1 text-sm text-muted">
+            Configure redirect URIs, scopes, claims, and token policy.
+          </p>
+        </div>
+        <Link
+          to="/clients/new"
+          className="rounded-card bg-accent px-4 py-2 text-sm font-semibold text-surface hover:opacity-90"
+        >
+          Create client
+        </Link>
+      </div>
+
+      <div className="mt-6 flex flex-wrap gap-3">
+        <input
+          type="search"
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder="Search client ID, name, or owner"
+          aria-label="Search clients"
+          className={`${inputClass} w-72 max-w-full`}
+        />
+        <select
+          value={status}
+          onChange={(event) =>
+            setStatus(event.target.value as OidcClientStatus | '')
+          }
+          aria-label="Filter by status"
+          className={inputClass}
+        >
+          <option value="">All statuses</option>
+          {CLIENT_STATUSES.map((value) => (
+            <option key={value} value={value}>
+              {value}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="mt-4 overflow-x-auto rounded-card border border-line bg-surface">
+        <table className="w-full min-w-160 border-collapse text-left text-sm">
+          <thead>
+            <tr className="border-b border-line text-xs text-muted uppercase">
+              <th className="px-4 py-3 font-semibold">Client ID</th>
+              <th className="px-4 py-3 font-semibold">Name</th>
+              <th className="px-4 py-3 font-semibold">Type</th>
+              <th className="px-4 py-3 font-semibold">Secret</th>
+              <th className="px-4 py-3 font-semibold">Owner</th>
+              <th className="px-4 py-3 font-semibold">Status</th>
+              <th className="px-4 py-3 font-semibold">Created</th>
+            </tr>
+          </thead>
+          <tbody>
+            {query.isPending ? (
+              <tr>
+                <td colSpan={7} className="px-4 py-8 text-center text-muted">
+                  Loading clients…
+                </td>
+              </tr>
+            ) : null}
+            {query.isError ? (
+              <tr>
+                <td colSpan={7} className="px-4 py-8 text-center">
+                  <span className="text-danger">Could not load clients.</span>{' '}
+                  <button
+                    type="button"
+                    onClick={() => void query.refetch()}
+                    className="font-semibold text-accent"
+                  >
+                    Retry
+                  </button>
+                </td>
+              </tr>
+            ) : null}
+            {query.isSuccess && clients.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="px-4 py-8 text-center text-muted">
+                  No clients match.{' '}
+                  <Link to="/clients/new" className="font-semibold text-accent">
+                    Register the first one
+                  </Link>
+                </td>
+              </tr>
+            ) : null}
+            {clients.map((client) => (
+              <tr
+                key={client.id}
+                onClick={() => void navigate(`/clients/${client.id}`)}
+                className="cursor-pointer border-b border-line last:border-b-0 hover:bg-page"
+              >
+                <td className="px-4 py-3 font-mono text-xs">
+                  <Link
+                    to={`/clients/${client.id}`}
+                    className="hover:text-accent"
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    {client.clientId}
+                  </Link>
+                </td>
+                <td className="px-4 py-3 font-medium">{client.name}</td>
+                <td className="px-4 py-3 text-muted">{client.type}</td>
+                <td className="px-4 py-3 text-muted">
+                  {client.hasSecret ? 'set' : '—'}
+                </td>
+                <td className="px-4 py-3 text-muted">
+                  {client.ownerTeam ?? '—'}
+                </td>
+                <td className="px-4 py-3">
+                  <StatusBadge
+                    label={client.status}
+                    tone={clientStatusTone(client.status)}
+                  />
+                </td>
+                <td className="px-4 py-3 text-muted">
+                  {formatDate(client.createdAt)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {query.hasNextPage ? (
+        <div className="mt-4 text-center">
+          <button
+            type="button"
+            disabled={query.isFetchingNextPage}
+            onClick={() => void query.fetchNextPage()}
+            className="rounded-card border border-line bg-surface px-4 py-2 text-sm font-semibold text-accent hover:border-accent disabled:opacity-50"
+          >
+            {query.isFetchingNextPage ? 'Loading…' : 'Load more'}
+          </button>
+        </div>
+      ) : null}
+    </section>
   );
 }
