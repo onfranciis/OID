@@ -8,6 +8,7 @@ import type {
   OidcClientStatus,
   OidcClientType,
 } from '../features/clients/types';
+import type { AuditEvent, AuditSeverity } from '../features/audit/types';
 import type { GroupDetail, GroupSummary } from '../features/groups/types';
 import type {
   AdminCreateUserInput,
@@ -82,8 +83,80 @@ interface MockDb {
   users: MockUser[];
   groups: MockGroup[];
   clients: MockClient[];
+  auditEvents: AuditEvent[];
   counter: number;
 }
+
+interface AuditSeed {
+  eventType: string;
+  severity: AuditSeverity;
+  actorUserId: string | null;
+  targetUserId: string | null;
+  clientId: string | null;
+  metadata: Record<string, unknown>;
+}
+
+const AUDIT_SEEDS: AuditSeed[] = [
+  {
+    eventType: 'admin.user.created',
+    severity: 'info',
+    actorUserId: 'usr_01mockadmin0000000000000000',
+    targetUserId: 'usr_seed000000000000000000000001',
+    clientId: null,
+    metadata: {
+      normalizedEmail: 'alice.adeyemi@company.com',
+      status: 'pending',
+    },
+  },
+  {
+    eventType: 'admin.user.status_changed',
+    severity: 'info',
+    actorUserId: 'usr_01mockadmin0000000000000000',
+    targetUserId: 'usr_seed000000000000000000000001',
+    clientId: null,
+    metadata: { status: 'active' },
+  },
+  {
+    eventType: 'admin.client.secret_rotated',
+    severity: 'warning',
+    actorUserId: 'usr_01mockadmin0000000000000000',
+    targetUserId: null,
+    clientId: 'cli_sample000000000000000000000',
+    metadata: { clientId: 'internal-id-sample-client' },
+  },
+  {
+    eventType: 'admin.group.membership_added',
+    severity: 'info',
+    actorUserId: 'usr_01mockadmin0000000000000000',
+    targetUserId: 'usr_seed000000000000000000000002',
+    clientId: null,
+    metadata: { groupId: 'grp_engineering0000000000000' },
+  },
+  {
+    eventType: 'user.login.rejected',
+    severity: 'warning',
+    actorUserId: null,
+    targetUserId: 'usr_seed000000000000000000000004',
+    clientId: null,
+    metadata: { reason: 'invalid_credentials' },
+  },
+  {
+    eventType: 'oidc.token.issued',
+    severity: 'info',
+    actorUserId: 'usr_seed000000000000000000000001',
+    targetUserId: null,
+    clientId: 'cli_sample000000000000000000000',
+    metadata: { grantType: 'authorization_code' },
+  },
+  {
+    eventType: 'oidc.refresh_token.replayed',
+    severity: 'critical',
+    actorUserId: null,
+    targetUserId: 'usr_seed000000000000000000000005',
+    clientId: 'cli_sample000000000000000000000',
+    metadata: { action: 'family_revoked', revokedCount: 3 },
+  },
+];
 
 const FIRST_NAMES = [
   'Alice',
@@ -270,7 +343,32 @@ function createMockDb(): MockDb {
     },
   ];
 
-  return { users, groups, clients, counter: 0 };
+  // Repeat the seed set a few times for volume; newest first.
+  const auditEvents: AuditEvent[] = Array.from({ length: 4 }).flatMap(
+    (_unused, round) =>
+      AUDIT_SEEDS.map((seed, index) => {
+        const sequence = round * AUDIT_SEEDS.length + index;
+
+        return {
+          id: `aud_seed${String(sequence + 1).padStart(24, '0')}`,
+          eventType: seed.eventType,
+          severity: seed.severity,
+          actorUserId: seed.actorUserId,
+          targetUserId: seed.targetUserId,
+          clientId: seed.clientId,
+          providerSessionId: seed.actorUserId
+            ? 'ses_mock000000000000000000000'
+            : null,
+          ipAddress: '198.51.100.24',
+          userAgent:
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+          metadata: seed.metadata,
+          createdAt: new Date(Date.now() - sequence * 3_600_000).toISOString(),
+        } satisfies AuditEvent;
+      }),
+  );
+
+  return { users, groups, clients, auditEvents, counter: 0 };
 }
 
 let db = createMockDb();
@@ -1030,5 +1128,35 @@ export const handlers = [
     client.updatedAt = new Date().toISOString();
 
     return HttpResponse.json(toClientDetail(client));
+  }),
+
+  http.get('/admin/api/audit-events', ({ request }) => {
+    const url = new URL(request.url);
+    const eventType = url.searchParams.get('eventType');
+    const severity = url.searchParams.get('severity');
+    const actorUserId = url.searchParams.get('actorUserId');
+    const targetUserId = url.searchParams.get('targetUserId');
+    const clientId = url.searchParams.get('clientId');
+    const limit = Number(url.searchParams.get('limit') ?? 50);
+
+    let matches = db.auditEvents;
+
+    if (eventType) {
+      matches = matches.filter((event) => event.eventType.includes(eventType));
+    }
+    if (severity) {
+      matches = matches.filter((event) => event.severity === severity);
+    }
+    if (actorUserId) {
+      matches = matches.filter((event) => event.actorUserId === actorUserId);
+    }
+    if (targetUserId) {
+      matches = matches.filter((event) => event.targetUserId === targetUserId);
+    }
+    if (clientId) {
+      matches = matches.filter((event) => event.clientId === clientId);
+    }
+
+    return HttpResponse.json(matches.slice(0, Math.min(limit, 200)));
   }),
 ];

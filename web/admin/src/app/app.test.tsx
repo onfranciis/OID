@@ -34,7 +34,7 @@ test('authenticated load renders the shell with the actor name', async () => {
     screen.getByRole('navigation', { name: 'Admin sections' }),
   ).toBeDefined();
   expect(
-    await screen.findByRole('heading', { name: 'Overview' }),
+    await screen.findByRole('heading', { name: 'Admin console' }),
   ).toBeDefined();
 });
 
