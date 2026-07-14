@@ -1,5 +1,6 @@
 import { createBrowserRouter, type RouteObject } from 'react-router-dom';
 import { AppShell } from '../components/app-shell';
+import { RouteErrorElement } from '../components/error-boundary';
 import { ToastProvider } from '../components/toaster';
 import { AuditPage } from '../features/audit/audit-page';
 import { ClientCreatePage } from '../features/clients/client-create-page';
@@ -33,6 +34,7 @@ export const routes: RouteObject[] = [
   {
     path: '/',
     element: <AdminLayout />,
+    errorElement: <RouteErrorElement />,
     children: [
       { index: true, element: <OverviewPage /> },
       { path: 'users', element: <UsersPage /> },

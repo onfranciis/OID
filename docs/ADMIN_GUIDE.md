@@ -3,10 +3,45 @@
 The Internal ID admin surface is provider-local and protected by provider
 sessions, admin group membership, recent authentication, and CSRF checks.
 
-Admin management is moving toward a standalone React app later. The backend
-admin contract should therefore be treated as `/admin/api/*` JSON endpoints
-protected by the same provider-local rules. The current server-rendered admin
-pages are a temporary management surface, not the long-term UI boundary.
+Admin management is moving toward a standalone React app. The backend admin
+contract should therefore be treated as `/admin/api/*` JSON endpoints protected
+by the same provider-local rules. The current server-rendered admin pages are a
+temporary management surface, not the long-term UI boundary.
+
+## React Admin App
+
+The standalone admin SPA lives in `web/admin/` (Vite + React + TypeScript,
+Tailwind, Radix). It is a same-origin client that renders the Users, Groups,
+Clients, and Audit sections plus an Overview landing page.
+
+Security posture:
+
+- It authenticates only through the existing `internal_id_provider_session`
+  cookie; it never reads that cookie (HttpOnly) and never mints its own tokens.
+- It bootstraps identity and a CSRF token from `GET /admin/api/session` and
+  attaches the token as the `x-csrf-token` header on every mutation.
+- Session, CSRF, and secret material are held in memory only. Nothing is written
+  to `localStorage` or `sessionStorage`.
+- A `401` sends the user to `/login?returnTo=/admin`; a non-admin session shows
+  an access-denied screen; the recent-auth `403` opens a re-authentication
+  dialog and retries the original mutation.
+- Rotated client secrets are shown exactly once and are never cached.
+- Self-lockout guards require typed confirmation before an admin removes their
+  own membership in the bootstrap admin group or renames that group's slug.
+
+The SPA currently runs against a mocked `/admin/api/*` contract (MSW) that
+mirrors `docs/ADMIN_API_CONTRACT.md`. Wiring it to the real endpoints and
+serving it same-origin from NestJS at `/admin` is tracked as backend queue item
+`B-07` plus roadmap phase F6 in `FRONTEND_ROADMAP.md`.
+
+Local development:
+
+```bash
+pnpm admin:install   # first run
+pnpm admin:dev       # http://localhost:5173/admin/ (MSW-mocked)
+pnpm admin:test      # component/integration tests
+pnpm admin:build     # type-check + production build
+```
 
 ## Access Model
 

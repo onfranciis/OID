@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { RouterProvider } from 'react-router-dom';
 import { queryClient } from './app/query';
 import { createAppRouter } from './app/router';
+import { ErrorBoundary } from './components/error-boundary';
 import './styles/theme.css';
 
 // MSW mocks the /admin/api/* contract in dev until the backend read layer
@@ -30,9 +31,11 @@ if (!container) {
 void enableMocking().then(() => {
   createRoot(container).render(
     <StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <RouterProvider router={createAppRouter()} />
-      </QueryClientProvider>
+      <ErrorBoundary>
+        <QueryClientProvider client={queryClient}>
+          <RouterProvider router={createAppRouter()} />
+        </QueryClientProvider>
+      </ErrorBoundary>
     </StrictMode>,
   );
 });

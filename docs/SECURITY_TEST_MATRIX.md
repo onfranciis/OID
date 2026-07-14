@@ -52,6 +52,28 @@ changes.
 | Security headers are emitted.                               | Covered | `src/common/security-headers.middleware.spec.ts`                               |
 | Request logs include request ID and service context.        | Covered | `src/common/structured-logger.middleware.spec.ts`                              |
 
+## Admin SPA (web/admin)
+
+Client-side coverage for the standalone React admin app. These complement, but do
+not replace, the server-side guards; the backend remains the enforcement
+boundary.
+
+| Requirement                                                          | Status  | Coverage                                                              |
+| -------------------------------------------------------------------- | ------- | -------------------------------------------------------------------- |
+| Mutations attach the `x-csrf-token` header; GETs do not.             | Covered | `web/admin/src/app/api-client.test.ts`                               |
+| Error envelope (string and array) maps to typed client errors.       | Covered | `web/admin/src/app/api-client.test.ts`                               |
+| Recent-auth `403` triggers re-auth then retries the mutation.        | Covered | `web/admin/src/app/reauth.test.tsx`                                  |
+| Unauthenticated load redirects to provider login.                    | Covered | `web/admin/src/app/app.test.tsx`                                     |
+| Non-admin session is denied without rendering admin data.            | Covered | `web/admin/src/app/app.test.tsx`                                     |
+| No session/CSRF/secret material is written to web storage.           | Covered | `web/admin/src/app/hardening.test.tsx`                              |
+| Rotated client secret is revealed once and not recoverable after.    | Covered | `web/admin/src/features/clients/clients.test.tsx`                    |
+| Self-lockout guards require typed confirmation (user + group views).  | Covered | `web/admin/src/features/users/users.test.tsx`, `groups/groups.test.tsx` |
+| Redirect URI validation matches backend (absolute, no fragment).     | Covered | `web/admin/src/features/clients/clients.test.tsx`                    |
+| Identity conflicts (email/username/slug/clientId) surface inline.     | Covered | Users, groups, and clients feature tests.                           |
+| Unexpected render errors show a safe fallback, not a stack trace.    | Covered | `web/admin/src/components/error-boundary.test.tsx`                   |
+| User-controlled content is escaped (React/Radix; no `dangerouslySetInnerHTML`). | Covered by review | No `dangerouslySetInnerHTML` in `web/admin`; verify in review. |
+| Full browser login-to-manage e2e (Playwright).                       | Planned | Deferred to F6 with the real `/admin/api/*` backend and `/login`.    |
+
 ## Audit And Secrets
 
 | Requirement                                     | Status                      | Coverage                                                                       |

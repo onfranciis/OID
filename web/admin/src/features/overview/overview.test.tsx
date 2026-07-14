@@ -33,5 +33,7 @@ test('a recent activity item deep-links into the audit section', async () => {
 
   // Landed on the audit page with the event-type filter applied.
   expect(await screen.findByRole('heading', { name: 'Audit' })).toBeDefined();
-  expect(screen.getByLabelText('Event type').value).toBe('admin.user.created');
+  expect(screen.getByLabelText<HTMLInputElement>('Event type').value).toBe(
+    'admin.user.created',
+  );
 });

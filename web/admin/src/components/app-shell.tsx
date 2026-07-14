@@ -1,14 +1,22 @@
 import type { ReactNode } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useSession } from '../app/session';
+import { useDocumentTitle } from '../lib/use-document-title';
 
 // The persistent chrome from FRONTEND_ROADMAP.md 7.1: header with actor name
 // and sign-out, left navigation for the sections, and the routed outlet.
 export function AppShell() {
   const { user } = useSession();
+  useDocumentTitle();
 
   return (
     <div className="min-h-screen bg-page font-sans text-ink">
+      <a
+        href="#admin-main"
+        className="sr-only rounded-card bg-accent px-3 py-2 text-sm font-semibold text-surface focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50"
+      >
+        Skip to content
+      </a>
       <header className="border-b border-line bg-surface">
         <div className="mx-auto flex min-h-16 w-full max-w-[1280px] items-center justify-between gap-6 px-4">
           <div className="font-bold">Internal ID Admin</div>
@@ -37,7 +45,7 @@ export function AppShell() {
             <NavItem to="/audit">Audit</NavItem>
           </ul>
         </nav>
-        <main className="min-w-0 flex-1">
+        <main id="admin-main" tabIndex={-1} className="min-w-0 flex-1">
           <Outlet />
         </main>
       </div>

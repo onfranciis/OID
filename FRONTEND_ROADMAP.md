@@ -24,7 +24,7 @@ marketing or illustration.
 | Area                    | Status      | Notes                                                                                                     |
 | ----------------------- | ----------- | --------------------------------------------------------------------------------------------------------- |
 | Frontend roadmap        | In Progress | This file. Defines the admin UI build and tracking.                                                       |
-| Admin SPA               | In Progress | F0–F5 done: all sections built on MSW (Overview, Users, Groups, Clients, Audit). F6 (Nest wiring) next.   |
+| Admin SPA               | In Progress | F0–F5 + F7 done: all sections + hardening on MSW. Only F6 (Nest wiring, blocked on B-07) remains.         |
 | Backend admin JSON API  | Blocked     | Read/list endpoints do not exist. Tracked as `B-07` in `ROADMAP.md`. This UI depends on it (see Sec. 13). |
 | Existing admin surface  | Done        | Static SSR placeholder (`src/admin/views/index.njk`) with non-interactive tiles.                          |
 
@@ -303,7 +303,7 @@ The Vite build output is emitted to a path NestJS serves in Phase F6.
 | F4    | Groups                           | Done        | Full group management incl. membership add/remove and lockout guards against MSW.                  |
 | F5    | Audit And Overview               | Done        | Filterable audit browsing (URL-driven, expandable metadata) against MSW; Overview assembled.       |
 | F6    | Nest Integration (Same-Origin)   | Blocked     | `pnpm build && pnpm start` serves the SPA at `/admin`; real session + CSRF flow end-to-end.        |
-| F7    | Hardening And Tests              | Not Started | Green typecheck/lint/build/test/e2e; a11y pass; security review; docs updated.                    |
+| F7    | Hardening And Tests              | Done        | Green typecheck/lint/build/test; a11y pass; security review; docs updated. Browser e2e moved to F6. |
 
 Phase F6 is `Blocked` on backend `B-07`. Phases F0 through F5 and F7's
 component-level tests proceed unblocked against MSW.
@@ -403,24 +403,34 @@ Blocked on backend `B-07`. Tasks:
   `admin-page.service.ts` in favor of the SPA.
 - Point the app at the real `/admin/api/*` endpoints; relegate MSW to tests.
 - Reconcile any contract drift with the delivered backend.
+- Add the Playwright browser e2e (login then manage each domain) reusing the
+  bootstrap seed. This moved from F7 because a login-to-manage flow needs the
+  real `/login` page and the live `/admin/api/*` endpoints, which only exist
+  once B-07 lands.
 
 Exit criteria: `pnpm build && pnpm start` serves the SPA at
 `http://localhost:3000/admin`; real session and CSRF cookies drive whoami and at
-least one live mutation end-to-end.
+least one live mutation end-to-end; the Playwright e2e passes.
 
 ### 11.9 Phase F7: Hardening And Tests
 
-Tasks: loading / empty / error states and error boundaries across all screens
-per Section 7.7; accessibility pass (Radix a11y, keyboard navigation, focus
-management); Vitest + React Testing Library coverage for forms, pagination,
-error mapping, and the CSRF / recent-auth interceptors; Playwright e2e happy
-paths (login then manage each domain) reusing `playwright.config.ts` and the
-bootstrap seed; a security pass (no tokens in web storage, CSRF on every
-mutation, reliance on React/Radix escaping with no `dangerouslySetInnerHTML`).
-Update `docs/ADMIN_GUIDE.md` and `docs/SECURITY_TEST_MATRIX.md`.
+Done. Delivered: loading / empty / error states plus a global error boundary
+(`components/error-boundary.tsx`, wired as the router `errorElement` and the
+outermost wrapper in `main.tsx`); accessibility pass (skip link, focusable
+`#admin-main` landmark, `aria-current` nav, per-route document titles); Vitest +
+React Testing Library coverage for forms, pagination, error mapping, and the
+CSRF / recent-auth interceptors (`app/api-client.test.ts`, `app/hardening.test.tsx`,
+`components/error-boundary.test.tsx`); a security pass (no tokens in web storage,
+CSRF on every mutation, no `dangerouslySetInnerHTML`, reveal-once secrets,
+lockout guards). Updated `docs/ADMIN_GUIDE.md` and `docs/SECURITY_TEST_MATRIX.md`.
 
-Exit criteria: green typecheck, lint, build, unit, and e2e; accessibility and
-security passes complete; docs updated.
+The Playwright browser e2e moved to F6: a login-to-manage flow requires the real
+`/login` page and live `/admin/api/*` endpoints, so it can only run end-to-end
+once B-07 lands.
+
+Exit criteria (met): green typecheck, lint, build, and unit/integration tests;
+accessibility and security passes complete; docs updated. Browser e2e tracked in
+F6.
 
 ## 12. Cross-Cutting Requirements
 
