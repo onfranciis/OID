@@ -1,7 +1,8 @@
 # Internal ID
 
 Internal ID is an internal OpenID Connect identity provider built with NestJS,
-TypeORM, PostgreSQL, and Better Auth.
+TypeORM, PostgreSQL, and Better Auth. It ships with a standalone React admin
+console (in `web/admin/`) served same-origin at `/admin`.
 
 ## Local Setup
 
@@ -15,6 +16,47 @@ TypeORM, PostgreSQL, and Better Auth.
 
 The app listens on `http://localhost:3000` by default.
 
+## Admin Console (React SPA)
+
+The admin console lives in `web/admin/` (Vite + React + TypeScript, Tailwind,
+Radix) and is a same-origin client that reuses the provider session cookie and
+CSRF token. It has its own package and lockfile.
+
+Frontend-only development (mocked API via MSW):
+
+```bash
+pnpm admin:install   # first run, installs web/admin dependencies
+pnpm admin:dev       # http://localhost:5173/admin/ (MSW-mocked contract)
+pnpm admin:test      # component/integration tests (Vitest + RTL)
+pnpm admin:lint      # ESLint
+pnpm admin:build     # type-check + production build to web/admin/dist
+```
+
+Integrated (served by NestJS against the live `/admin/api/*` API):
+
+```bash
+pnpm admin:build && pnpm build && pnpm start   # SPA + API at http://localhost:3000/admin
+```
+
+NestJS serves `web/admin/dist` at `/admin` (with `/admin/api/*` excluded so it
+reaches the API, and client-side deep links falling back to `index.html`). To
+run the SPA dev server against a running backend instead of MSW:
+
+```bash
+VITE_USE_REAL_API=1 pnpm admin:dev
+```
+
+End-to-end tests (Playwright, `web/admin/e2e/`) drive the full login-to-manage
+flow against a seeded backend:
+
+```bash
+pnpm admin:e2e:install   # one-time Chromium download
+pnpm seed:bootstrap      # with BOOTSTRAP_ADMIN_PASSWORD set
+E2E_ADMIN_EMAIL=admin@company.com E2E_ADMIN_PASSWORD=<pw> pnpm admin:e2e
+```
+
+See `web/admin/e2e/README.md` for the full prerequisites.
+
 ## Useful Commands
 
 - `pnpm build`: compile the NestJS app.
@@ -25,6 +67,7 @@ The app listens on `http://localhost:3000` by default.
 - `pnpm cleanup:expired`: cleanup expired authorization codes, sessions, and refresh tokens.
 - `pnpm better-auth:schema`: materialize or verify Better Auth-owned tables.
 - `pnpm sample-client:start`: run the sample OIDC client on `http://localhost:4000`.
+- `pnpm admin:*`: admin console tasks (see Admin Console above) — `admin:dev`, `admin:build`, `admin:test`, `admin:e2e`.
 
 ## Docker
 
@@ -39,6 +82,9 @@ Run app and PostgreSQL:
 ```bash
 docker compose up --build
 ```
+
+The image builds the admin SPA and serves it at `/admin`, so no separate
+frontend deployment is needed.
 
 ## Operations
 
