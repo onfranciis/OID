@@ -14,12 +14,10 @@ import { AdminAccessService } from './admin-access.service';
 import { AdminApiController } from './admin-api.controller';
 import { AdminAuditService } from './admin-audit.service';
 import { AdminClientService } from './admin-client.service';
-import { AdminController } from './admin.controller';
 import { AdminCsrfGuard } from './admin-csrf.guard';
 import { AdminCsrfService } from './admin-csrf.service';
 import { AdminGroupService } from './admin-group.service';
 import { AdminGuard } from './admin.guard';
-import { AdminPageService } from './admin-page.service';
 import { AdminRecentAuthGuard } from './admin-recent-auth.guard';
 import { AdminUserService } from './admin-user.service';
 
@@ -38,7 +36,7 @@ import { AdminUserService } from './admin-user.service';
       OidcRedirectUriEntity,
     ]),
   ],
-  controllers: [AdminController, AdminApiController],
+  controllers: [AdminApiController],
   providers: [
     AdminAccessService,
     AdminAuditService,
@@ -47,7 +45,6 @@ import { AdminUserService } from './admin-user.service';
     AdminCsrfService,
     AdminGroupService,
     AdminGuard,
-    AdminPageService,
     AdminRecentAuthGuard,
     AdminUserService,
   ],

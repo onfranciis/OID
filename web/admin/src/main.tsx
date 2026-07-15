@@ -7,10 +7,11 @@ import { createAppRouter } from './app/router';
 import { ErrorBoundary } from './components/error-boundary';
 import './styles/theme.css';
 
-// MSW mocks the /admin/api/* contract in dev until the backend read layer
-// (B-07) lands; production builds never load the worker (F6 removes it).
+// MSW mocks the /admin/api/* contract in dev. Production builds never load the
+// worker (hits the real API served same-origin by NestJS). In dev, set
+// VITE_USE_REAL_API=1 to bypass MSW and proxy to a running backend instead.
 async function enableMocking(): Promise<void> {
-  if (!import.meta.env.DEV) {
+  if (!import.meta.env.DEV || import.meta.env.VITE_USE_REAL_API) {
     return;
   }
 

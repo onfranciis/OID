@@ -1,4 +1,6 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { adminStaticOptions } from './admin/admin-static.options';
 import { AppConfigModule } from './config/app-config.module';
 import { RequestContextMiddleware } from './common/request-context.middleware';
 import { SecurityHeadersMiddleware } from './common/security-headers.middleware';
@@ -18,6 +20,7 @@ import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
+    ServeStaticModule.forRoot(adminStaticOptions()),
     AppConfigModule,
     DatabaseModule,
     BetterAuthModule,

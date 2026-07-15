@@ -24,7 +24,7 @@ marketing or illustration.
 | Area                    | Status      | Notes                                                                                                     |
 | ----------------------- | ----------- | --------------------------------------------------------------------------------------------------------- |
 | Frontend roadmap        | In Progress | This file. Defines the admin UI build and tracking.                                                       |
-| Admin SPA               | In Progress | F0–F5 + F7 done: all sections + hardening on MSW. Only F6 (Nest wiring, blocked on B-07) remains.         |
+| Admin SPA               | Done        | F0–F7 complete. SPA served same-origin at `/admin` against live `/admin/api/*`; SSR admin retired.        |
 | Backend admin JSON API  | Done        | `AdminApiController` implements `/admin/api/*` (session, reads, mutations). B-07 in `ROADMAP.md` is done. |
 | Existing admin surface  | Done        | Static SSR placeholder (`src/admin/views/index.njk`) with non-interactive tiles.                          |
 
@@ -302,12 +302,14 @@ The Vite build output is emitted to a path NestJS serves in Phase F6.
 | F3    | Clients                          | Done        | Full client management incl. reveal-once secret rotation and redirect URIs against MSW.            |
 | F4    | Groups                           | Done        | Full group management incl. membership add/remove and lockout guards against MSW.                  |
 | F5    | Audit And Overview               | Done        | Filterable audit browsing (URL-driven, expandable metadata) against MSW; Overview assembled.       |
-| F6    | Nest Integration (Same-Origin)   | Not Started | `pnpm build && pnpm start` serves the SPA at `/admin`; real session + CSRF flow end-to-end.        |
+| F6    | Nest Integration (Same-Origin)   | Done        | ServeStatic serves the SPA at `/admin` (API excluded); SSR retired; Playwright e2e authored.       |
 | F7    | Hardening And Tests              | Done        | Green typecheck/lint/build/test; a11y pass; security review; docs updated. Browser e2e moved to F6. |
 
-Backend `B-07` (the `/admin/api/*` layer) is now done, so F6 is unblocked and is
-the only remaining phase. Phases F0 through F5 and F7 were built against MSW; F6
-swaps the mocks for the live endpoints and serves the SPA same-origin.
+All phases F0 through F7 are done. The SPA is built against MSW for unit/
+integration tests and served same-origin by NestJS against the live
+`/admin/api/*` layer (`AdminApiController`) in dev-integrated and production
+runs. The only open verification is executing the Playwright e2e against a
+seeded database with installed browsers.
 
 ## 11. Execution Plan
 
@@ -396,22 +398,27 @@ actions.
 
 ### 11.8 Phase F6: Nest Integration (Same-Origin Serving)
 
-Unblocked: backend `B-07` (`AdminApiController`) is done. Tasks:
+Done. Delivered:
 
-- Serve the Vite build from NestJS at `/admin` with SPA fallback (non-`/admin/api`
-  routes return `index.html`) in `src/main.ts`.
-- Retire the SSR placeholder render in `src/admin/admin.controller.ts` /
-  `admin-page.service.ts` in favor of the SPA.
-- Point the app at the real `/admin/api/*` endpoints; relegate MSW to tests.
-- Reconcile any contract drift with the delivered backend.
-- Add the Playwright browser e2e (login then manage each domain) reusing the
-  bootstrap seed. This moved from F7 because a login-to-manage flow needs the
-  real `/login` page and the live `/admin/api/*` endpoints, which only exist
-  once B-07 lands.
+- NestJS serves the Vite build at `/admin` via `ServeStaticModule.forRoot(...)`
+  (`src/admin/admin-static.options.ts`), with `/admin/api/{*path}` excluded so
+  the API reaches `AdminApiController` and client-side deep links fall back to
+  `index.html`. Verified by a real-`NestFactory` integration test
+  (`src/admin/admin-static.options.spec.ts`).
+- Retired the SSR admin surface: removed `AdminController`, `AdminPageService`,
+  and `views/index.njk` (and their specs); `AdminApiController` is the sole
+  admin surface.
+- The SPA hits the live `/admin/api/*` in production builds (MSW is dev-only and
+  absent from the bundle); `VITE_USE_REAL_API=1 pnpm admin:dev` proxies to a
+  running backend for development against real endpoints.
+- The Docker image builds and includes `web/admin/dist`.
+- Authored the Playwright login-to-manage e2e (`web/admin/e2e/`, `pnpm admin:e2e`).
 
-Exit criteria: `pnpm build && pnpm start` serves the SPA at
-`http://localhost:3000/admin`; real session and CSRF cookies drive whoami and at
-least one live mutation end-to-end; the Playwright e2e passes.
+Exit criteria (met, except live e2e execution): serving semantics verified by
+integration test; SSR retired; SPA wired to the live API; Docker updated. The
+Playwright e2e is authored and parses (`playwright test --list`) but is not run
+here — it needs a seeded Postgres and installed browsers (see
+`web/admin/e2e/README.md`). Running it green is the one open verification.
 
 ### 11.9 Phase F7: Hardening And Tests
 

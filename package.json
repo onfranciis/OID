@@ -40,7 +40,9 @@
     "admin:build": "pnpm -C web/admin build",
     "admin:test": "pnpm -C web/admin test",
     "admin:lint": "pnpm -C web/admin lint",
-    "admin:typecheck": "pnpm -C web/admin typecheck"
+    "admin:typecheck": "pnpm -C web/admin typecheck",
+    "admin:e2e": "pnpm -C web/admin e2e",
+    "admin:e2e:install": "pnpm -C web/admin e2e:install"
   },
   "dependencies": {
     "@better-auth/oauth-provider": "^1.6.20",
@@ -48,6 +50,7 @@
     "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
+    "@nestjs/serve-static": "^5.0.5",
     "@nestjs/typeorm": "^11.0.1",
     "better-auth": "^1.6.20",
     "kysely": "^0.29.2",

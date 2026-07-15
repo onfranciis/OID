@@ -3,10 +3,10 @@
 The Internal ID admin surface is provider-local and protected by provider
 sessions, admin group membership, recent authentication, and CSRF checks.
 
-Admin management is moving toward a standalone React app. The backend admin
-contract should therefore be treated as `/admin/api/*` JSON endpoints protected
-by the same provider-local rules. The current server-rendered admin pages are a
-temporary management surface, not the long-term UI boundary.
+Admin management is a standalone React app served same-origin by NestJS at
+`/admin`. The backend admin contract is the `/admin/api/*` JSON endpoints
+(`AdminApiController`), protected by the same provider-local rules. The old
+server-rendered admin pages have been retired in favor of the SPA.
 
 ## React Admin App
 
@@ -29,10 +29,10 @@ Security posture:
 - Self-lockout guards require typed confirmation before an admin removes their
   own membership in the bootstrap admin group or renames that group's slug.
 
-The SPA currently runs against a mocked `/admin/api/*` contract (MSW) that
-mirrors `docs/ADMIN_API_CONTRACT.md`. Wiring it to the real endpoints and
-serving it same-origin from NestJS at `/admin` is tracked as backend queue item
-`B-07` plus roadmap phase F6 in `FRONTEND_ROADMAP.md`.
+Serving: NestJS serves the Vite build (`web/admin/dist`) at `/admin` via
+`ServeStaticModule`, with `/admin/api/*` excluded so it reaches
+`AdminApiController` (see `src/admin/admin-static.options.ts`). Client-side deep
+links fall back to `index.html`. The Docker image builds and includes the SPA.
 
 Local development:
 
@@ -41,7 +41,16 @@ pnpm admin:install   # first run
 pnpm admin:dev       # http://localhost:5173/admin/ (MSW-mocked)
 pnpm admin:test      # component/integration tests
 pnpm admin:build     # type-check + production build
+
+# Integrated (real API), from the repo root, with a seeded database:
+pnpm admin:build && pnpm build && pnpm start   # SPA + API at :3000/admin
+
+# Or run the SPA dev server against a running backend (no MSW):
+VITE_USE_REAL_API=1 pnpm admin:dev
 ```
+
+End-to-end tests (Playwright) live in `web/admin/e2e/`; see that folder's
+`README.md` for the seeded-backend + browser prerequisites (`pnpm admin:e2e`).
 
 ## Access Model
 
