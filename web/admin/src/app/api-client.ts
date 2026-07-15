@@ -45,6 +45,10 @@ export function setCsrfToken(token: string | null): void {
   csrfToken = token;
 }
 
+export function getCsrfToken(): string | null {
+  return csrfToken;
+}
+
 async function request<T>(
   method: 'GET' | 'POST',
   path: string,

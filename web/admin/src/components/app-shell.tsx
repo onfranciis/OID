@@ -1,5 +1,6 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
+import { performLogout } from '../app/logout';
 import { useSession } from '../app/session';
 import { useDocumentTitle } from '../lib/use-document-title';
 
@@ -20,6 +21,12 @@ function initials(name: string): string {
 export function AppShell() {
   const { user } = useSession();
   useDocumentTitle();
+  const [signingOut, setSigningOut] = useState(false);
+
+  const handleSignOut = () => {
+    setSigningOut(true);
+    void performLogout();
+  };
 
   return (
     <div className="min-h-screen bg-page p-3 font-sans text-ink sm:p-4">
@@ -62,14 +69,14 @@ export function AppShell() {
                 <div className="truncate text-xs text-muted">{user.email}</div>
               </div>
             </div>
-            <form method="post" action="/logout" className="mt-3">
-              <button
-                type="submit"
-                className="w-full rounded-card border border-line px-3 py-2 text-sm font-medium text-muted hover:border-accent hover:text-accent"
-              >
-                Sign out
-              </button>
-            </form>
+            <button
+              type="button"
+              onClick={handleSignOut}
+              disabled={signingOut}
+              className="mt-3 w-full rounded-card border border-line px-3 py-2 text-sm font-medium text-muted hover:border-accent hover:text-accent disabled:opacity-50"
+            >
+              {signingOut ? 'Signing out…' : 'Sign out'}
+            </button>
           </div>
         </aside>
 

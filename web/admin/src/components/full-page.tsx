@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { performLogout } from '../app/logout';
 
 // Full-viewport states rendered outside the app shell: session loading,
 // access denied, and unexpected bootstrap failures.
@@ -27,14 +28,15 @@ export function AccessDeniedScreen() {
         Internal ID. Administrators are active members of the bootstrap admin
         group.
       </p>
-      <form method="post" action="/logout">
+      <div>
         <button
-          type="submit"
+          type="button"
+          onClick={() => void performLogout()}
           className="rounded-card border border-line bg-surface px-4 py-2 text-sm font-semibold hover:border-accent hover:text-accent"
         >
           Sign out
         </button>
-      </form>
+      </div>
     </FullPageMessage>
   );
 }

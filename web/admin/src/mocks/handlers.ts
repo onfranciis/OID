@@ -518,6 +518,10 @@ function conflictOnIdentity(
 export const handlers = [
   http.get('/admin/api/session', () => HttpResponse.json(mockSession)),
 
+  // Provider-owned logout endpoint (SSR route in production). Mocked so dev and
+  // tests exercise the logout flow; real cookie clearing happens on the backend.
+  http.post('/logout', () => new HttpResponse(null, { status: 204 })),
+
   http.get('/admin/api/users', ({ request }) => {
     const url = new URL(request.url);
     const q = url.searchParams.get('q')?.toLowerCase() ?? '';
