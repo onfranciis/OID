@@ -213,7 +213,7 @@ function AuditRow({ event }: { event: AuditEvent }) {
     <>
       <tr
         onClick={() => setExpanded((value) => !value)}
-        className="cursor-pointer border-b border-line last:border-b-0 hover:bg-page"
+        className="cursor-pointer border-b border-line last:border-b-0 hover:bg-row-hover"
       >
         <td className="px-4 py-3 whitespace-nowrap text-muted">
           {formatDateTime(event.createdAt)}
@@ -236,7 +236,7 @@ function AuditRow({ event }: { event: AuditEvent }) {
         </td>
       </tr>
       {expanded ? (
-        <tr className="border-b border-line bg-page">
+        <tr className="border-b border-line bg-row-hover">
           <td colSpan={6} className="px-4 py-3">
             <dl className="grid gap-2 text-xs">
               <div>

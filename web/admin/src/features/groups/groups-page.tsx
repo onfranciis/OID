@@ -88,7 +88,7 @@ export function GroupsPage() {
               <tr
                 key={group.id}
                 onClick={() => void navigate(`/groups/${group.id}`)}
-                className="cursor-pointer border-b border-line last:border-b-0 hover:bg-page"
+                className="cursor-pointer border-b border-line last:border-b-0 hover:bg-row-hover"
               >
                 <td className="px-4 py-3 font-mono text-xs">
                   <Link

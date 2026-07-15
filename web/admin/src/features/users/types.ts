@@ -71,7 +71,7 @@ export interface SetUserStatusResponse {
 export function userStatusTone(status: UserStatus): BadgeTone {
   switch (status) {
     case 'active':
-      return 'accent';
+      return 'success';
     case 'pending':
       return 'muted';
     case 'suspended':

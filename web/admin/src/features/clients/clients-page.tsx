@@ -116,7 +116,7 @@ export function ClientsPage() {
               <tr
                 key={client.id}
                 onClick={() => void navigate(`/clients/${client.id}`)}
-                className="cursor-pointer border-b border-line last:border-b-0 hover:bg-page"
+                className="cursor-pointer border-b border-line last:border-b-0 hover:bg-row-hover"
               >
                 <td className="px-4 py-3 font-mono text-xs">
                   <Link

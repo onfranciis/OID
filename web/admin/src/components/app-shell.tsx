@@ -3,48 +3,76 @@ import { NavLink, Outlet } from 'react-router-dom';
 import { useSession } from '../app/session';
 import { useDocumentTitle } from '../lib/use-document-title';
 
-// The persistent chrome from FRONTEND_ROADMAP.md 7.1: header with actor name
-// and sign-out, left navigation for the sections, and the routed outlet.
+function initials(name: string): string {
+  const letters = name
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0] ?? '');
+
+  return letters.join('').toUpperCase() || '?';
+}
+
+// Dashboard chrome (FRONTEND_ROADMAP.md 7.1): a rounded sidebar card holding the
+// brand, section navigation, and the signed-in admin; the routed content sits
+// beside it on the page.
 export function AppShell() {
   const { user } = useSession();
   useDocumentTitle();
 
   return (
-    <div className="min-h-screen bg-page font-sans text-ink">
+    <div className="min-h-screen bg-page p-3 font-sans text-ink sm:p-4">
       <a
         href="#admin-main"
         className="sr-only rounded-card bg-accent px-3 py-2 text-sm font-semibold text-surface focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50"
       >
         Skip to content
       </a>
-      <header className="border-b border-line bg-surface">
-        <div className="mx-auto flex min-h-16 w-full max-w-[1280px] items-center justify-between gap-6 px-4">
-          <div className="font-bold">Internal ID Admin</div>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-muted">{user.displayName}</span>
-            <form method="post" action="/logout">
+      <div className="mx-auto flex w-full max-w-[2000px] flex-col gap-4 md:flex-row md:items-start">
+        <aside className="rounded-2xl border border-line bg-surface p-4 shadow-sm md:sticky md:top-4 md:w-60 md:shrink-0">
+          <div className="flex items-center gap-2.5 px-1 py-1">
+            <span className="grid h-9 w-9 place-items-center rounded-xl bg-accent text-sm font-bold text-surface">
+              ID
+            </span>
+            <span className="text-lg font-bold">Internal ID</span>
+          </div>
+
+          <nav aria-label="Admin sections" className="mt-6">
+            <ul className="grid gap-1">
+              <NavItem to="/" end>
+                Overview
+              </NavItem>
+              <NavItem to="/users">Users</NavItem>
+              <NavItem to="/groups">Groups</NavItem>
+              <NavItem to="/clients">Clients</NavItem>
+              <NavItem to="/audit">Audit</NavItem>
+            </ul>
+          </nav>
+
+          <div className="mt-6 border-t border-line pt-4">
+            <div className="flex items-center gap-3 px-1">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-accent/10 text-sm font-semibold text-accent">
+                {initials(user.displayName)}
+              </span>
+              <div className="min-w-0">
+                <div className="truncate text-sm font-semibold">
+                  {user.displayName}
+                </div>
+                <div className="truncate text-xs text-muted">{user.email}</div>
+              </div>
+            </div>
+            <form method="post" action="/logout" className="mt-3">
               <button
                 type="submit"
-                className="rounded-card border border-line px-3 py-1.5 text-sm text-muted hover:border-accent hover:text-accent"
+                className="w-full rounded-card border border-line px-3 py-2 text-sm font-medium text-muted hover:border-accent hover:text-accent"
               >
                 Sign out
               </button>
             </form>
           </div>
-        </div>
-      </header>
-      <div className="mx-auto flex w-full max-w-[1280px] gap-8 px-4 py-8">
-        <nav aria-label="Admin sections" className="w-44 shrink-0">
-          <ul className="grid gap-1">
-            <NavItem to="/" end>
-              Overview
-            </NavItem>
-            <NavItem to="/users">Users</NavItem>
-            <NavItem to="/groups">Groups</NavItem>
-            <NavItem to="/clients">Clients</NavItem>
-            <NavItem to="/audit">Audit</NavItem>
-          </ul>
-        </nav>
+        </aside>
+
         <main id="admin-main" tabIndex={-1} className="min-w-0 flex-1">
           <Outlet />
         </main>
@@ -68,10 +96,10 @@ function NavItem({
         to={to}
         end={end}
         className={({ isActive }) =>
-          `block rounded-card px-3 py-2 text-sm ${
+          `block rounded-xl px-3 py-2 text-sm ${
             isActive
               ? 'bg-accent/10 font-semibold text-accent'
-              : 'text-muted hover:bg-surface hover:text-ink'
+              : 'text-muted hover:bg-nav-hover hover:text-ink'
           }`
         }
       >

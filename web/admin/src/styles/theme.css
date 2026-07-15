@@ -1,18 +1,23 @@
 @import 'tailwindcss';
 
 /*
- * Theme tokens mirrored from the provider-owned SSR pages
- * (src/admin/views/index.njk) for visual continuity.
+ * Design tokens for the admin console. Cornflower-blue brand accent with a
+ * dedicated success green (reserved for active/done states), soft neutral
+ * grays, and generous rounding for a calm dashboard feel.
  */
 @theme {
-  --color-ink: #17211d;
-  --color-muted: #61706a;
-  --color-line: #d8ded9;
+  --color-ink: #181a1f;
+  --color-muted: #6b7280;
+  --color-line: #edeef2;
   --color-surface: #ffffff;
-  --color-page: #f4f7f5;
-  --color-accent: #1d6f5f;
-  --color-danger: #a23b2e;
-  --color-warning: #8a6116;
-  --radius-card: 8px;
+  --color-page: #eceef1;
+  --color-accent: #4b7fe0;
+  --color-success: #1f9d6b;
+  --color-warning: #c07d19;
+  --color-danger: #d75a4a;
+  /* Translucent hover fills: rows are more opaque, sidebar nav is lighter. */
+  --color-row-hover: #eceef178;
+  --color-nav-hover: #eceef140;
+  --radius-card: 14px;
   --font-sans: ui-sans-serif, 'Aptos', 'Segoe UI', sans-serif;
 }

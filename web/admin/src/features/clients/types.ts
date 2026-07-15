@@ -68,5 +68,5 @@ export interface RotateSecretResult {
 }
 
 export function clientStatusTone(status: OidcClientStatus): BadgeTone {
-  return status === 'active' ? 'accent' : 'danger';
+  return status === 'active' ? 'success' : 'danger';
 }
