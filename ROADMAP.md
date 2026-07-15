@@ -262,7 +262,7 @@ from later phases.
 | 4     | B-04    | Not Started | Database and unexpected service failures should not leak internals to clients.   | Global exception filter with safe HTTP responses and useful server logs.        |
 | 5     | B-05    | Not Started | In-memory rate limiting and request metrics are single-instance friendly only.   | Redis-backed login rate limiting plan and proper Prometheus client evaluation.  |
 | 6     | B-06    | Not Started | OIDC edge behavior must stay strict as Better Auth evolves underneath us.        | Protocol tests for prompt handling, discovery metadata, offline access, and logout/consent edges. |
-| 7     | B-07    | Deferred    | Admin management will move to a standalone React app later.                      | Hardened `/admin/api/*` JSON contract with auth, CSRF/session posture, validation, pagination, and audit. |
+| 7     | B-07    | Done        | Admin management moved to a standalone React app; the SPA needs a JSON read layer. | Hardened `/admin/api/*` JSON contract (`AdminApiController`) with auth, CSRF/recent-auth, cursor pagination, presenters, and audit. |
 | 8     | B-08    | Done        | Placeholder modules currently preserve intended domain boundaries.               | Leave empty `IdentityModule` and `ClientsModule` in place until their API shape is decided. |
 
 ### 10.6 Decision Log For Phase 0

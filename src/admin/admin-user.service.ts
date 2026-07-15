@@ -7,6 +7,11 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { monotonicFactory } from 'ulid';
 import { IsNull, Repository } from 'typeorm';
+import {
+  normalizeLimit,
+  toCursorPage,
+  type CursorPage,
+} from './admin-pagination';
 import { AuditService } from '../audit/audit.service';
 import { AuditEventTypes, type AuditEventType } from '../audit/audit.types';
 import { AuditSeverity } from '../database/entities/audit-event.entity';
@@ -49,6 +54,13 @@ export interface AdminMutationContext {
   userAgent: string | null;
 }
 
+export interface AdminUserListParams {
+  cursor?: string;
+  limit?: number;
+  status?: UserStatus;
+  q?: string;
+}
+
 @Injectable()
 export class AdminUserService {
   constructor(
@@ -60,6 +72,38 @@ export class AdminUserService {
     private readonly refreshTokenRepository: Repository<OidcRefreshTokenEntity>,
     private readonly auditService: AuditService,
   ) {}
+
+  async listUsers(
+    params: AdminUserListParams,
+  ): Promise<CursorPage<UserEntity>> {
+    const limit = normalizeLimit(params.limit);
+    const query = this.userRepository
+      .createQueryBuilder('user')
+      .orderBy('user.id', 'DESC')
+      .take(limit + 1);
+
+    if (params.status) {
+      query.andWhere('user.status = :status', { status: params.status });
+    }
+
+    if (params.q) {
+      const term = `%${params.q.trim().toLowerCase()}%`;
+      query.andWhere(
+        '(LOWER(user.email) LIKE :term OR LOWER(user.displayName) LIKE :term OR user.normalizedUsername LIKE :term)',
+        { term },
+      );
+    }
+
+    if (params.cursor) {
+      query.andWhere('user.id < :cursor', { cursor: params.cursor });
+    }
+
+    return toCursorPage(await query.getMany(), limit);
+  }
+
+  async getUserById(userId: string): Promise<UserEntity> {
+    return this.getExistingUser(userId);
+  }
 
   async createUser(
     input: AdminCreateUserInput,

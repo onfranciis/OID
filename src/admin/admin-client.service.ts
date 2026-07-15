@@ -8,6 +8,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { createHash, randomBytes } from 'node:crypto';
 import { Repository } from 'typeorm';
 import { monotonicFactory } from 'ulid';
+import {
+  normalizeLimit,
+  toCursorPage,
+  type CursorPage,
+} from './admin-pagination';
 import { AuditService } from '../audit/audit.service';
 import { AuditEventTypes, type AuditEventType } from '../audit/audit.types';
 import { AuditSeverity } from '../database/entities/audit-event.entity';
@@ -66,6 +71,13 @@ export interface AdminRotateClientSecretResult {
   clientSecret: string;
 }
 
+export interface AdminClientListParams {
+  cursor?: string;
+  limit?: number;
+  status?: OidcClientStatus;
+  q?: string;
+}
+
 @Injectable()
 export class AdminClientService {
   constructor(
@@ -75,6 +87,47 @@ export class AdminClientService {
     private readonly redirectUriRepository: Repository<OidcRedirectUriEntity>,
     private readonly auditService: AuditService,
   ) {}
+
+  async listClients(
+    params: AdminClientListParams,
+  ): Promise<CursorPage<OidcClientEntity>> {
+    const limit = normalizeLimit(params.limit);
+    const query = this.clientRepository
+      .createQueryBuilder('client')
+      .orderBy('client.id', 'DESC')
+      .take(limit + 1);
+
+    if (params.status) {
+      query.andWhere('client.status = :status', { status: params.status });
+    }
+
+    if (params.q) {
+      const term = `%${params.q.trim().toLowerCase()}%`;
+      query.andWhere(
+        '(LOWER(client.clientId) LIKE :term OR LOWER(client.name) LIKE :term OR LOWER(client.ownerTeam) LIKE :term)',
+        { term },
+      );
+    }
+
+    if (params.cursor) {
+      query.andWhere('client.id < :cursor', { cursor: params.cursor });
+    }
+
+    return toCursorPage(await query.getMany(), limit);
+  }
+
+  async getClientById(clientRecordId: string): Promise<OidcClientEntity> {
+    return this.getExistingClient(clientRecordId);
+  }
+
+  async getRedirectUris(
+    clientRecordId: string,
+  ): Promise<OidcRedirectUriEntity[]> {
+    return this.redirectUriRepository.find({
+      where: { clientId: clientRecordId },
+      order: { createdAt: 'ASC' },
+    });
+  }
 
   async createClient(
     input: AdminCreateClientInput,

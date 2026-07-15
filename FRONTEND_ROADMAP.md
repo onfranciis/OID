@@ -25,7 +25,7 @@ marketing or illustration.
 | ----------------------- | ----------- | --------------------------------------------------------------------------------------------------------- |
 | Frontend roadmap        | In Progress | This file. Defines the admin UI build and tracking.                                                       |
 | Admin SPA               | In Progress | F0–F5 + F7 done: all sections + hardening on MSW. Only F6 (Nest wiring, blocked on B-07) remains.         |
-| Backend admin JSON API  | Blocked     | Read/list endpoints do not exist. Tracked as `B-07` in `ROADMAP.md`. This UI depends on it (see Sec. 13). |
+| Backend admin JSON API  | Done        | `AdminApiController` implements `/admin/api/*` (session, reads, mutations). B-07 in `ROADMAP.md` is done. |
 | Existing admin surface  | Done        | Static SSR placeholder (`src/admin/views/index.njk`) with non-interactive tiles.                          |
 
 ## 3. Locked Decisions
@@ -302,11 +302,12 @@ The Vite build output is emitted to a path NestJS serves in Phase F6.
 | F3    | Clients                          | Done        | Full client management incl. reveal-once secret rotation and redirect URIs against MSW.            |
 | F4    | Groups                           | Done        | Full group management incl. membership add/remove and lockout guards against MSW.                  |
 | F5    | Audit And Overview               | Done        | Filterable audit browsing (URL-driven, expandable metadata) against MSW; Overview assembled.       |
-| F6    | Nest Integration (Same-Origin)   | Blocked     | `pnpm build && pnpm start` serves the SPA at `/admin`; real session + CSRF flow end-to-end.        |
+| F6    | Nest Integration (Same-Origin)   | Not Started | `pnpm build && pnpm start` serves the SPA at `/admin`; real session + CSRF flow end-to-end.        |
 | F7    | Hardening And Tests              | Done        | Green typecheck/lint/build/test; a11y pass; security review; docs updated. Browser e2e moved to F6. |
 
-Phase F6 is `Blocked` on backend `B-07`. Phases F0 through F5 and F7's
-component-level tests proceed unblocked against MSW.
+Backend `B-07` (the `/admin/api/*` layer) is now done, so F6 is unblocked and is
+the only remaining phase. Phases F0 through F5 and F7 were built against MSW; F6
+swaps the mocks for the live endpoints and serves the SPA same-origin.
 
 ## 11. Execution Plan
 
@@ -395,7 +396,7 @@ actions.
 
 ### 11.8 Phase F6: Nest Integration (Same-Origin Serving)
 
-Blocked on backend `B-07`. Tasks:
+Unblocked: backend `B-07` (`AdminApiController`) is done. Tasks:
 
 - Serve the Vite build from NestJS at `/admin` with SPA fallback (non-`/admin/api`
   routes return `index.html`) in `src/main.ts`.
@@ -448,10 +449,10 @@ F6.
 
 ## 13. Dependencies And Risks
 
-- **Hard dependency**: the backend `/admin/api/*` read/API layer (`B-07` in
-  `ROADMAP.md`). The UI cannot reach production without it. This roadmap defines
-  the exact contract; F0 through F5 proceed on MSW; F6 swaps mocks for the real
-  API.
+- **Hard dependency (resolved)**: the backend `/admin/api/*` read/API layer
+  (`B-07` in `ROADMAP.md`) is implemented by `AdminApiController`. F0 through F5
+  were built on MSW against the contract; F6 swaps mocks for these live
+  endpoints.
 - **Contract drift risk**: mitigated by keeping MSW handlers and
   `docs/ADMIN_API_CONTRACT.md` as a single, reviewed specification the backend
   builds to.

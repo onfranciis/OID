@@ -4,10 +4,11 @@ This document is the target contract for the admin JSON API that the React admin
 app ([FRONTEND_ROADMAP.md](../FRONTEND_ROADMAP.md)) consumes. It corresponds to
 backend queue item **B-07** in [ROADMAP.md](../ROADMAP.md).
 
-Status of each endpoint is marked **Exists** (implemented today) or **Proposed**
-(new, required by the UI, mocked with MSW until delivered). The frontend's MSW
-handlers (`web/admin/src/mocks/handlers.ts`) are the executable form of this
-document; keep the two in sync.
+The `/admin/api/*` layer is implemented by `AdminApiController`
+(`src/admin/admin-api.controller.ts`), backed by the read methods on the admin
+services and the presenters in `src/admin/admin-presenters.ts`. The frontend's
+MSW handlers (`web/admin/src/mocks/handlers.ts`) mirror the same shapes for
+offline development. Statuses below are **Implemented** unless noted.
 
 ## Conventions
 
@@ -29,11 +30,11 @@ document; keep the two in sync.
 
 ## Session
 
-### `GET /admin/api/session` — Proposed
+### `GET /admin/api/session` — Implemented
 
 Bootstraps the SPA: returns the current admin identity, a fresh CSRF token, and
-the admin group slug, and sets the CSRF cookie. Replaces today's practice of
-injecting the token into SSR HTML.
+the admin group slug, and sets the CSRF cookie. Replaces the SSR practice of
+injecting the token into HTML.
 
 ```json
 {
@@ -92,9 +93,10 @@ interface SetUserStatusResponse {
 | `POST /admin/api/users/:id`                          | Exists\* | Body = `AdminUpdateUserInput` (partial). Returns `UserDetail`. |
 | `POST /admin/api/users/:id/status`                   | Exists\* | Body `{ status: UserStatus }`. Returns `SetUserStatusResponse`. Deactivation revokes sessions + refresh tokens. |
 
-\* Exists today under `/admin/*`; **Proposed** move to the `/admin/api/*` prefix.
-The create/update endpoints currently return the entity; the UI expects the full
-`UserDetail` shape (with `groups`) on the response.
+All of the above are implemented by `AdminApiController` under `/admin/api/*`
+(the legacy SSR routes under `/admin/*` remain until F6 retires them). Create,
+update, and status endpoints return the full `UserDetail` shape (with `groups`);
+`.../status` returns `{ user: UserDetail }`.
 
 Request bodies (from `AdminUserService`):
 
@@ -232,15 +234,22 @@ interface AuditEvent {
 | --------------------------------------------------------------------------------- | -------- | -------------------------------------------------------------------------------------- |
 | `GET /admin/api/audit-events?limit=&eventType=&severity=&actorUserId=&targetUserId=&clientId=` | Exists\* | Today returns a plain `AuditEvent[]` (newest first, `limit` default 50, max 200). |
 
-**Proposed enhancement**: wrap the response as `{ items, nextCursor }` and add
-cursor pagination + a date-range filter, to match the other list endpoints. Until
-then the UI treats the array response as a single page.
+The audit endpoint is implemented under `/admin/api/audit-events` and returns a
+plain array (newest first, `limit` default 50, max 200), mapped by
+`toAuditEvent` so `metadataJson` is exposed as `metadata`. The UI treats the
+array as a single page.
 
-## Open Questions For B-07
+**Deferred enhancement**: wrap the audit response as `{ items, nextCursor }` and
+add cursor pagination + a date-range filter, to match the other list endpoints.
 
-- Pagination style: cursor (assumed here) vs offset. Cursor preferred for stable
-  ordering over ULIDs.
-- Whether list endpoints live in the existing `AdminController` under an
-  `/admin/api` prefix or a dedicated `AdminApiController`.
-- Whether create/update mutations should return the enriched detail shape
-  (`UserDetail`, `ClientDetail`) the UI expects, or the bare entity.
+## Resolved Decisions (B-07)
+
+- Pagination is **cursor-based** over the prefixed-ULID `id`, descending
+  (newest first), `limit` default 20 / max 100. See `src/admin/admin-pagination.ts`.
+- Endpoints live in a dedicated **`AdminApiController`** (`@Controller('admin/api')`),
+  guarded by `AdminGuard`, with mutations additionally behind
+  `AdminRecentAuthGuard` + `AdminCsrfGuard`.
+- Create/update mutations return the **enriched detail shape** (`UserDetail`,
+  `GroupDetail`, `ClientDetail`) by re-composing after the write.
+- Remaining follow-up: user status change does not yet return revocation counts
+  (`revoked*Count`); the UI already treats them as optional.

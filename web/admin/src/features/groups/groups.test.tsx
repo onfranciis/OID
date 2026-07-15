@@ -14,6 +14,19 @@ test('groups list renders seeded groups with member counts', async () => {
   expect(screen.getByText('People Operations')).toBeDefined();
 });
 
+test('groups list survives after the overview populated the picker list', async () => {
+  // Overview uses the plain useGroupsList ({items}); the Groups section uses the
+  // infinite list ({pages}). They must not collide on the query cache.
+  const { router } = renderApp('/');
+
+  await screen.findByRole('heading', { name: 'Admin console' });
+  await screen.findByRole('link', { name: '3 Groups' });
+
+  await router.navigate('/groups');
+
+  expect(await screen.findByText('Engineering')).toBeDefined();
+});
+
 test('search narrows the groups list', async () => {
   renderApp('/groups');
 

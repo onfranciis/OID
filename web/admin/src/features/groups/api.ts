@@ -18,7 +18,11 @@ export interface GroupsListParams {
 
 export const groupsKeys = {
   all: ['groups'] as const,
-  list: (params: GroupsListParams = {}) => ['groups', 'list', params] as const,
+  // The simple picker list and the paginated section list have different result
+  // shapes (`{items}` vs `{pages}`), so they must not share a cache key.
+  list: () => ['groups', 'list'] as const,
+  infinite: (params: GroupsListParams) =>
+    ['groups', 'infinite', params] as const,
   detail: (groupId: string) => ['groups', 'detail', groupId] as const,
 };
 
@@ -51,7 +55,7 @@ export function useGroupsList() {
 // Paginated + searchable list for the Groups section.
 export function useGroupsInfiniteList(params: GroupsListParams) {
   return useInfiniteQuery({
-    queryKey: groupsKeys.list(params),
+    queryKey: groupsKeys.infinite(params),
     queryFn: ({ pageParam }) =>
       apiGet<GroupListResponse>(
         buildGroupsPath({ ...params, cursor: pageParam }),

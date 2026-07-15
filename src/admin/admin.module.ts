@@ -11,6 +11,7 @@ import { OidcRedirectUriEntity } from '../database/entities/oidc-redirect-uri.en
 import { OidcRefreshTokenEntity } from '../database/entities/oidc-refresh-token.entity';
 import { UserEntity } from '../database/entities/user.entity';
 import { AdminAccessService } from './admin-access.service';
+import { AdminApiController } from './admin-api.controller';
 import { AdminAuditService } from './admin-audit.service';
 import { AdminClientService } from './admin-client.service';
 import { AdminController } from './admin.controller';
@@ -37,7 +38,7 @@ import { AdminUserService } from './admin-user.service';
       OidcRedirectUriEntity,
     ]),
   ],
-  controllers: [AdminController],
+  controllers: [AdminController, AdminApiController],
   providers: [
     AdminAccessService,
     AdminAuditService,

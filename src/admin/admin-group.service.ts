@@ -7,6 +7,11 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { monotonicFactory } from 'ulid';
 import { Repository } from 'typeorm';
+import {
+  normalizeLimit,
+  toCursorPage,
+  type CursorPage,
+} from './admin-pagination';
 import { AuditService } from '../audit/audit.service';
 import { AuditEventTypes, type AuditEventType } from '../audit/audit.types';
 import { AuditSeverity } from '../database/entities/audit-event.entity';
@@ -33,6 +38,17 @@ export interface AdminUpdateGroupInput {
   description?: string | null;
 }
 
+export interface AdminGroupListParams {
+  cursor?: string;
+  limit?: number;
+  q?: string;
+}
+
+export interface AdminGroupWithCount {
+  group: GroupEntity;
+  memberCount: number;
+}
+
 @Injectable()
 export class AdminGroupService {
   constructor(
@@ -44,6 +60,81 @@ export class AdminGroupService {
     private readonly userRepository: Repository<UserEntity>,
     private readonly auditService: AuditService,
   ) {}
+
+  async listGroups(
+    params: AdminGroupListParams,
+  ): Promise<CursorPage<AdminGroupWithCount>> {
+    const limit = normalizeLimit(params.limit);
+    const query = this.groupRepository
+      .createQueryBuilder('group')
+      .orderBy('group.id', 'DESC')
+      .take(limit + 1);
+
+    if (params.q) {
+      const term = `%${params.q.trim().toLowerCase()}%`;
+      query.andWhere(
+        '(LOWER(group.slug) LIKE :term OR LOWER(group.displayName) LIKE :term)',
+        { term },
+      );
+    }
+
+    if (params.cursor) {
+      query.andWhere('group.id < :cursor', { cursor: params.cursor });
+    }
+
+    const page = toCursorPage(await query.getMany(), limit);
+    const counts = await this.countMembers(page.items.map((group) => group.id));
+
+    return {
+      items: page.items.map((group) => ({
+        group,
+        memberCount: counts.get(group.id) ?? 0,
+      })),
+      nextCursor: page.nextCursor,
+    };
+  }
+
+  async getGroupById(groupId: string): Promise<GroupEntity> {
+    return this.getExistingGroup(groupId);
+  }
+
+  async getGroupsForUser(userId: string): Promise<GroupEntity[]> {
+    const memberships = await this.membershipRepository.find({
+      where: { userId },
+      relations: { group: true },
+    });
+
+    return memberships
+      .map((membership) => membership.group)
+      .sort((a, b) => a.displayName.localeCompare(b.displayName));
+  }
+
+  async getGroupMembers(groupId: string): Promise<UserEntity[]> {
+    const memberships = await this.membershipRepository.find({
+      where: { groupId },
+      relations: { user: true },
+    });
+
+    return memberships
+      .map((membership) => membership.user)
+      .sort((a, b) => a.displayName.localeCompare(b.displayName));
+  }
+
+  private async countMembers(groupIds: string[]): Promise<Map<string, number>> {
+    if (groupIds.length === 0) {
+      return new Map();
+    }
+
+    const rows = await this.membershipRepository
+      .createQueryBuilder('membership')
+      .select('membership.groupId', 'groupId')
+      .addSelect('COUNT(*)', 'count')
+      .where('membership.groupId IN (:...groupIds)', { groupIds })
+      .groupBy('membership.groupId')
+      .getRawMany<{ groupId: string; count: string }>();
+
+    return new Map(rows.map((row) => [row.groupId, Number(row.count)]));
+  }
 
   async createGroup(
     input: AdminCreateGroupInput,

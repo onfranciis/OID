@@ -48,7 +48,8 @@ changes.
 | Admin authorization requires active admin group membership. | Covered | `src/admin/admin-access.service.spec.ts`                                       |
 | Confidential client secret rotation is guarded and audited. | Covered | `src/admin/admin.controller.spec.ts`, `src/admin/admin-client.service.spec.ts` |
 | SSR output escapes user-controlled content.                 | Covered | Login page and temporary admin page service tests.                             |
-| Admin JSON APIs preserve provider-local protection.         | Planned | Add coverage as `/admin/api/*` endpoints are introduced for the React admin.   |
+| Admin JSON APIs preserve provider-local protection.         | Covered | `AdminApiController` reuses `AdminGuard` + recent-auth + CSRF guards; `src/admin/admin-api.controller.spec.ts`. |
+| Admin API presenters exclude secret hashes and internal columns. | Covered | `src/admin/admin-presenters.spec.ts`                                       |
 | Security headers are emitted.                               | Covered | `src/common/security-headers.middleware.spec.ts`                               |
 | Request logs include request ID and service context.        | Covered | `src/common/structured-logger.middleware.spec.ts`                              |
 
