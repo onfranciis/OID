@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ApiError } from '../../app/api-client';
 import { isReauthCancelled } from '../../app/reauth';
 import { useSession } from '../../app/session';
@@ -12,6 +12,7 @@ import { useToast } from '../../components/toaster';
 import { userStatusTone } from '../users/types';
 import {
   useAddGroupMember,
+  useDeleteGroup,
   useGroupDetail,
   useRemoveGroupMember,
   useUpdateGroup,
@@ -61,6 +62,71 @@ export function GroupDetailPage() {
         <MetadataPanel group={group} />
         <MembersPanel group={group} />
       </div>
+
+      <DangerZone group={group} />
+    </section>
+  );
+}
+
+function DangerZone({ group }: { group: GroupDetail }) {
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  const deleteGroup = useDeleteGroup(group.id);
+  const [confirming, setConfirming] = useState(false);
+  const hasMembers = group.members.length > 0;
+
+  return (
+    <section className="mt-6 rounded-card border border-danger/30 bg-surface p-5">
+      <h2 className="text-base font-semibold text-danger">Danger zone</h2>
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+        <p className="max-w-prose text-sm text-muted">
+          {hasMembers
+            ? 'This group still has members. Remove all members before it can be deleted.'
+            : 'Permanently delete this empty group. This cannot be undone.'}
+        </p>
+        <button
+          type="button"
+          disabled={hasMembers || deleteGroup.isPending}
+          onClick={() => setConfirming(true)}
+          className="shrink-0 rounded-card border border-danger/40 px-4 py-2 text-sm font-semibold text-danger hover:bg-danger/10 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Delete group
+        </button>
+      </div>
+
+      <ConfirmDialog
+        open={confirming}
+        onOpenChange={setConfirming}
+        title={`Delete ${group.displayName}?`}
+        description={
+          <p>
+            The group <span className="font-mono">{group.slug}</span> will be
+            permanently removed. This cannot be undone.
+          </p>
+        }
+        confirmLabel="Delete group"
+        tone="danger"
+        pending={deleteGroup.isPending}
+        onConfirm={() => {
+          deleteGroup.mutate(undefined, {
+            onSuccess: () => {
+              toast({ title: 'Group deleted' });
+              void navigate('/groups');
+            },
+            onError: (error) => {
+              setConfirming(false);
+
+              if (!isReauthCancelled(error)) {
+                toast({
+                  title: 'Could not delete group',
+                  description: error.message,
+                  variant: 'danger',
+                });
+              }
+            },
+          });
+        }}
+      />
     </section>
   );
 }

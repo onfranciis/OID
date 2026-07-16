@@ -202,6 +202,32 @@ export class AdminGroupService {
     return savedGroup;
   }
 
+  async deleteGroup(
+    groupId: string,
+    context: AdminMutationContext,
+  ): Promise<void> {
+    const group = await this.getExistingGroup(groupId);
+    const memberCount = await this.membershipRepository.count({
+      where: { groupId },
+    });
+
+    if (memberCount > 0) {
+      throw new ConflictException(
+        'Remove all members before deleting the group.',
+      );
+    }
+
+    await this.groupRepository.remove(group);
+    await this.auditGroupMutation(
+      AuditEventTypes.AdminGroupDeleted,
+      group,
+      context,
+      {
+        slug: group.slug,
+      },
+    );
+  }
+
   async addMembership(
     groupId: string,
     userId: string,

@@ -16,6 +16,10 @@ describe('AdminGroupService', () => {
   const createMembership = vi.fn((input: unknown) => input);
   const saveMembership = vi.fn((input: unknown) => Promise.resolve(input));
   const removeMembership = vi.fn(() => Promise.resolve());
+  const countMembership = vi.fn<() => Promise<number>>(() =>
+    Promise.resolve(0),
+  );
+  const removeGroup = vi.fn(() => Promise.resolve());
   const findUser = vi.fn();
   const record = vi.fn<(input: unknown) => Promise<string>>(() =>
     Promise.resolve('evt_123'),
@@ -25,12 +29,14 @@ describe('AdminGroupService', () => {
       findOne: findGroup,
       create: createGroup,
       save: saveGroup,
+      remove: removeGroup,
     } as never,
     {
       findOne: findMembership,
       create: createMembership,
       save: saveMembership,
       remove: removeMembership,
+      count: countMembership,
     } as never,
     {
       findOne: findUser,
@@ -60,6 +66,9 @@ describe('AdminGroupService', () => {
     createMembership.mockClear();
     saveMembership.mockClear();
     removeMembership.mockClear();
+    countMembership.mockReset();
+    countMembership.mockResolvedValue(0);
+    removeGroup.mockClear();
     findUser.mockReset();
     record.mockClear();
   });
@@ -208,5 +217,32 @@ describe('AdminGroupService', () => {
     await expect(
       service.removeMembership('grp_target', 'usr_target', context),
     ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('deletes an empty group and audits it', async () => {
+    const group = { id: 'grp_target', slug: 'people-ops' };
+    findGroup.mockResolvedValueOnce(group);
+    countMembership.mockResolvedValueOnce(0);
+
+    await service.deleteGroup('grp_target', context);
+
+    expect(removeGroup).toHaveBeenCalledWith(group);
+    expect(record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: 'admin.group.deleted',
+        severity: AuditSeverity.INFO,
+      }),
+    );
+  });
+
+  it('refuses to delete a group that still has members', async () => {
+    findGroup.mockResolvedValueOnce({ id: 'grp_target', slug: 'engineering' });
+    countMembership.mockResolvedValueOnce(3);
+
+    await expect(
+      service.deleteGroup('grp_target', context),
+    ).rejects.toBeInstanceOf(ConflictException);
+
+    expect(removeGroup).not.toHaveBeenCalled();
   });
 });

@@ -117,6 +117,36 @@ test('adding a member through the picker appends them', async () => {
   expect(await within(panel).findByText('Alice Adeyemi')).toBeDefined();
 });
 
+test('an empty group can be deleted and returns to the list', async () => {
+  // people-ops is seeded with no members.
+  renderApp('/groups/grp_peopleops000000000000000');
+
+  await screen.findByRole('heading', { name: 'People Operations' });
+
+  const deleteButton = screen.getByRole('button', { name: 'Delete group' });
+  expect(deleteButton.hasAttribute('disabled')).toBe(false);
+  fireEvent.click(deleteButton);
+
+  const dialog = await screen.findByRole('dialog');
+  fireEvent.click(within(dialog).getByRole('button', { name: 'Delete group' }));
+
+  // Lands back on the Groups list, and the group is gone.
+  expect(await screen.findByRole('heading', { name: 'Groups' })).toBeDefined();
+  await expect.poll(() => screen.queryByText('People Operations')).toBeNull();
+});
+
+test('a group with members cannot be deleted', async () => {
+  renderApp('/groups/grp_engineering0000000000000');
+
+  await screen.findByRole('heading', { name: 'Engineering' });
+
+  const deleteButton = screen.getByRole('button', { name: 'Delete group' });
+  expect(deleteButton.hasAttribute('disabled')).toBe(true);
+  expect(
+    screen.getByText(/Remove all members before it can be deleted/i),
+  ).toBeDefined();
+});
+
 test('removing yourself from the admin group requires typed confirmation', async () => {
   renderApp(`/groups/${ADMIN_GROUP_ID}`);
 

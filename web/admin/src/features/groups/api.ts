@@ -97,6 +97,15 @@ export function useUpdateGroup(groupId: string) {
   });
 }
 
+export function useDeleteGroup(groupId: string) {
+  const invalidateGroups = useInvalidateGroups();
+
+  return useAdminMutation<unknown, void>({
+    mutationFn: () => apiPost(`/admin/api/groups/${groupId}/delete`),
+    onSuccess: invalidateGroups,
+  });
+}
+
 export function useAddGroupMember(groupId: string) {
   const invalidateGroups = useInvalidateGroups();
 

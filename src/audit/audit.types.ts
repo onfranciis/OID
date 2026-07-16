@@ -7,6 +7,7 @@ export const AuditEventTypes = {
   AdminClientStatusChanged: 'admin.client.status_changed',
   AdminClientUpdated: 'admin.client.updated',
   AdminGroupCreated: 'admin.group.created',
+  AdminGroupDeleted: 'admin.group.deleted',
   AdminGroupMembershipAdded: 'admin.group.membership_added',
   AdminGroupMembershipRemoved: 'admin.group.membership_removed',
   AdminGroupUpdated: 'admin.group.updated',

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { Request, Response } from 'express';
 import type { AppConfigService } from '../config/app-config.service';
+import type { AdminPrincipal } from './admin-access.service';
 import { AdminApiController } from './admin-api.controller';
 import type { AdminAuditService } from './admin-audit.service';
 import type { AdminClientService } from './admin-client.service';
@@ -29,7 +30,7 @@ function makeController(overrides: {
   );
 }
 
-function adminRequest(): Request & { adminPrincipal: unknown } {
+function adminRequest(): Request & { adminPrincipal: AdminPrincipal } {
   return {
     adminPrincipal: {
       user: {
@@ -41,7 +42,7 @@ function adminRequest(): Request & { adminPrincipal: unknown } {
     },
     ip: '127.0.0.1',
     get: () => 'vitest',
-  } as unknown as Request & { adminPrincipal: unknown };
+  } as unknown as Request & { adminPrincipal: AdminPrincipal };
 }
 
 describe('AdminApiController', () => {

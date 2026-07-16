@@ -227,6 +227,20 @@ export class AdminApiController {
     return this.buildGroupDetail(groupId);
   }
 
+  @Post('groups/:groupId/delete')
+  @UseGuards(AdminRecentAuthGuard, AdminCsrfGuard)
+  async deleteGroup(
+    @Req() req: AdminRequest,
+    @Param('groupId') groupId: string,
+  ): Promise<{ id: string }> {
+    await this.adminGroupService.deleteGroup(
+      groupId,
+      buildMutationContext(req),
+    );
+
+    return { id: groupId };
+  }
+
   @Post('groups/:groupId/members/:userId')
   @UseGuards(AdminRecentAuthGuard, AdminCsrfGuard)
   async addGroupMembership(

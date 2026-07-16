@@ -829,6 +829,38 @@ export const handlers = [
     return HttpResponse.json(toGroupDetail(group));
   }),
 
+  http.post('/admin/api/groups/:groupId/delete', ({ params, request }) => {
+    const csrfError = requireCsrf(request);
+
+    if (csrfError) {
+      return csrfError;
+    }
+
+    const group = db.groups.find(
+      (candidate) => candidate.id === params.groupId,
+    );
+
+    if (!group) {
+      return errorResponse(404, 'Group not found.', 'Not Found');
+    }
+
+    const memberCount = db.users.filter((user) =>
+      user.groupIds.includes(group.id),
+    ).length;
+
+    if (memberCount > 0) {
+      return errorResponse(
+        409,
+        'Remove all members before deleting the group.',
+        'Conflict',
+      );
+    }
+
+    db.groups = db.groups.filter((candidate) => candidate.id !== group.id);
+
+    return HttpResponse.json({ id: group.id });
+  }),
+
   http.post(
     '/admin/api/groups/:groupId/members/:userId',
     ({ params, request }) => {
