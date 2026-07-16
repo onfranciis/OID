@@ -21,6 +21,7 @@ export interface AppEnvironment {
   };
   authentication: {
     csrfCookieName: string;
+    adminCsrfCookieName: string;
     providerSessionCookieName: string;
     providerSessionIdleTtlSeconds: number;
     providerSessionAbsoluteTtlSeconds: number;

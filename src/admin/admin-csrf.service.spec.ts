@@ -6,8 +6,8 @@ import { AdminCsrfService } from './admin-csrf.service';
 describe('AdminCsrfService', () => {
   const service = new AdminCsrfService({
     get: vi.fn((key: string) => {
-      if (key === 'authentication.csrfCookieName') {
-        return 'internal_id_login_csrf';
+      if (key === 'authentication.adminCsrfCookieName') {
+        return 'internal_id_admin_csrf';
       }
 
       if (key === 'betterAuth.secret') {

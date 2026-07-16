@@ -49,6 +49,11 @@ export function configuration(): AppEnvironment {
     authentication: {
       csrfCookieName:
         process.env.AUTHENTICATION_CSRF_COOKIE_NAME ?? 'internal_id_login_csrf',
+      // Distinct from the login CSRF cookie so the two (which live at different
+      // paths, / and /admin) never collide by name on admin mutations.
+      adminCsrfCookieName:
+        process.env.AUTHENTICATION_ADMIN_CSRF_COOKIE_NAME ??
+        'internal_id_admin_csrf',
       providerSessionCookieName:
         process.env.AUTHENTICATION_PROVIDER_SESSION_COOKIE_NAME ??
         'internal_id_provider_session',

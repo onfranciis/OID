@@ -8,7 +8,7 @@ export class AdminCsrfService {
   private readonly csrfSecret: string;
 
   constructor(configService: AppConfigService) {
-    this.cookieName = configService.get('authentication.csrfCookieName');
+    this.cookieName = configService.get('authentication.adminCsrfCookieName');
     this.csrfSecret = configService.get('betterAuth.secret');
   }
 

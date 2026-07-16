@@ -40,6 +40,9 @@ export class BetterAuthService implements OnModuleDestroy {
       },
       authentication: {
         csrfCookieName: configService.get('authentication.csrfCookieName'),
+        adminCsrfCookieName: configService.get(
+          'authentication.adminCsrfCookieName',
+        ),
         providerSessionCookieName: configService.get(
           'authentication.providerSessionCookieName',
         ),
