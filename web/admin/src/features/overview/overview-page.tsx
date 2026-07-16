@@ -47,7 +47,7 @@ export function OverviewPage() {
         <QuickAction to="/groups/new" label="Create group" />
       </div>
 
-      <section className="mt-8 rounded-2xl border border-line bg-surface p-5 shadow-sm">
+      <section className="mt-8 rounded-xl border border-line bg-surface p-5 shadow-sm">
         <div className="flex items-center justify-between">
           <h2 className="text-base font-semibold">Recent activity</h2>
           <Link
@@ -109,7 +109,7 @@ function Tile({
   return (
     <Link
       to={to}
-      className="rounded-2xl border border-line bg-surface p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-accent/40"
+      className="rounded-xl border border-line bg-surface p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-accent/40"
     >
       <div className="text-3xl font-bold tracking-tight">{count}</div>
       <div className="mt-1 text-sm text-muted">{label}</div>

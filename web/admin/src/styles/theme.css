@@ -18,6 +18,6 @@
   /* Translucent hover fills: rows are more opaque, sidebar nav is lighter. */
   --color-row-hover: #eceef178;
   --color-nav-hover: #eceef140;
-  --radius-card: 14px;
+  --radius-card: 8px;
   --font-sans: ui-sans-serif, 'Aptos', 'Segoe UI', sans-serif;
 }
