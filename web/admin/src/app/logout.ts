@@ -1,5 +1,5 @@
 import { getCsrfToken, setCsrfToken } from './api-client';
-import { hardNavigate } from './navigation';
+import { hardNavigate, LOGIN_PATH } from './navigation';
 
 // Ends the provider session and leaves the SPA. POSTs to the provider-owned
 // `/logout` (which revokes the session, signs out of Better Auth, and clears
@@ -27,5 +27,5 @@ export async function performLogout(): Promise<void> {
   }
 
   setCsrfToken(null);
-  hardNavigate('/admin/login');
+  hardNavigate(LOGIN_PATH);
 }

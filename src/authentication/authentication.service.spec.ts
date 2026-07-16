@@ -10,11 +10,9 @@ import { AppConfigService } from '../config/app-config.service';
 import { AuditSeverity } from '../database/entities/audit-event.entity';
 import { UserStatus } from '../database/entities/user.entity';
 import { AuthenticationService } from './authentication.service';
-import { LoginPageService } from './login-page.service';
 import { ProviderSessionService } from './provider-session.service';
 
 describe('AuthenticationService', () => {
-  const renderLoginPage = vi.fn<(model: unknown) => string>(() => '<html />');
   const signInWithEmail = vi.fn<BetterAuthService['signInWithEmail']>(() =>
     Promise.resolve(
       new Response(
@@ -108,9 +106,6 @@ describe('AuthenticationService', () => {
       }),
     } as unknown as AppConfigService,
     {
-      renderLoginPage,
-    } as unknown as LoginPageService,
-    {
       signInWithEmail,
       signOut,
     } as unknown as BetterAuthService,
@@ -134,7 +129,6 @@ describe('AuthenticationService', () => {
   );
 
   beforeEach(() => {
-    renderLoginPage.mockClear();
     signInWithEmail.mockClear();
     signOut.mockClear();
     record.mockClear();
@@ -148,14 +142,10 @@ describe('AuthenticationService', () => {
     findOne.mockClear();
   });
 
-  it('renders the login page with a fresh CSRF cookie', () => {
-    const result = service.renderLoginPage('/authorize');
+  it('issues a login CSRF token with a fresh cookie', () => {
+    const result = service.initLogin();
 
-    expect(renderLoginPage).toHaveBeenCalledWith(
-      expect.objectContaining({
-        returnTo: '/authorize',
-      }),
-    );
+    expect(result.csrfToken).toMatch(/\./);
     expect(result.csrfCookieHeader).toContain('internal_id_login_csrf=');
     expect(result.csrfCookieHeader).toContain('HttpOnly');
     expect(result.csrfCookieHeader).toContain('Secure');
@@ -185,9 +175,7 @@ describe('AuthenticationService', () => {
       normalizedEmail: 'admin@company.com',
       status: UserStatus.SUSPENDED,
     });
-    const csrfToken = readCookieValue(
-      service.renderLoginPage(null).csrfCookieHeader,
-    );
+    const csrfToken = readCookieValue(service.initLogin().csrfCookieHeader);
 
     await expect(
       service.login(
@@ -217,9 +205,7 @@ describe('AuthenticationService', () => {
   });
 
   it('translates Better Auth success into provider session cookies and audit events', async () => {
-    const csrfToken = readCookieValue(
-      service.renderLoginPage('/authorize').csrfCookieHeader,
-    );
+    const csrfToken = readCookieValue(service.initLogin().csrfCookieHeader);
 
     const result = await service.login(
       {
@@ -272,9 +258,7 @@ describe('AuthenticationService', () => {
         status: 401,
       }),
     );
-    const csrfToken = readCookieValue(
-      service.renderLoginPage(null).csrfCookieHeader,
-    );
+    const csrfToken = readCookieValue(service.initLogin().csrfCookieHeader);
 
     await expect(
       service.login(
@@ -304,9 +288,7 @@ describe('AuthenticationService', () => {
     assertAllowed.mockImplementationOnce(() => {
       throw new HttpException('blocked', HttpStatus.TOO_MANY_REQUESTS);
     });
-    const csrfToken = readCookieValue(
-      service.renderLoginPage(null).csrfCookieHeader,
-    );
+    const csrfToken = readCookieValue(service.initLogin().csrfCookieHeader);
 
     await expect(
       service.login(

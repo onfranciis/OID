@@ -81,7 +81,14 @@ describe('admin static serving', () => {
     expect(JSON.parse(response.body)).toEqual({ ok: true });
   });
 
-  it('exports the API exclusion so the fallback never shadows the API', () => {
+  it('serves the client-rendered /admin/login route from the SPA', async () => {
+    const response = await get(app, '/admin/login');
+
+    expect(response.status).toBe(200);
+    expect(response.body).toContain('id="root"');
+  });
+
+  it('excludes only the API so the fallback never shadows it', () => {
     expect(adminStaticOptions('/tmp/x').exclude).toEqual([ADMIN_API_EXCLUDE]);
   });
 });

@@ -3,6 +3,7 @@ import { AppShell } from '../components/app-shell';
 import { RouteErrorElement } from '../components/error-boundary';
 import { ToastProvider } from '../components/toaster';
 import { AuditPage } from '../features/audit/audit-page';
+import { LoginPage } from '../features/auth/login-page';
 import { ClientCreatePage } from '../features/clients/client-create-page';
 import { ClientDetailPage } from '../features/clients/client-detail-page';
 import { ClientsPage } from '../features/clients/clients-page';
@@ -31,6 +32,16 @@ function AdminLayout() {
 
 // Exported separately so tests can mount the same tree on a memory router.
 export const routes: RouteObject[] = [
+  // Login lives outside the session boundary so it never bootstraps a session
+  // or redirect-loops; it is served by the SPA at /admin/login.
+  {
+    path: '/login',
+    element: (
+      <ToastProvider>
+        <LoginPage />
+      </ToastProvider>
+    ),
+  },
   {
     path: '/',
     element: <AdminLayout />,

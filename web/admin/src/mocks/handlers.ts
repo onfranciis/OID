@@ -34,6 +34,9 @@ export const mockSession: SessionInfo = {
   adminGroupSlug: 'internal-id-admins',
 };
 
+// Credentials the mocked login endpoint accepts (dev + tests).
+export const MOCK_LOGIN_PASSWORD = 'correct-horse-battery';
+
 interface MockUser {
   id: string;
   email: string;
@@ -521,6 +524,32 @@ export const handlers = [
   // Provider-owned logout endpoint (SSR route in production). Mocked so dev and
   // tests exercise the logout flow; real cookie clearing happens on the backend.
   http.post('/logout', () => new HttpResponse(null, { status: 204 })),
+
+  // Login JSON API. GET issues a CSRF token; POST authenticates and returns the
+  // redirect target, or a 401 for bad credentials (mirrors the backend).
+  http.get('/admin/api/auth/login', () =>
+    HttpResponse.json({ csrfToken: 'login-nonce.login-signature' }),
+  ),
+  http.post('/admin/api/auth/login', async ({ request }) => {
+    const body = (await request.json()) as {
+      email?: string;
+      password?: string;
+      returnTo?: string;
+    };
+
+    if (
+      body.email?.toLowerCase() === mockSession.user.email &&
+      body.password === MOCK_LOGIN_PASSWORD
+    ) {
+      return HttpResponse.json({ redirectTo: body.returnTo || '/admin' });
+    }
+
+    return errorResponse(
+      401,
+      'We could not sign you in with those credentials.',
+      'Unauthorized',
+    );
+  }),
 
   http.get('/admin/api/users', ({ request }) => {
     const url = new URL(request.url);

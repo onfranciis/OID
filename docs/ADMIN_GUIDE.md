@@ -22,7 +22,7 @@ Security posture:
   attaches the token as the `x-csrf-token` header on every mutation.
 - Session, CSRF, and secret material are held in memory only. Nothing is written
   to `localStorage` or `sessionStorage`.
-- A `401` sends the user to `/login?returnTo=/admin`; a non-admin session shows
+- A `401` sends the user to `/admin/login?returnTo=/admin`; a non-admin session shows
   an access-denied screen; the recent-auth `403` opens a re-authentication
   dialog and retries the original mutation.
 - Rotated client secrets are shown exactly once and are never cached.

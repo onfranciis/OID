@@ -34,8 +34,8 @@ function normalizeRoute(path: string): string {
     return '/oauth/revoke';
   }
 
-  if (path.startsWith('/login')) {
-    return '/login';
+  if (path.startsWith('/admin/login')) {
+    return '/admin/login';
   }
 
   if (path.startsWith('/api/auth')) {

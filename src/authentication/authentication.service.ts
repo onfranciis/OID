@@ -12,7 +12,6 @@ import { BetterAuthService } from '../better-auth/better-auth.service';
 import { AppConfigService } from '../config/app-config.service';
 import { AuditSeverity } from '../database/entities/audit-event.entity';
 import { UserEntity, UserStatus } from '../database/entities/user.entity';
-import { LoginPageService } from './login-page.service';
 import { LoginRateLimitService } from './login-rate-limit.service';
 import { ProviderSessionService } from './provider-session.service';
 
@@ -25,8 +24,8 @@ export interface AuthenticationRequestContext {
   cookies: Record<string, string>;
 }
 
-export interface LoginPageResult {
-  html: string;
+export interface LoginInitResult {
+  csrfToken: string;
   csrfCookieHeader: string;
 }
 
@@ -54,7 +53,6 @@ export class AuthenticationService {
 
   constructor(
     configService: AppConfigService,
-    private readonly loginPageService: LoginPageService,
     private readonly betterAuthService: BetterAuthService,
     private readonly auditService: AuditService,
     private readonly rateLimitService: LoginRateLimitService,
@@ -69,18 +67,13 @@ export class AuthenticationService {
     );
   }
 
-  renderLoginPage(
-    returnTo: string | null,
-    errorMessage?: string | null,
-  ): LoginPageResult {
+  // Issues a login CSRF token (double-submit) for the React login page. The SPA
+  // fetches this before submitting credentials to POST /admin/api/auth/login.
+  initLogin(): LoginInitResult {
     const csrfToken = this.generateCsrfToken();
 
     return {
-      html: this.loginPageService.renderLoginPage({
-        csrfToken,
-        errorMessage: errorMessage ?? null,
-        returnTo,
-      }),
+      csrfToken,
       csrfCookieHeader: this.buildCsrfCookieHeader(csrfToken),
     };
   }

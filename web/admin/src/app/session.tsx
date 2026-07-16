@@ -1,11 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  type ReactNode,
-} from 'react';
+import { createContext, useCallback, useContext, type ReactNode } from 'react';
 import { AccessDeniedScreen, FullPageMessage } from '../components/full-page';
 import {
   ApiError,
@@ -14,7 +8,6 @@ import {
   isUnauthorizedError,
   setCsrfToken,
 } from './api-client';
-import { hardNavigate, loginUrl } from './navigation';
 import { queryKeys } from './query';
 
 export interface SessionUser {
@@ -71,13 +64,9 @@ export function SessionBoundary({ children }: { children: ReactNode }) {
     staleTime: Number.POSITIVE_INFINITY,
   });
 
+  // The API client already redirects to login on a 401; here we just render the
+  // interstitial while that navigation happens.
   const unauthorized = query.isError && isUnauthorizedError(query.error);
-
-  useEffect(() => {
-    if (unauthorized) {
-      hardNavigate(loginUrl('/admin'));
-    }
-  }, [unauthorized]);
 
   const { refetch } = query;
   const refreshSession = useCallback(async () => {

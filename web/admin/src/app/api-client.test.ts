@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw';
-import { afterEach, expect, test } from 'vitest';
+import { afterEach, expect, test, vi } from 'vitest';
 import { server } from '../mocks/server';
 import {
   ApiError,
@@ -10,8 +10,35 @@ import {
   isUnauthorizedError,
   setCsrfToken,
 } from './api-client';
+import { hardNavigate } from './navigation';
+
+vi.mock('./navigation', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./navigation')>();
+
+  return { ...actual, hardNavigate: vi.fn() };
+});
 
 afterEach(() => setCsrfToken(null));
+
+test('a 401 redirects the whole UI to the login page', async () => {
+  server.use(
+    http.get('/admin/api/probe', () =>
+      HttpResponse.json(
+        {
+          statusCode: 401,
+          message: 'Admin authentication required.',
+          error: 'Unauthorized',
+        },
+        { status: 401 },
+      ),
+    ),
+  );
+
+  await expect(apiGet('/admin/api/probe')).rejects.toBeInstanceOf(ApiError);
+  expect(vi.mocked(hardNavigate)).toHaveBeenCalledWith(
+    '/admin/login?returnTo=%2Fadmin',
+  );
+});
 
 test('GET requests send credentials and no CSRF header', async () => {
   let sawCsrf: string | null = 'unset';

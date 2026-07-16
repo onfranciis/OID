@@ -56,7 +56,7 @@ test('unauthenticated load redirects to provider login', async () => {
 
   await vi.waitFor(() => {
     expect(vi.mocked(hardNavigate)).toHaveBeenCalledWith(
-      '/login?returnTo=%2Fadmin',
+      '/admin/login?returnTo=%2Fadmin',
     );
   });
 });

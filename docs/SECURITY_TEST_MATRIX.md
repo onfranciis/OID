@@ -46,8 +46,8 @@ changes.
 | Admin CSRF protection.                                      | Covered | `src/admin/admin-csrf.guard.spec.ts`                                           |
 | Recent authentication for sensitive admin routes.           | Covered | `src/admin/admin-recent-auth.guard.spec.ts`                                    |
 | Admin authorization requires active admin group membership. | Covered | `src/admin/admin-access.service.spec.ts`                                       |
-| Confidential client secret rotation is guarded and audited. | Covered | `src/admin/admin.controller.spec.ts`, `src/admin/admin-client.service.spec.ts` |
-| SSR output escapes user-controlled content.                 | Covered | Login page and temporary admin page service tests.                             |
+| Confidential client secret rotation is guarded and audited. | Covered | `src/admin/admin-api.controller.spec.ts`, `src/admin/admin-client.service.spec.ts` |
+| SSR output escapes user-controlled content.                 | Covered | Login page service tests (`src/authentication/login-page.service.spec.ts`).    |
 | Admin JSON APIs preserve provider-local protection.         | Covered | `AdminApiController` reuses `AdminGuard` + recent-auth + CSRF guards; `src/admin/admin-api.controller.spec.ts`. |
 | Admin API presenters exclude secret hashes and internal columns. | Covered | `src/admin/admin-presenters.spec.ts`                                       |
 | Security headers are emitted.                               | Covered | `src/common/security-headers.middleware.spec.ts`                               |
@@ -73,7 +73,7 @@ boundary.
 | Identity conflicts (email/username/slug/clientId) surface inline.     | Covered | Users, groups, and clients feature tests.                           |
 | Unexpected render errors show a safe fallback, not a stack trace.    | Covered | `web/admin/src/components/error-boundary.test.tsx`                   |
 | User-controlled content is escaped (React/Radix; no `dangerouslySetInnerHTML`). | Covered by review | No `dangerouslySetInnerHTML` in `web/admin`; verify in review. |
-| Full browser login-to-manage e2e (Playwright).                       | Planned | Deferred to F6 with the real `/admin/api/*` backend and `/login`.    |
+| Full browser login-to-manage e2e (Playwright).                       | Planned | Deferred to F6 with the real `/admin/api/*` backend and `/admin/login`.    |
 
 ## Audit And Secrets
 

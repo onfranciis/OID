@@ -27,6 +27,6 @@ test('signing out posts to /logout and redirects to provider login', async () =>
 
   await vi.waitFor(() => {
     expect(loggedOut).toBe(true);
-    expect(vi.mocked(hardNavigate)).toHaveBeenCalledWith('/login');
+    expect(vi.mocked(hardNavigate)).toHaveBeenCalledWith('/admin/login');
   });
 });

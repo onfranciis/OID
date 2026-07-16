@@ -107,14 +107,14 @@ Currently exported metrics:
 - `internal_id_http_request_duration_seconds_total`: cumulative request duration
   by method, normalized route, and status.
 
-Watch these routes closely: `/login`, `/oauth/token`, `/oauth/revoke`,
+Watch these routes closely: `/admin/login`, `/oauth/token`, `/oauth/revoke`,
 `/api/auth/*`, and `/oauth/authorize`.
 
 ## Alerts
 
 Minimum production alerts:
 
-- Failed login spike: sustained increase in `/login` 4xx or 5xx responses.
+- Failed login spike: sustained increase in `/admin/login` 4xx or 5xx responses.
 - Token errors: sustained increase in `/oauth/token` 4xx or 5xx responses.
 - Refresh replay: audit events with replay/family revocation reason.
 - Key compromise: any emergency signing-key retirement or unplanned key change.
