@@ -7,6 +7,7 @@ const SEGMENT_TITLES: Record<string, string> = {
   groups: 'Groups',
   clients: 'Clients',
   audit: 'Audit',
+  account: 'Account',
 };
 
 // Derives a page title from the top-level route so the browser tab and screen

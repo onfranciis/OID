@@ -3,6 +3,7 @@ import {
   LayoutDashboard,
   LogOut,
   ScrollText,
+  Settings,
   Shapes,
   Users,
   type LucideIcon,
@@ -99,11 +100,24 @@ export function AppShell() {
                 <div className="truncate text-xs text-muted">{user.email}</div>
               </div>
             </div>
+            <NavLink
+              to="/account"
+              className={({ isActive }) =>
+                `mt-3 flex w-full items-center justify-center gap-2 rounded-card border px-3 py-2 text-sm font-medium ${
+                  isActive
+                    ? 'border-accent text-accent'
+                    : 'border-line text-muted hover:border-accent hover:text-accent'
+                }`
+              }
+            >
+              <Settings className="h-4 w-4" aria-hidden="true" />
+              Account settings
+            </NavLink>
             <button
               type="button"
               onClick={handleSignOut}
               disabled={signingOut}
-              className="mt-3 flex w-full items-center justify-center gap-2 rounded-card border border-line px-3 py-2 text-sm font-medium text-muted hover:border-accent hover:text-accent disabled:opacity-50"
+              className="mt-2 flex w-full items-center justify-center gap-2 rounded-card border border-line px-3 py-2 text-sm font-medium text-muted hover:border-accent hover:text-accent disabled:opacity-50"
             >
               <LogOut className="h-4 w-4" aria-hidden="true" />
               {signingOut ? 'Signing out…' : 'Sign out'}

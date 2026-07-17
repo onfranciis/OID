@@ -49,6 +49,31 @@ injecting the token into HTML.
 self-lockout guards (e.g. requiring typed confirmation before an admin removes
 their own membership in that group) and cannot read backend config otherwise.
 
+## Account
+
+### `POST /admin/api/account/change-password` — Implemented
+
+Lets the signed-in admin change their own password. Subject to the recent-auth
+and CSRF guards like any other mutation. Delegates to Better Auth's
+`changePassword` API (`AdminAccountService` / `BetterAuthService.changePassword`),
+forwarding the request's `Cookie` header so Better Auth can identify the caller's
+own session; the current password is re-verified there.
+
+Request:
+
+```json
+{ "currentPassword": "...", "newPassword": "..." }
+```
+
+Response:
+
+```json
+{ "success": true }
+```
+
+A wrong current password, or a new password failing Better Auth's length policy,
+answers `400` with a message safe to show directly (e.g. "Invalid password").
+
 ## Users
 
 `UserSummary` and `UserDetail` derive from `UserEntity` (secrets/security columns

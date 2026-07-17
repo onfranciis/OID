@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { Request, Response } from 'express';
 import type { AppConfigService } from '../config/app-config.service';
 import type { AdminPrincipal } from './admin-access.service';
+import type { AdminAccountService } from './admin-account.service';
 import { AdminApiController } from './admin-api.controller';
 import type { AdminAuditService } from './admin-audit.service';
 import type { AdminClientService } from './admin-client.service';
@@ -12,6 +13,7 @@ import type { AdminUserService } from './admin-user.service';
 const CREATED = new Date('2026-01-02T03:04:05.000Z');
 
 function makeController(overrides: {
+  account?: Partial<AdminAccountService>;
   audit?: Partial<AdminAuditService>;
   client?: Partial<AdminClientService>;
   csrf?: Partial<AdminCsrfService>;
@@ -22,6 +24,7 @@ function makeController(overrides: {
     {
       get: vi.fn().mockReturnValue('internal-id-admins'),
     } as unknown as AppConfigService,
+    (overrides.account ?? {}) as AdminAccountService,
     (overrides.audit ?? {}) as AdminAuditService,
     (overrides.client ?? {}) as AdminClientService,
     (overrides.csrf ?? {}) as AdminCsrfService,
@@ -40,6 +43,7 @@ function adminRequest(): Request & { adminPrincipal: AdminPrincipal } {
       },
       providerSession: { id: 'psn_admin' },
     },
+    headers: { cookie: 'internal_id_session=sess-token' },
     ip: '127.0.0.1',
     get: () => 'vitest',
   } as unknown as Request & { adminPrincipal: AdminPrincipal };
@@ -70,6 +74,33 @@ describe('AdminApiController', () => {
       adminGroupSlug: 'internal-id-admins',
     });
     expect(setHeader).toHaveBeenCalledWith('set-cookie', 'cookie');
+  });
+
+  it('changes the password and forwards the request cookie header', async () => {
+    const changePassword = vi.fn().mockResolvedValue(undefined);
+    const controller = makeController({
+      account: { changePassword },
+    });
+    const req = adminRequest();
+
+    const result = await controller.changePassword(req, {
+      currentPassword: 'old-pass',
+      newPassword: 'new-password-123',
+    });
+
+    expect(result).toEqual({ success: true });
+    expect(changePassword).toHaveBeenCalledWith(
+      {
+        currentPassword: 'old-pass',
+        newPassword: 'new-password-123',
+        cookieHeader: 'internal_id_session=sess-token',
+      },
+      {
+        principal: req.adminPrincipal,
+        ipAddress: '127.0.0.1',
+        userAgent: 'vitest',
+      },
+    );
   });
 
   it('maps the user list to summaries and passes the cursor page through', async () => {

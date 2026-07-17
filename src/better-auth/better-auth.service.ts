@@ -174,6 +174,36 @@ export class BetterAuthService implements OnModuleDestroy {
     return response;
   }
 
+  async changePassword(input: {
+    currentPassword: string;
+    newPassword: string;
+    cookieHeader?: string;
+  }): Promise<Response> {
+    const authApi = this.runtime.auth.api as {
+      changePassword: (context: {
+        headers: Headers;
+        body: {
+          currentPassword: string;
+          newPassword: string;
+        };
+        asResponse: true;
+      }) => Promise<Response>;
+    };
+    const response = await authApi.changePassword({
+      headers: new Headers({
+        origin: this.baseUrl,
+        ...(input.cookieHeader ? { cookie: input.cookieHeader } : {}),
+      }),
+      body: {
+        currentPassword: input.currentPassword,
+        newPassword: input.newPassword,
+      },
+      asResponse: true,
+    });
+
+    return response;
+  }
+
   async signOut(input?: { cookieHeader?: string }): Promise<Response> {
     const authApi = this.runtime.auth.api as {
       signOut: (context: {

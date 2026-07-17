@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuditModule } from '../audit/audit.module';
+import { BetterAuthModule } from '../better-auth/better-auth.module';
 import { AuditEventEntity } from '../database/entities/audit-event.entity';
 import { GroupMembershipEntity } from '../database/entities/group-membership.entity';
 import { GroupEntity } from '../database/entities/group.entity';
@@ -11,6 +12,7 @@ import { OidcRedirectUriEntity } from '../database/entities/oidc-redirect-uri.en
 import { OidcRefreshTokenEntity } from '../database/entities/oidc-refresh-token.entity';
 import { UserEntity } from '../database/entities/user.entity';
 import { AdminAccessService } from './admin-access.service';
+import { AdminAccountService } from './admin-account.service';
 import { AdminApiController } from './admin-api.controller';
 import { AdminAuditService } from './admin-audit.service';
 import { AdminClientService } from './admin-client.service';
@@ -25,6 +27,7 @@ import { AdminUserService } from './admin-user.service';
   imports: [
     ConfigModule,
     AuditModule,
+    BetterAuthModule,
     TypeOrmModule.forFeature([
       AuditEventEntity,
       UserEntity,
@@ -39,6 +42,7 @@ import { AdminUserService } from './admin-user.service';
   controllers: [AdminApiController],
   providers: [
     AdminAccessService,
+    AdminAccountService,
     AdminAuditService,
     AdminClientService,
     AdminCsrfGuard,

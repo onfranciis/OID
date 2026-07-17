@@ -1,6 +1,7 @@
 import { AuditSeverity } from '../database/entities/audit-event.entity';
 
 export const AuditEventTypes = {
+  AdminAccountPasswordChanged: 'admin.account.password_changed',
   AdminClientCreated: 'admin.client.created',
   AdminClientRedirectUriAdded: 'admin.client.redirect_uri_added',
   AdminClientRedirectUriRemoved: 'admin.client.redirect_uri_removed',

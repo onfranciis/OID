@@ -15,6 +15,10 @@ import { OidcClientStatus } from '../database/entities/oidc-client.entity';
 import { UserStatus } from '../database/entities/user.entity';
 import type { AdminPrincipal } from './admin-access.service';
 import {
+  AdminAccountService,
+  type AdminChangePasswordInput,
+} from './admin-account.service';
+import {
   AdminAuditService,
   type AdminAuditQueryInput,
 } from './admin-audit.service';
@@ -63,6 +67,7 @@ export class AdminApiController {
 
   constructor(
     configService: AppConfigService,
+    private readonly adminAccountService: AdminAccountService,
     private readonly adminAuditService: AdminAuditService,
     private readonly adminClientService: AdminClientService,
     private readonly adminCsrfService: AdminCsrfService,
@@ -95,6 +100,26 @@ export class AdminApiController {
       csrfToken,
       adminGroupSlug: this.adminGroupSlug,
     };
+  }
+
+  // Account -----------------------------------------------------------------
+
+  @Post('account/change-password')
+  @UseGuards(AdminRecentAuthGuard, AdminCsrfGuard)
+  async changePassword(
+    @Req() req: AdminRequest,
+    @Body() body: AdminChangePasswordInput,
+  ): Promise<{ success: true }> {
+    await this.adminAccountService.changePassword(
+      {
+        currentPassword: body.currentPassword,
+        newPassword: body.newPassword,
+        cookieHeader: req.headers.cookie,
+      },
+      buildMutationContext(req),
+    );
+
+    return { success: true };
   }
 
   // Users -------------------------------------------------------------------

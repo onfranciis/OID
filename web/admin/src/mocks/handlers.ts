@@ -551,6 +551,26 @@ export const handlers = [
     );
   }),
 
+  http.post('/admin/api/account/change-password', async ({ request }) => {
+    const csrfError = requireCsrf(request);
+    if (csrfError) return csrfError;
+
+    const body = (await request.json()) as {
+      currentPassword?: string;
+      newPassword?: string;
+    };
+
+    if (body.currentPassword !== MOCK_LOGIN_PASSWORD) {
+      return errorResponse(400, 'Invalid password', 'Bad Request');
+    }
+
+    if (!body.newPassword || body.newPassword.length < 8) {
+      return errorResponse(400, 'Password is too short.', 'Bad Request');
+    }
+
+    return HttpResponse.json({ success: true });
+  }),
+
   http.get('/admin/api/users', ({ request }) => {
     const url = new URL(request.url);
     const q = url.searchParams.get('q')?.toLowerCase() ?? '';

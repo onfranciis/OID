@@ -2,6 +2,7 @@ import { createBrowserRouter, type RouteObject } from 'react-router-dom';
 import { AppShell } from '../components/app-shell';
 import { RouteErrorElement } from '../components/error-boundary';
 import { ToastProvider } from '../components/toaster';
+import { AccountPage } from '../features/account/account-page';
 import { AuditPage } from '../features/audit/audit-page';
 import { LoginPage } from '../features/auth/login-page';
 import { ClientCreatePage } from '../features/clients/client-create-page';
@@ -58,6 +59,7 @@ export const routes: RouteObject[] = [
       { path: 'clients/new', element: <ClientCreatePage /> },
       { path: 'clients/:clientRecordId', element: <ClientDetailPage /> },
       { path: 'audit', element: <AuditPage /> },
+      { path: 'account', element: <AccountPage /> },
       { path: '*', element: <NotFoundPage /> },
     ],
   },
