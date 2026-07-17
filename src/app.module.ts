@@ -1,7 +1,9 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { APP_FILTER } from '@nestjs/core';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { adminStaticOptions } from './admin/admin-static.options';
 import { AppConfigModule } from './config/app-config.module';
+import { GlobalExceptionFilter } from './common/global-exception.filter';
 import { RequestContextMiddleware } from './common/request-context.middleware';
 import { SecurityHeadersMiddleware } from './common/security-headers.middleware';
 import { StructuredLoggerMiddleware } from './common/structured-logger.middleware';
@@ -33,6 +35,12 @@ import { HealthModule } from './health/health.module';
     TokensModule,
     AdminModule,
     AuditModule,
+  ],
+  providers: [
+    {
+      provide: APP_FILTER,
+      useClass: GlobalExceptionFilter,
+    },
   ],
 })
 export class AppModule implements NestModule {
