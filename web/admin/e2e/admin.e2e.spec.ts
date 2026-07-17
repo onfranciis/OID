@@ -6,6 +6,13 @@ import { expect, test, type Page } from '@playwright/test';
 const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL ?? 'admin@company.com';
 const ADMIN_PASSWORD = process.env.E2E_ADMIN_PASSWORD ?? '';
 
+// The Overview page's own tiles link to the same routes as the sidebar (e.g.
+// "2 Users"), so an unscoped getByRole('link', { name: 'Users' }) matches
+// both. Scope navigation to the persistent sidebar landmark.
+function sidebarNav(page: Page) {
+  return page.getByRole('navigation', { name: 'Admin sections' });
+}
+
 async function signIn(page: Page): Promise<void> {
   // Unauthenticated visit to the SPA redirects to the provider-owned login page.
   await page.goto('/admin');
@@ -13,7 +20,7 @@ async function signIn(page: Page): Promise<void> {
 
   await page.getByLabel(/email/i).fill(ADMIN_EMAIL);
   await page.getByLabel(/password/i).fill(ADMIN_PASSWORD);
-  await page.getByRole('button', { name: /sign in|log in/i }).click();
+  await page.getByRole('button', { name: /continue|sign in|log in/i }).click();
 
   // After login the returnTo brings us back into the admin console.
   await page.waitForURL(/\/admin/);
@@ -31,12 +38,16 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('overview loads with the section tiles', async ({ page }) => {
-  await expect(page.getByRole('link', { name: /Users/ })).toBeVisible();
-  await expect(page.getByRole('link', { name: /Clients/ })).toBeVisible();
+  await expect(
+    sidebarNav(page).getByRole('link', { name: 'Users' }),
+  ).toBeVisible();
+  await expect(
+    sidebarNav(page).getByRole('link', { name: 'Clients' }),
+  ).toBeVisible();
 });
 
 test('users section lists users and opens a detail view', async ({ page }) => {
-  await page.getByRole('link', { name: 'Users' }).click();
+  await sidebarNav(page).getByRole('link', { name: 'Users' }).click();
   await page.waitForURL(/\/admin\/users$/);
 
   await expect(
@@ -50,7 +61,7 @@ test('users section lists users and opens a detail view', async ({ page }) => {
 });
 
 test('clients section exposes the tabbed detail', async ({ page }) => {
-  await page.getByRole('link', { name: 'Clients' }).click();
+  await sidebarNav(page).getByRole('link', { name: 'Clients' }).click();
   await page.waitForURL(/\/admin\/clients$/);
 
   await page.locator('tbody tr').first().click();
@@ -59,7 +70,7 @@ test('clients section exposes the tabbed detail', async ({ page }) => {
 });
 
 test('audit section renders the event stream', async ({ page }) => {
-  await page.getByRole('link', { name: 'Audit' }).click();
+  await sidebarNav(page).getByRole('link', { name: 'Audit' }).click();
   await page.waitForURL(/\/admin\/audit/);
 
   await expect(page.getByRole('heading', { name: 'Audit' })).toBeVisible();
