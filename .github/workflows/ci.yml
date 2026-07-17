@@ -61,3 +61,36 @@ jobs:
 
       - name: Dependency audit
         run: pnpm dependency:audit
+
+  admin-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.12.4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: web/admin/pnpm-lock.yaml
+
+      - name: Install admin dependencies
+        run: pnpm admin:install --frozen-lockfile
+
+      - name: Build
+        run: pnpm admin:build
+
+      - name: Typecheck
+        run: pnpm admin:typecheck
+
+      - name: Lint
+        run: pnpm admin:lint
+
+      - name: Unit tests
+        run: pnpm admin:test
