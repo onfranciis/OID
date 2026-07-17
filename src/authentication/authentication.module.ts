@@ -24,5 +24,6 @@ import { ProviderSessionService } from './provider-session.service';
     LoginRateLimitService,
     ProviderSessionService,
   ],
+  exports: [AuthenticationService],
 })
 export class AuthenticationModule {}

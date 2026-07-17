@@ -292,6 +292,32 @@ export class OidcTokenService {
     });
   }
 
+  // Best-effort identification of the RP-initiated logout caller from
+  // id_token_hint (OIDC RP-Initiated Logout 1.0 §2: expiration is deliberately
+  // not checked here, only the signature). Returns null on any failure rather
+  // than throwing — an unverifiable hint just means end-session falls back to
+  // not trusting a caller-supplied post_logout_redirect_uri.
+  async verifyIdTokenHint(
+    idToken: string,
+  ): Promise<{ sub: string; aud: string } | null> {
+    try {
+      const signingKey = await this.getOrCreateActiveSigningKey();
+      const payload = verifyJwtSignature(idToken, signingKey.publicJwk);
+
+      if (
+        payload.iss !== this.issuer ||
+        typeof payload.sub !== 'string' ||
+        typeof payload.aud !== 'string'
+      ) {
+        return null;
+      }
+
+      return { sub: payload.sub, aud: payload.aud };
+    } catch {
+      return null;
+    }
+  }
+
   async userInfo(input: UserInfoInput): Promise<Record<string, unknown>> {
     const accessToken = extractBearerToken(input.authorizationHeader);
 
@@ -497,6 +523,20 @@ function verifyJwt(
   token: string,
   publicJwk: Record<string, unknown>,
 ): Record<string, unknown> {
+  const payload = verifyJwtSignature(token, publicJwk);
+  const nowSeconds = Math.floor(Date.now() / 1000);
+
+  if (typeof payload.exp !== 'number' || payload.exp <= nowSeconds) {
+    throw new UnauthorizedException('JWT expired.');
+  }
+
+  return payload;
+}
+
+function verifyJwtSignature(
+  token: string,
+  publicJwk: Record<string, unknown>,
+): Record<string, unknown> {
   const [encodedHeader, encodedPayload, encodedSignature] = token.split('.');
 
   if (!encodedHeader || !encodedPayload || !encodedSignature) {
@@ -516,16 +556,9 @@ function verifyJwt(
     throw new UnauthorizedException('Invalid JWT signature.');
   }
 
-  const payload = JSON.parse(
+  return JSON.parse(
     Buffer.from(encodedPayload, 'base64url').toString('utf8'),
   ) as Record<string, unknown>;
-  const nowSeconds = Math.floor(Date.now() / 1000);
-
-  if (typeof payload.exp !== 'number' || payload.exp <= nowSeconds) {
-    throw new UnauthorizedException('JWT expired.');
-  }
-
-  return payload;
 }
 
 function base64UrlJson(value: Record<string, unknown>): string {

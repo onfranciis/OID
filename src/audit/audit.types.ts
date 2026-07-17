@@ -20,6 +20,7 @@ export const AuditEventTypes = {
   OidcAuthorizationCodeIssued: 'oidc.authorization_code.issued',
   OidcAuthorizeRequestAccepted: 'oidc.authorize.request.accepted',
   OidcAuthorizeRequestRejected: 'oidc.authorize.request.rejected',
+  OidcEndSessionSucceeded: 'oidc.end_session.succeeded',
   OidcRefreshTokenReplayDetected: 'oidc.refresh_token.replay_detected',
   OidcRefreshTokenRevoked: 'oidc.refresh_token.revoked',
   OidcRefreshTokenRotated: 'oidc.refresh_token.rotated',

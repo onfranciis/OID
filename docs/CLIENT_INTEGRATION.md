@@ -70,10 +70,20 @@ App logout:
 
 Provider logout:
 
-- Posts to Internal ID `/logout`.
-- Clears the provider session.
-- Currently redirects to the provider login page because Internal ID does not yet
-  implement an OIDC RP-initiated logout endpoint.
+- `GET /oauth/end-session` implements OIDC RP-Initiated Logout 1.0 (advertised as
+  `end_session_endpoint` in the discovery document). Accepts `id_token_hint`,
+  `client_id`, `post_logout_redirect_uri`, and `state`.
+- Always terminates the caller's provider session, the same work `POST /logout`
+  does.
+- Redirects to `post_logout_redirect_uri` (with `state` echoed) only when it is
+  registered for the resolved client — resolved from an explicit `client_id`, or
+  from `id_token_hint`'s `aud` claim once its signature is verified. Any
+  unregistered or unresolvable redirect target is ignored in favor of the
+  provider's own login page; it is never followed blindly.
+- Register post-logout redirect URIs for a client the same way regular redirect
+  URIs are registered (see the admin console / `OidcPostLogoutRedirectUriEntity`).
 
-Applications should expose app logout separately from provider logout until a
-dedicated OIDC logout endpoint is added.
+Applications should still expose their own app logout separately from provider
+logout: clear the local session first, then send the browser to
+`/oauth/end-session` (with `id_token_hint` from the original sign-in) to also end
+the Internal ID session.

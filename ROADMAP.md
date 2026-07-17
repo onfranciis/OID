@@ -259,7 +259,7 @@ from later phases.
 | 1     | B-01    | Done        | Refresh token rotation relies on database locking and replay handling.          | PostgreSQL-backed integration/concurrency tests for rotation, replay, and locks. |
 | 2     | B-02    | Done        | The OAuth Provider plugin schema changed after replacing deprecated OIDC wiring. | Reviewed migration for `oauthClient`, `oauthRefreshToken`, and OAuth field deltas. |
 | 3     | B-03    | Done        | Better Auth inspect reports `scopes` type drift from the provider expectation.   | OAuth `scopes` columns are migrated to Better Auth's current JSON array shape. |
-| 4     | B-04    | Not Started | Database and unexpected service failures should not leak internals to clients.   | Global exception filter with safe HTTP responses and useful server logs.        |
+| 4     | B-04    | Done        | Database and unexpected service failures should not leak internals to clients.   | Global exception filter (`GlobalExceptionFilter`) with safe HTTP responses and structured server logs. |
 | 5     | B-05    | Not Started | In-memory rate limiting and request metrics are single-instance friendly only.   | Redis-backed login rate limiting plan and proper Prometheus client evaluation.  |
 | 6     | B-06    | Not Started | OIDC edge behavior must stay strict as Better Auth evolves underneath us.        | Protocol tests for prompt handling, discovery metadata, offline access, and logout/consent edges. |
 | 7     | B-07    | Done        | Admin management moved to a standalone React app; the SPA needs a JSON read layer. | Hardened `/admin/api/*` JSON contract (`AdminApiController`) with auth, CSRF/recent-auth, cursor pagination, presenters, and audit. |
@@ -1077,5 +1077,4 @@ The next concrete repo changes should be:
 - add PostgreSQL-backed refresh-token rotation concurrency tests
 - materialize and review the Better Auth OAuth Provider schema deltas
 - decide how to handle OAuth `scopes` column type drift
-- add a global exception filter for safe database/service failure responses
 - keep `IdentityModule` and `ClientsModule` empty until their admin/API boundary is clearer

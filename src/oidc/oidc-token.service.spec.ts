@@ -188,6 +188,28 @@ describe('OidcTokenService', () => {
     );
   });
 
+  it('verifyIdTokenHint accepts a real id_token issued by this service and rejects a tampered one', async () => {
+    const result = await service.exchangeAuthorizationCode(validInput());
+    const idToken = result.id_token ?? '';
+    const savedSigningKey = signingRepository.save.mock.calls.at(-1)?.[0];
+
+    signingRepository.findOne.mockResolvedValueOnce(savedSigningKey);
+    expect(await service.verifyIdTokenHint(idToken)).toEqual({
+      sub: 'usr_123',
+      aud: 'internal-web',
+    });
+
+    signingRepository.findOne.mockResolvedValueOnce(savedSigningKey);
+    const tampered = `${idToken.slice(0, -2)}xx`;
+    expect(await service.verifyIdTokenHint(tampered)).toBeNull();
+  });
+
+  it('verifyIdTokenHint returns null for malformed input rather than throwing', async () => {
+    signingRepository.findOne.mockResolvedValueOnce(null);
+
+    expect(await service.verifyIdTokenHint('not-a-jwt')).toBeNull();
+  });
+
   it('issues refresh tokens only when offline_access and client policy allow it', async () => {
     codeRepository.findOne.mockResolvedValueOnce({
       ...validCode(),

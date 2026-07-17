@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppConfigService } from '../config/app-config.service';
 import { OidcController } from './oidc.controller';
 import type { OidcAuthorizationService } from './oidc-authorization.service';
+import type { OidcLogoutService } from './oidc-logout.service';
 import type { OidcTokenService } from './oidc-token.service';
 
 describe('OidcController', () => {
@@ -11,6 +12,7 @@ describe('OidcController', () => {
     vi.fn<OidcTokenService['exchangeAuthorizationCode']>();
   const userInfo = vi.fn<OidcTokenService['userInfo']>();
   const revokeToken = vi.fn<OidcTokenService['revokeToken']>();
+  const endSession = vi.fn<OidcLogoutService['endSession']>();
   const assertAllowed = vi.fn();
   const controller = new OidcController(
     {
@@ -38,12 +40,16 @@ describe('OidcController', () => {
     {
       assertAllowed,
     } as never,
+    {
+      endSession,
+    } as never,
   );
 
   beforeEach(() => {
     authorize.mockReset();
     revokeToken.mockReset();
     exchangeAuthorizationCode.mockReset();
+    endSession.mockReset();
     assertAllowed.mockClear();
     authorize.mockResolvedValue({
       redirectTo: 'https://app.company.com/callback?code=abc&state=state_123',
@@ -55,6 +61,10 @@ describe('OidcController', () => {
       expires_in: 600,
       scope: 'openid',
     });
+    endSession.mockResolvedValue({
+      redirectTo: '/admin/login',
+      responseHeaders: ['internal_id_provider_session=; Max-Age=0'],
+    });
   });
 
   it('returns constrained discovery metadata', () => {
@@ -62,9 +72,51 @@ describe('OidcController', () => {
       issuer: 'https://auth.company.com',
       authorization_endpoint: 'https://auth.company.com/oauth/authorize',
       token_endpoint: 'https://auth.company.com/oauth/token',
+      end_session_endpoint: 'https://auth.company.com/oauth/end-session',
       response_types_supported: ['code'],
       code_challenge_methods_supported: ['S256'],
     });
+  });
+
+  it('passes end-session requests to the logout service and redirects with cleared cookies', async () => {
+    const setHeader = vi.fn();
+    const redirect = vi.fn();
+
+    await controller.endSession(
+      {
+        id_token_hint: 'id-token',
+        client_id: 'internal-web',
+        post_logout_redirect_uri: 'https://app.company.com/logout/callback',
+        state: 'state_123',
+      },
+      {
+        headers: {
+          cookie: 'internal_id_provider_session=session-token',
+        },
+        ip: '127.0.0.1',
+        get: vi.fn(() => 'vitest'),
+      } as never,
+      {
+        setHeader,
+        redirect,
+      } as never,
+    );
+
+    expect(endSession).toHaveBeenCalledWith(
+      expect.objectContaining({
+        idTokenHint: 'id-token',
+        clientId: 'internal-web',
+        postLogoutRedirectUri: 'https://app.company.com/logout/callback',
+        state: 'state_123',
+        ipAddress: '127.0.0.1',
+        userAgent: 'vitest',
+        cookies: { internal_id_provider_session: 'session-token' },
+      }),
+    );
+    expect(setHeader).toHaveBeenCalledWith('set-cookie', [
+      'internal_id_provider_session=; Max-Age=0',
+    ]);
+    expect(redirect).toHaveBeenCalledWith('/admin/login');
   });
 
   it('passes authorize requests to the service and redirects', async () => {

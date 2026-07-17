@@ -9,9 +9,11 @@ import {
   UseFilters,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
+import { buildRequestContext } from '../authentication/request-context';
 import { AppConfigService } from '../config/app-config.service';
 import { OAuthErrorFilter } from './oauth-error.filter';
 import { OidcAuthorizationService } from './oidc-authorization.service';
+import { OidcLogoutService } from './oidc-logout.service';
 import { OidcTokenService } from './oidc-token.service';
 import { TokenRateLimitService } from './token-rate-limit.service';
 
@@ -41,6 +43,13 @@ interface RevokeBody {
   token?: string;
 }
 
+interface EndSessionQuery {
+  id_token_hint?: string;
+  client_id?: string;
+  post_logout_redirect_uri?: string;
+  state?: string;
+}
+
 @Controller()
 @UseFilters(OAuthErrorFilter)
 export class OidcController {
@@ -52,6 +61,7 @@ export class OidcController {
     private readonly authorizationService: OidcAuthorizationService,
     private readonly tokenService: OidcTokenService,
     private readonly tokenRateLimitService: TokenRateLimitService,
+    private readonly logoutService: OidcLogoutService,
   ) {
     this.issuer = configService.get('app.baseUrl');
     this.providerSessionCookieName = configService.get(
@@ -66,6 +76,7 @@ export class OidcController {
       authorization_endpoint: `${this.issuer}/oauth/authorize`,
       token_endpoint: `${this.issuer}/oauth/token`,
       revocation_endpoint: `${this.issuer}/oauth/revoke`,
+      end_session_endpoint: `${this.issuer}/oauth/end-session`,
       jwks_uri: `${this.issuer}/.well-known/jwks.json`,
       userinfo_endpoint: `${this.issuer}/oauth/userinfo`,
       response_types_supported: ['code'],
@@ -163,6 +174,27 @@ export class OidcController {
     await this.tokenService.revokeToken({
       token: body.token,
     });
+  }
+
+  // OIDC RP-Initiated Logout 1.0: terminates the caller's provider session
+  // (same as POST /logout) and, only for a client_id/id_token_hint-verified
+  // caller with a registered post_logout_redirect_uri, redirects back there.
+  @Get('oauth/end-session')
+  async endSession(
+    @Query() query: EndSessionQuery,
+    @Req() req: Request,
+    @Res() res: Response,
+  ): Promise<void> {
+    const result = await this.logoutService.endSession({
+      idTokenHint: query.id_token_hint,
+      clientId: query.client_id,
+      postLogoutRedirectUri: query.post_logout_redirect_uri,
+      state: query.state,
+      ...buildRequestContext(req),
+    });
+
+    res.setHeader('set-cookie', result.responseHeaders);
+    res.redirect(result.redirectTo);
   }
 }
 
