@@ -1,12 +1,69 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { KeyRound, Lock } from 'lucide-react';
+import {
+  KeyRound,
+  Lock,
+  Monitor,
+  Moon,
+  Sun,
+  type LucideIcon,
+} from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { ApiError } from '../../app/api-client';
 import { isReauthCancelled } from '../../app/reauth';
+import { useTheme, type ThemePreference } from '../../app/theme';
 import { FormField, inputClass } from '../../components/form-field';
 import { useToast } from '../../components/toaster';
 import { useChangePassword } from './api';
+
+const APPEARANCE_OPTIONS: {
+  value: ThemePreference;
+  label: string;
+  icon: LucideIcon;
+}[] = [
+  { value: 'light', label: 'Light', icon: Sun },
+  { value: 'dark', label: 'Dark', icon: Moon },
+  { value: 'system', label: 'System', icon: Monitor },
+];
+
+function AppearanceSection() {
+  const { preference, setPreference } = useTheme();
+
+  return (
+    <section className="rounded-card border border-line bg-surface p-6">
+      <h2 className="text-sm font-semibold">Appearance</h2>
+      <p className="mt-1 text-sm text-muted">
+        Choose how the admin console looks on this device.
+      </p>
+      <div
+        role="group"
+        aria-label="Theme"
+        className="mt-4 inline-flex rounded-card border border-line p-1"
+      >
+        {APPEARANCE_OPTIONS.map(({ value, label, icon: Icon }) => {
+          const selected = preference === value;
+
+          return (
+            <button
+              key={value}
+              type="button"
+              aria-pressed={selected}
+              onClick={() => setPreference(value)}
+              className={`flex items-center gap-1.5 rounded-[6px] px-3 py-1.5 text-sm font-medium ${
+                selected
+                  ? 'bg-accent/10 text-accent'
+                  : 'text-muted hover:text-ink'
+              }`}
+            >
+              <Icon className="h-4 w-4" aria-hidden="true" />
+              {label}
+            </button>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
 
 const changePasswordSchema = z
   .object({
@@ -77,6 +134,10 @@ export function AccountPage() {
       <p className="mt-1 text-sm text-muted">
         Update the password you use to sign in.
       </p>
+
+      <div className="mt-6">
+        <AppearanceSection />
+      </div>
 
       <form
         onSubmit={(event) => void onSubmit(event)}

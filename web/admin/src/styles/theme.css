@@ -1,5 +1,10 @@
 @import 'tailwindcss';
 
+/* Class-based dark mode: toggled via ThemeProvider (src/app/theme.tsx), which
+ * applies/removes `.dark` on <html> based on a persisted light/dark/system
+ * preference. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /*
  * Design tokens for the admin console. Cornflower-blue brand accent with a
  * dedicated success green (reserved for active/done states), soft neutral
@@ -20,4 +25,20 @@
   --color-nav-hover: #eceef140;
   --radius-card: 8px;
   --font-sans: ui-sans-serif, 'Aptos', 'Segoe UI', sans-serif;
+  --shadow-card: 0 12px 40px rgba(24, 26, 31, 0.08);
+}
+
+.dark {
+  --color-ink: #eef0f4;
+  --color-muted: #9aa1ad;
+  --color-line: #2a2d35;
+  --color-surface: #1b1d23;
+  --color-page: #121317;
+  --color-accent: #7ea2ec;
+  --color-success: #34c98f;
+  --color-warning: #e2a53f;
+  --color-danger: #ec7a68;
+  --color-row-hover: #2a2d3578;
+  --color-nav-hover: #2a2d3540;
+  --shadow-card: 0 12px 40px rgba(0, 0, 0, 0.4);
 }

@@ -57,6 +57,19 @@ test('mismatched new/confirm passwords are caught client-side', async () => {
   expect(await screen.findByText('Passwords do not match.')).toBeDefined();
 });
 
+test('selecting Dark in Appearance applies the dark class', async () => {
+  renderApp('/account');
+
+  await screen.findByRole('heading', { name: 'Account' });
+  fireEvent.click(screen.getByRole('button', { name: 'Dark' }));
+
+  expect(document.documentElement.classList.contains('dark')).toBe(true);
+
+  fireEvent.click(screen.getByRole('button', { name: 'Light' }));
+
+  expect(document.documentElement.classList.contains('dark')).toBe(false);
+});
+
 test('a wrong current password surfaces a toast and does not clear the form', async () => {
   renderApp('/account');
 

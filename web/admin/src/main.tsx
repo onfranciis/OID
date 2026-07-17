@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { RouterProvider } from 'react-router-dom';
 import { queryClient } from './app/query';
 import { createAppRouter } from './app/router';
+import { ThemeProvider } from './app/theme';
 import { ErrorBoundary } from './components/error-boundary';
 import './styles/theme.css';
 
@@ -32,11 +33,13 @@ if (!container) {
 void enableMocking().then(() => {
   createRoot(container).render(
     <StrictMode>
-      <ErrorBoundary>
-        <QueryClientProvider client={queryClient}>
-          <RouterProvider router={createAppRouter()} />
-        </QueryClientProvider>
-      </ErrorBoundary>
+      <ThemeProvider>
+        <ErrorBoundary>
+          <QueryClientProvider client={queryClient}>
+            <RouterProvider router={createAppRouter()} />
+          </QueryClientProvider>
+        </ErrorBoundary>
+      </ThemeProvider>
     </StrictMode>,
   );
 });

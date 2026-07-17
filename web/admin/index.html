@@ -8,6 +8,26 @@
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
     <link rel="manifest" href="/site.webmanifest" />
     <title>Internal ID Admin</title>
+    <script>
+      // Mirrors the resolution logic in src/app/theme.tsx: applies the `.dark`
+      // class before first paint so there is no light-mode flash on load.
+      (function () {
+        try {
+          var stored = localStorage.getItem('oid-admin-theme');
+          var isDark =
+            stored === 'dark' ||
+            ((stored === null || stored === 'system') &&
+              window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+          if (isDark) {
+            document.documentElement.classList.add('dark');
+          }
+        } catch (error) {
+          // localStorage can throw in locked-down environments; fall back to
+          // light mode rather than blocking page load.
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

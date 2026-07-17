@@ -77,7 +77,7 @@ export function LoginPage() {
 
   return (
     <div className="grid min-h-screen place-items-center bg-page p-6 font-sans text-ink">
-      <main className="w-full max-w-100 rounded-[20px] border border-line bg-surface p-8 shadow-[0_12px_40px_rgba(24,26,31,0.08)]">
+      <main className="w-full max-w-100 rounded-[20px] border border-line bg-surface p-8 shadow-[var(--shadow-card)]">
         <div className="mb-7 flex items-center gap-2.5">
           <span className="grid h-9 w-9 place-items-center rounded-xl bg-accent text-sm font-bold text-surface">
             ID
