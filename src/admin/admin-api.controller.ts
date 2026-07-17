@@ -394,9 +394,12 @@ export class AdminApiController {
 
   @Get('audit-events')
   async listAuditEvents(@Query() query: AdminAuditQueryInput) {
-    const events = await this.adminAuditService.listRecent(query);
+    const page = await this.adminAuditService.listRecent(query);
 
-    return events.map(toAuditEvent);
+    return {
+      items: page.items.map(toAuditEvent),
+      nextCursor: page.nextCursor,
+    };
   }
 
   // Composition helpers -----------------------------------------------------

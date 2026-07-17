@@ -232,15 +232,16 @@ interface AuditEvent {
 
 | Method + Path                                                                     | Status   | Notes                                                                                  |
 | --------------------------------------------------------------------------------- | -------- | -------------------------------------------------------------------------------------- |
-| `GET /admin/api/audit-events?limit=&eventType=&severity=&actorUserId=&targetUserId=&clientId=` | Exists\* | Today returns a plain `AuditEvent[]` (newest first, `limit` default 50, max 200). |
+| `GET /admin/api/audit-events?cursor=&limit=&eventType=&severity=&actorUserId=&targetUserId=&clientId=` | Implemented | `{ items: AuditEvent[], nextCursor }`, newest first, `limit` default 50, max 200. |
 
-The audit endpoint is implemented under `/admin/api/audit-events` and returns a
-plain array (newest first, `limit` default 50, max 200), mapped by
-`toAuditEvent` so `metadataJson` is exposed as `metadata`. The UI treats the
-array as a single page.
+The audit endpoint is implemented under `/admin/api/audit-events` and returns
+`{ items, nextCursor }` — cursor-paginated over the prefixed-ULID `id`,
+descending, matching the pagination shape used by users/groups/clients. Items
+are mapped by `toAuditEvent` so `metadataJson` is exposed as `metadata`.
 
-**Deferred enhancement**: wrap the audit response as `{ items, nextCursor }` and
-add cursor pagination + a date-range filter, to match the other list endpoints.
+**Remaining deferred enhancement**: a date-range filter, to further narrow the
+event stream beyond the existing actor/target/client/event-type/severity
+filters.
 
 ## Resolved Decisions (B-07)
 

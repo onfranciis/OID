@@ -26,6 +26,7 @@ export function OverviewPage() {
   const clientsCount = clientsFirstPage
     ? `${clientsFirstPage.items.length}${clientsFirstPage.nextCursor ? '+' : ''}`
     : '—';
+  const recentEvents = recentQuery.data?.pages[0]?.items;
 
   return (
     <section>
@@ -64,11 +65,11 @@ export function OverviewPage() {
           {recentQuery.isError ? (
             <p className="text-sm text-danger">Could not load activity.</p>
           ) : null}
-          {recentQuery.isSuccess && recentQuery.data.length === 0 ? (
+          {recentQuery.isSuccess && recentEvents?.length === 0 ? (
             <p className="text-sm text-muted">No recent events.</p>
           ) : null}
           <ul className="grid gap-2">
-            {recentQuery.data?.map((event) => (
+            {recentEvents?.map((event) => (
               <li
                 key={event.id}
                 className="flex items-center justify-between gap-3 border-b border-line pb-2 text-sm last:border-b-0 last:pb-0"

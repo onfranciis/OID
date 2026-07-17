@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { TablePagination } from '../../components/table-pagination';
 import { inputClass } from '../../components/form-field';
 import { StatusBadge } from '../../components/status-badge';
 import { formatDate } from '../../lib/format';
 import { useDebouncedValue } from '../../lib/use-debounced-value';
+import { usePagedList } from '../../lib/use-paged-list';
 import { useClientsList } from './api';
 import {
   CLIENT_STATUSES,
@@ -22,7 +24,9 @@ export function ClientsPage() {
     status: status || undefined,
   });
 
-  const clients = query.data?.pages.flatMap((page) => page.items) ?? [];
+  const paged = usePagedList(query, `${debouncedSearch}|${status}`);
+  const clients = paged.items ?? [];
+  const isPageLoading = paged.items === undefined && !query.isError;
 
   return (
     <section>
@@ -81,7 +85,7 @@ export function ClientsPage() {
             </tr>
           </thead>
           <tbody>
-            {query.isPending ? (
+            {isPageLoading ? (
               <tr>
                 <td colSpan={7} className="px-4 py-8 text-center text-muted">
                   Loading clients…
@@ -102,7 +106,7 @@ export function ClientsPage() {
                 </td>
               </tr>
             ) : null}
-            {query.isSuccess && clients.length === 0 ? (
+            {!isPageLoading && !query.isError && clients.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-4 py-8 text-center text-muted">
                   No clients match.{' '}
@@ -150,18 +154,14 @@ export function ClientsPage() {
         </table>
       </div>
 
-      {query.hasNextPage ? (
-        <div className="mt-4 text-center">
-          <button
-            type="button"
-            disabled={query.isFetchingNextPage}
-            onClick={() => void query.fetchNextPage()}
-            className="rounded-card border border-line bg-surface px-4 py-2 text-sm font-semibold text-accent hover:border-accent disabled:opacity-50"
-          >
-            {query.isFetchingNextPage ? 'Loading…' : 'Load more'}
-          </button>
-        </div>
-      ) : null}
+      <TablePagination
+        pageNumber={paged.pageNumber}
+        hasPreviousPage={paged.hasPreviousPage}
+        hasNextPage={paged.hasNextPage}
+        isFetchingNextPage={paged.isFetchingNextPage}
+        onPrevious={paged.goToPreviousPage}
+        onNext={paged.goToNextPage}
+      />
     </section>
   );
 }

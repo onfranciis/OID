@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { TablePagination } from '../../components/table-pagination';
 import { inputClass } from '../../components/form-field';
 import { StatusBadge } from '../../components/status-badge';
 import { formatDateTime } from '../../lib/format';
 import { useDebouncedValue } from '../../lib/use-debounced-value';
+import { usePagedList } from '../../lib/use-paged-list';
 import { useAuditEvents } from './api';
 import {
   AUDIT_SEVERITIES,
@@ -45,7 +47,9 @@ export function AuditPage() {
   }, [debouncedParamsString]);
 
   const query = useAuditEvents(filters);
-  const events = query.data ?? [];
+  const paged = usePagedList(query, debouncedParamsString);
+  const events = paged.items ?? [];
+  const isPageLoading = paged.items === undefined && !query.isError;
 
   const setParam = (key: string, value: string) => {
     const next = new URLSearchParams(searchParams);
@@ -168,7 +172,7 @@ export function AuditPage() {
             </tr>
           </thead>
           <tbody>
-            {query.isPending ? (
+            {isPageLoading ? (
               <tr>
                 <td colSpan={6} className="px-4 py-8 text-center text-muted">
                   Loading events…
@@ -189,7 +193,7 @@ export function AuditPage() {
                 </td>
               </tr>
             ) : null}
-            {query.isSuccess && events.length === 0 ? (
+            {!isPageLoading && !query.isError && events.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-4 py-8 text-center text-muted">
                   No events match these filters.
@@ -202,6 +206,15 @@ export function AuditPage() {
           </tbody>
         </table>
       </div>
+
+      <TablePagination
+        pageNumber={paged.pageNumber}
+        hasPreviousPage={paged.hasPreviousPage}
+        hasNextPage={paged.hasNextPage}
+        isFetchingNextPage={paged.isFetchingNextPage}
+        onPrevious={paged.goToPreviousPage}
+        onNext={paged.goToNextPage}
+      />
     </section>
   );
 }

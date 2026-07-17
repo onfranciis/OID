@@ -48,6 +48,41 @@ test('expanding a row reveals metadata JSON', async () => {
   expect(screen.getAllByText(/User agent/i).length).toBeGreaterThan(0);
 });
 
+test('pagination moves through pages when the page size is small', async () => {
+  // 28 seeded events across 4 rounds; limit=10 forces 3 pages.
+  renderApp('/audit?limit=10');
+
+  await screen.findAllByText('admin.user.created');
+  expect(screen.getByText('Page 1')).toBeDefined();
+  expect(
+    screen.getByRole('button', { name: 'Previous' }).hasAttribute('disabled'),
+  ).toBe(true);
+
+  fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+
+  expect(await screen.findByText('Page 2')).toBeDefined();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Previous' }));
+
+  expect(await screen.findByText('Page 1')).toBeDefined();
+});
+
+test('changing a filter resets pagination back to page 1', async () => {
+  renderApp('/audit?limit=10');
+
+  await screen.findAllByText('admin.user.created');
+  fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+  await screen.findByText('Page 2');
+
+  fireEvent.change(screen.getByLabelText('Severity'), {
+    target: { value: 'critical' },
+  });
+
+  // Only 4 critical events at limit=10: single page, no pagination controls.
+  await screen.findAllByText('oidc.refresh_token.replayed');
+  await expect.poll(() => screen.queryByText(/^Page /)).toBeNull();
+});
+
 test('clear filters resets the URL-driven query', async () => {
   renderApp('/audit?severity=critical');
 

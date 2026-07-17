@@ -34,6 +34,11 @@ export interface AuditFilters {
   limit?: number;
 }
 
+export interface AuditEventListResponse {
+  items: AuditEvent[];
+  nextCursor: string | null;
+}
+
 export function auditSeverityTone(severity: AuditSeverity): BadgeTone {
   switch (severity) {
     case 'info':

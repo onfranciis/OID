@@ -181,33 +181,37 @@ describe('AdminApiController', () => {
     expect(result.user.status).toBe('suspended');
   });
 
-  it('maps audit events, renaming metadataJson to metadata', async () => {
+  it('maps audit events, renaming metadataJson to metadata, and forwards the cursor page', async () => {
     const controller = makeController({
       audit: {
-        listRecent: vi.fn().mockResolvedValue([
-          {
-            id: 'aud_1',
-            eventType: 'admin.user.created',
-            severity: 'info',
-            actorUserId: 'usr_admin',
-            targetUserId: 'usr_1',
-            clientId: null,
-            providerSessionId: null,
-            ipAddress: null,
-            userAgent: null,
-            metadataJson: { status: 'pending' },
-            createdAt: CREATED,
-          },
-        ]),
+        listRecent: vi.fn().mockResolvedValue({
+          items: [
+            {
+              id: 'aud_1',
+              eventType: 'admin.user.created',
+              severity: 'info',
+              actorUserId: 'usr_admin',
+              targetUserId: 'usr_1',
+              clientId: null,
+              providerSessionId: null,
+              ipAddress: null,
+              userAgent: null,
+              metadataJson: { status: 'pending' },
+              createdAt: CREATED,
+            },
+          ],
+          nextCursor: 'aud_1',
+        }),
       },
     });
 
     const result = await controller.listAuditEvents({});
 
-    expect(result[0]).toMatchObject({
+    expect(result.nextCursor).toBe('aud_1');
+    expect(result.items[0]).toMatchObject({
       id: 'aud_1',
       metadata: { status: 'pending' },
     });
-    expect(result[0]).not.toHaveProperty('metadataJson');
+    expect(result.items[0]).not.toHaveProperty('metadataJson');
   });
 });

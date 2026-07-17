@@ -1202,7 +1202,8 @@ export const handlers = [
     const actorUserId = url.searchParams.get('actorUserId');
     const targetUserId = url.searchParams.get('targetUserId');
     const clientId = url.searchParams.get('clientId');
-    const limit = Number(url.searchParams.get('limit') ?? 50);
+    const cursor = url.searchParams.get('cursor');
+    const limit = Math.min(Number(url.searchParams.get('limit') ?? 50), 200);
 
     let matches = db.auditEvents;
 
@@ -1222,6 +1223,15 @@ export const handlers = [
       matches = matches.filter((event) => event.clientId === clientId);
     }
 
-    return HttpResponse.json(matches.slice(0, Math.min(limit, 200)));
+    const startIndex = cursor
+      ? matches.findIndex((event) => event.id === cursor) + 1
+      : 0;
+    const page = matches.slice(startIndex, startIndex + limit);
+    const nextCursor =
+      startIndex + limit < matches.length
+        ? (page[page.length - 1]?.id ?? null)
+        : null;
+
+    return HttpResponse.json({ items: page, nextCursor });
   }),
 ];

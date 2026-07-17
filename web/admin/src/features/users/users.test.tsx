@@ -27,18 +27,49 @@ test('search narrows the users list', async () => {
   await expect.poll(() => screen.queryByText('Bola Okafor')).toBeNull();
 });
 
-test('load more appends the next page', async () => {
+test('pagination moves to the next page and back', async () => {
   renderApp('/users');
 
   await screen.findByText('Alice Adeyemi');
+  expect(screen.getByText('Page 1')).toBeDefined();
 
-  // 29 seeded users, page size 20: last seeded user is on page 2.
+  // 29 seeded users, page size 20: page 1 has no Previous, but has a Next.
+  expect(
+    screen.getByRole('button', { name: 'Previous' }).hasAttribute('disabled'),
+  ).toBe(true);
+
+  // Last seeded user is on page 2.
   expect(screen.queryByText('Bisi Eze')).toBeNull();
 
-  fireEvent.click(screen.getByRole('button', { name: 'Load more' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Next' }));
 
   expect(await screen.findByText('Bisi Eze')).toBeDefined();
-  expect(screen.queryByRole('button', { name: 'Load more' })).toBeNull();
+  expect(screen.getByText('Page 2')).toBeDefined();
+  expect(screen.queryByText('Alice Adeyemi')).toBeNull();
+  expect(
+    screen.getByRole('button', { name: 'Next' }).hasAttribute('disabled'),
+  ).toBe(true);
+
+  fireEvent.click(screen.getByRole('button', { name: 'Previous' }));
+
+  expect(await screen.findByText('Alice Adeyemi')).toBeDefined();
+  expect(screen.getByText('Page 1')).toBeDefined();
+});
+
+test('searching resets pagination back to page 1', async () => {
+  renderApp('/users');
+
+  await screen.findByText('Alice Adeyemi');
+  fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+  await screen.findByText('Bisi Eze');
+
+  fireEvent.change(screen.getByLabelText('Search users'), {
+    target: { value: 'alice' },
+  });
+
+  expect(await screen.findByText('Alice Adeyemi')).toBeDefined();
+  // Single-page result: pagination controls disappear entirely.
+  await expect.poll(() => screen.queryByText(/^Page /)).toBeNull();
 });
 
 test('creating a user navigates to its detail page', async () => {
