@@ -1,4 +1,14 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  ArrowLeft,
+  ArrowUpRight,
+  Ban,
+  CircleCheck,
+  CirclePause,
+  Pencil,
+  Plus,
+  X,
+} from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useParams } from 'react-router-dom';
@@ -42,8 +52,9 @@ export function UserDetailPage() {
         <p className="mt-2 text-sm text-muted">{query.error.message}</p>
         <Link
           to="/users"
-          className="mt-6 inline-block rounded-card border border-line bg-surface px-3 py-2 text-sm font-semibold text-accent hover:border-accent"
+          className="mt-6 inline-flex items-center gap-1.5 rounded-card border border-line bg-surface px-3 py-2 text-sm font-semibold text-accent hover:border-accent"
         >
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           Back to Users
         </Link>
       </section>
@@ -121,8 +132,9 @@ function ProfilePanel({ user }: { user: UserDetail }) {
           <button
             type="button"
             onClick={() => setEditing(true)}
-            className="rounded-card border border-line px-3 py-1.5 text-sm text-muted hover:border-accent hover:text-accent"
+            className="flex items-center gap-1.5 rounded-card border border-line px-3 py-1.5 text-sm text-muted hover:border-accent hover:text-accent"
           >
+            <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
             Edit
           </button>
         ) : null}
@@ -202,27 +214,65 @@ interface StatusTransition {
   label: string;
   target: UserStatus;
   destructive: boolean;
+  icon: typeof CircleCheck;
 }
 
 function availableTransitions(status: UserStatus): StatusTransition[] {
   switch (status) {
     case 'pending':
       return [
-        { label: 'Activate', target: 'active', destructive: false },
-        { label: 'Deactivate', target: 'deactivated', destructive: true },
+        {
+          label: 'Activate',
+          target: 'active',
+          destructive: false,
+          icon: CircleCheck,
+        },
+        {
+          label: 'Deactivate',
+          target: 'deactivated',
+          destructive: true,
+          icon: Ban,
+        },
       ];
     case 'active':
       return [
-        { label: 'Suspend', target: 'suspended', destructive: true },
-        { label: 'Deactivate', target: 'deactivated', destructive: true },
+        {
+          label: 'Suspend',
+          target: 'suspended',
+          destructive: true,
+          icon: CirclePause,
+        },
+        {
+          label: 'Deactivate',
+          target: 'deactivated',
+          destructive: true,
+          icon: Ban,
+        },
       ];
     case 'suspended':
       return [
-        { label: 'Reactivate', target: 'active', destructive: false },
-        { label: 'Deactivate', target: 'deactivated', destructive: true },
+        {
+          label: 'Reactivate',
+          target: 'active',
+          destructive: false,
+          icon: CircleCheck,
+        },
+        {
+          label: 'Deactivate',
+          target: 'deactivated',
+          destructive: true,
+          icon: Ban,
+        },
       ];
     case 'deactivated':
-      return [{ label: 'Reactivate', target: 'active', destructive: false }];
+      return [
+        {
+          label: 'Reactivate',
+          target: 'active',
+          destructive: false,
+          icon: CircleCheck,
+        },
+      ];
   }
 }
 
@@ -270,25 +320,30 @@ function LifecyclePanel({ user }: { user: UserDetail }) {
         <StatusBadge label={user.status} tone={userStatusTone(user.status)} />
       </p>
       <div className="mt-4 flex flex-wrap gap-2">
-        {availableTransitions(user.status).map((transition) => (
-          <button
-            key={transition.target}
-            type="button"
-            disabled={setStatus.isPending}
-            onClick={() =>
-              transition.destructive
-                ? setPendingTransition(transition)
-                : runTransition(transition)
-            }
-            className={`rounded-card border px-3 py-1.5 text-sm font-semibold disabled:opacity-50 ${
-              transition.destructive
-                ? 'border-danger/40 text-danger hover:bg-danger/10'
-                : 'border-accent/40 text-accent hover:bg-accent/10'
-            }`}
-          >
-            {transition.label}
-          </button>
-        ))}
+        {availableTransitions(user.status).map((transition) => {
+          const Icon = transition.icon;
+
+          return (
+            <button
+              key={transition.target}
+              type="button"
+              disabled={setStatus.isPending}
+              onClick={() =>
+                transition.destructive
+                  ? setPendingTransition(transition)
+                  : runTransition(transition)
+              }
+              className={`flex items-center gap-1.5 rounded-card border px-3 py-1.5 text-sm font-semibold disabled:opacity-50 ${
+                transition.destructive
+                  ? 'border-danger/40 text-danger hover:bg-danger/10'
+                  : 'border-accent/40 text-accent hover:bg-accent/10'
+              }`}
+            >
+              <Icon className="h-4 w-4" aria-hidden="true" />
+              {transition.label}
+            </button>
+          );
+        })}
       </div>
       <ConfirmDialog
         open={pendingTransition !== null}
@@ -377,8 +432,9 @@ function GroupsPanel({ user }: { user: UserDetail }) {
               <button
                 type="button"
                 onClick={() => setRemovingGroup(group)}
-                className="text-xs font-semibold text-danger hover:underline"
+                className="flex items-center gap-1 text-xs font-semibold text-danger hover:underline"
               >
+                <X className="h-3.5 w-3.5" aria-hidden="true" />
                 Remove
               </button>
             </li>
@@ -412,8 +468,9 @@ function GroupsPanel({ user }: { user: UserDetail }) {
               onError: mutationError('Could not add to group'),
             })
           }
-          className="rounded-card border border-accent/40 px-3 py-2 text-sm font-semibold text-accent hover:bg-accent/10 disabled:opacity-50"
+          className="flex items-center gap-1.5 rounded-card border border-accent/40 px-3 py-2 text-sm font-semibold text-accent hover:bg-accent/10 disabled:opacity-50"
         >
+          <Plus className="h-4 w-4" aria-hidden="true" />
           {addToGroup.isPending ? 'Adding…' : 'Add'}
         </button>
       </div>
@@ -469,17 +526,19 @@ function ActivityPanel({ user }: { user: UserDetail }) {
         <li>
           <Link
             to={`/audit?targetUserId=${user.id}`}
-            className="font-semibold text-accent hover:underline"
+            className="inline-flex items-center gap-1 font-semibold text-accent hover:underline"
           >
             Events targeting this user
+            <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
           </Link>
         </li>
         <li>
           <Link
             to={`/audit?actorUserId=${user.id}`}
-            className="font-semibold text-accent hover:underline"
+            className="inline-flex items-center gap-1 font-semibold text-accent hover:underline"
           >
             Events performed by this user
+            <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
           </Link>
         </li>
       </ul>

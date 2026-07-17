@@ -1,3 +1,5 @@
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+
 export function TablePagination({
   pageNumber,
   hasPreviousPage,
@@ -24,8 +26,9 @@ export function TablePagination({
         type="button"
         disabled={!hasPreviousPage}
         onClick={onPrevious}
-        className="rounded-card border border-line bg-surface px-3 py-2 text-sm font-semibold text-accent hover:border-accent disabled:cursor-not-allowed disabled:opacity-50"
+        className="flex items-center gap-1 rounded-card border border-line bg-surface px-3 py-2 text-sm font-semibold text-accent hover:border-accent disabled:cursor-not-allowed disabled:opacity-50"
       >
+        <ChevronLeft className="h-4 w-4" aria-hidden="true" />
         Previous
       </button>
       <span className="text-sm text-muted">Page {pageNumber}</span>
@@ -33,9 +36,10 @@ export function TablePagination({
         type="button"
         disabled={!hasNextPage || isFetchingNextPage}
         onClick={onNext}
-        className="rounded-card border border-line bg-surface px-3 py-2 text-sm font-semibold text-accent hover:border-accent disabled:cursor-not-allowed disabled:opacity-50"
+        className="flex items-center gap-1 rounded-card border border-line bg-surface px-3 py-2 text-sm font-semibold text-accent hover:border-accent disabled:cursor-not-allowed disabled:opacity-50"
       >
         {isFetchingNextPage ? 'Loading…' : 'Next'}
+        <ChevronRight className="h-4 w-4" aria-hidden="true" />
       </button>
     </div>
   );

@@ -1,3 +1,4 @@
+import { RefreshCw } from 'lucide-react';
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { useRouteError } from 'react-router-dom';
 import { FullPageMessage } from './full-page';
@@ -12,8 +13,9 @@ function ErrorFallback({ onReload }: { onReload: () => void }) {
         <button
           type="button"
           onClick={onReload}
-          className="rounded-card bg-accent px-4 py-2 text-sm font-semibold text-surface hover:opacity-90"
+          className="flex items-center gap-1.5 rounded-card bg-accent px-4 py-2 text-sm font-semibold text-surface hover:opacity-90"
         >
+          <RefreshCw className="h-4 w-4" aria-hidden="true" />
           Reload
         </button>
       </div>

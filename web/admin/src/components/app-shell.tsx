@@ -1,8 +1,30 @@
+import {
+  AppWindow,
+  LayoutDashboard,
+  LogOut,
+  ScrollText,
+  Shapes,
+  Users,
+  type LucideIcon,
+} from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { performLogout } from '../app/logout';
 import { useSession } from '../app/session';
 import { useDocumentTitle } from '../lib/use-document-title';
+
+// Shared with the Overview tiles so the same section always reads with the
+// same icon everywhere in the app.
+export const SECTION_ICONS: Record<
+  'overview' | 'users' | 'groups' | 'clients' | 'audit',
+  LucideIcon
+> = {
+  overview: LayoutDashboard,
+  users: Users,
+  groups: Shapes,
+  clients: AppWindow,
+  audit: ScrollText,
+};
 
 function initials(name: string): string {
   const letters = name
@@ -37,7 +59,7 @@ export function AppShell() {
         Skip to content
       </a>
       <div className="mx-auto flex w-full max-w-[2000px] flex-col gap-4 md:flex-row md:items-start">
-        <aside className="rounded-2xl border border-line bg-surface p-4 shadow-sm md:sticky md:top-4 md:w-60 md:shrink-0">
+        <aside className="rounded-xl border border-line bg-surface p-4 shadow-sm md:sticky md:top-4 md:w-60 md:shrink-0">
           <div className="flex items-center gap-2.5 px-1 py-1">
             <span className="grid h-9 w-9 place-items-center rounded-xl bg-accent text-sm font-bold text-surface">
               ID
@@ -47,13 +69,21 @@ export function AppShell() {
 
           <nav aria-label="Admin sections" className="mt-6">
             <ul className="grid gap-1">
-              <NavItem to="/" end>
+              <NavItem to="/" end icon={SECTION_ICONS.overview}>
                 Overview
               </NavItem>
-              <NavItem to="/users">Users</NavItem>
-              <NavItem to="/groups">Groups</NavItem>
-              <NavItem to="/clients">Clients</NavItem>
-              <NavItem to="/audit">Audit</NavItem>
+              <NavItem to="/users" icon={SECTION_ICONS.users}>
+                Users
+              </NavItem>
+              <NavItem to="/groups" icon={SECTION_ICONS.groups}>
+                Groups
+              </NavItem>
+              <NavItem to="/clients" icon={SECTION_ICONS.clients}>
+                Clients
+              </NavItem>
+              <NavItem to="/audit" icon={SECTION_ICONS.audit}>
+                Audit
+              </NavItem>
             </ul>
           </nav>
 
@@ -73,8 +103,9 @@ export function AppShell() {
               type="button"
               onClick={handleSignOut}
               disabled={signingOut}
-              className="mt-3 w-full rounded-card border border-line px-3 py-2 text-sm font-medium text-muted hover:border-accent hover:text-accent disabled:opacity-50"
+              className="mt-3 flex w-full items-center justify-center gap-2 rounded-card border border-line px-3 py-2 text-sm font-medium text-muted hover:border-accent hover:text-accent disabled:opacity-50"
             >
+              <LogOut className="h-4 w-4" aria-hidden="true" />
               {signingOut ? 'Signing out…' : 'Sign out'}
             </button>
           </div>
@@ -91,10 +122,12 @@ export function AppShell() {
 function NavItem({
   to,
   end,
+  icon: Icon,
   children,
 }: {
   to: string;
   end?: boolean;
+  icon: LucideIcon;
   children: ReactNode;
 }) {
   return (
@@ -103,13 +136,14 @@ function NavItem({
         to={to}
         end={end}
         className={({ isActive }) =>
-          `block rounded-xl px-3 py-2 text-sm ${
+          `flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm ${
             isActive
               ? 'bg-accent/10 font-semibold text-accent'
               : 'text-muted hover:bg-nav-hover hover:text-ink'
           }`
         }
       >
+        <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
         {children}
       </NavLink>
     </li>

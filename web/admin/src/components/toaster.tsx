@@ -1,4 +1,5 @@
 import * as Toast from '@radix-ui/react-toast';
+import { AlertTriangle, CheckCircle2 } from 'lucide-react';
 import {
   createContext,
   useCallback,
@@ -63,14 +64,25 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             }`}
           >
             <Toast.Title
-              className={`text-sm font-semibold ${
+              className={`flex items-center gap-2 text-sm font-semibold ${
                 item.variant === 'danger' ? 'text-danger' : 'text-ink'
               }`}
             >
+              {item.variant === 'danger' ? (
+                <AlertTriangle
+                  className="h-4 w-4 shrink-0 text-danger"
+                  aria-hidden="true"
+                />
+              ) : (
+                <CheckCircle2
+                  className="h-4 w-4 shrink-0 text-success"
+                  aria-hidden="true"
+                />
+              )}
               {item.title}
             </Toast.Title>
             {item.description ? (
-              <Toast.Description className="mt-1 text-sm text-muted">
+              <Toast.Description className="mt-1 pl-6 text-sm text-muted">
                 {item.description}
               </Toast.Description>
             ) : null}

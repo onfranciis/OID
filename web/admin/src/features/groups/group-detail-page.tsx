@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { ArrowLeft, ArrowUpRight, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate, useParams } from 'react-router-dom';
@@ -41,8 +42,9 @@ export function GroupDetailPage() {
         <p className="mt-2 text-sm text-muted">{query.error.message}</p>
         <Link
           to="/groups"
-          className="mt-6 inline-block rounded-card border border-line bg-surface px-3 py-2 text-sm font-semibold text-accent hover:border-accent"
+          className="mt-6 inline-flex items-center gap-1.5 rounded-card border border-line bg-surface px-3 py-2 text-sm font-semibold text-accent hover:border-accent"
         >
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           Back to Groups
         </Link>
       </section>
@@ -88,8 +90,9 @@ function DangerZone({ group }: { group: GroupDetail }) {
           type="button"
           disabled={hasMembers || deleteGroup.isPending}
           onClick={() => setConfirming(true)}
-          className="shrink-0 rounded-card border border-danger/40 px-4 py-2 text-sm font-semibold text-danger hover:bg-danger/10 disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex shrink-0 items-center gap-1.5 rounded-card border border-danger/40 px-4 py-2 text-sm font-semibold text-danger hover:bg-danger/10 disabled:cursor-not-allowed disabled:opacity-50"
         >
+          <Trash2 className="h-4 w-4" aria-hidden="true" />
           Delete group
         </button>
       </div>
@@ -266,8 +269,9 @@ function MembersPanel({ group }: { group: GroupDetail }) {
                 <button
                   type="button"
                   onClick={() => setRemoving(member)}
-                  className="text-xs font-semibold text-danger hover:underline"
+                  className="flex items-center gap-1 text-xs font-semibold text-danger hover:underline"
                 >
+                  <X className="h-3.5 w-3.5" aria-hidden="true" />
                   Remove
                 </button>
               </div>
@@ -348,9 +352,10 @@ function MembersPanel({ group }: { group: GroupDetail }) {
       <p className="mt-4 text-sm">
         <Link
           to={`/audit?eventType=admin.group.membership`}
-          className="font-semibold text-accent hover:underline"
+          className="inline-flex items-center gap-1 font-semibold text-accent hover:underline"
         >
           View membership changes in Audit
+          <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
         </Link>
       </p>
     </section>

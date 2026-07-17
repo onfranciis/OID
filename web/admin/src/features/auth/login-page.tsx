@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
+import { Lock, LogIn, Mail, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useSearchParams } from 'react-router-dom';
@@ -98,8 +99,9 @@ export function LoginPage() {
             <button
               type="button"
               onClick={() => void initQuery.refetch()}
-              className="font-semibold underline"
+              className="inline-flex items-center gap-1 font-semibold underline"
             >
+              <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
               Retry
             </button>
           </p>
@@ -111,31 +113,44 @@ export function LoginPage() {
           noValidate
         >
           <FormField label="Email" error={form.formState.errors.email?.message}>
-            <input
-              type="email"
-              autoComplete="username"
-              placeholder="you@company.com"
-              className={inputClass}
-              {...form.register('email')}
-            />
+            <div className="relative">
+              <Mail
+                className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted"
+                aria-hidden="true"
+              />
+              <input
+                type="email"
+                autoComplete="username"
+                placeholder="you@company.com"
+                className={`${inputClass} w-full pl-9`}
+                {...form.register('email')}
+              />
+            </div>
           </FormField>
           <FormField
             label="Password"
             error={form.formState.errors.password?.message}
           >
-            <input
-              type="password"
-              autoComplete="current-password"
-              placeholder="••••••••"
-              className={inputClass}
-              {...form.register('password')}
-            />
+            <div className="relative">
+              <Lock
+                className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted"
+                aria-hidden="true"
+              />
+              <input
+                type="password"
+                autoComplete="current-password"
+                placeholder="••••••••"
+                className={`${inputClass} w-full pl-9`}
+                {...form.register('password')}
+              />
+            </div>
           </FormField>
           <button
             type="submit"
             disabled={submitting || initQuery.isPending}
-            className="mt-1 rounded-card bg-accent px-4 py-3 text-sm font-semibold text-surface hover:opacity-90 disabled:opacity-50"
+            className="mt-1 flex items-center justify-center gap-1.5 rounded-card bg-accent px-4 py-3 text-sm font-semibold text-surface hover:opacity-90 disabled:opacity-50"
           >
+            <LogIn className="h-4 w-4" aria-hidden="true" />
             {submitting ? 'Signing in…' : 'Continue'}
           </button>
         </form>

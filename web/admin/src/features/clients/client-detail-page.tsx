@@ -1,4 +1,16 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  Activity,
+  ArrowLeft,
+  Ban,
+  CircleCheck,
+  KeyRound,
+  Link as LinkIcon,
+  Plus,
+  RefreshCw,
+  Settings2,
+  X,
+} from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useParams } from 'react-router-dom';
@@ -42,8 +54,9 @@ export function ClientDetailPage() {
         <p className="mt-2 text-sm text-muted">{query.error.message}</p>
         <Link
           to="/clients"
-          className="mt-6 inline-block rounded-card border border-line bg-surface px-3 py-2 text-sm font-semibold text-accent hover:border-accent"
+          className="mt-6 inline-flex items-center gap-1.5 rounded-card border border-line bg-surface px-3 py-2 text-sm font-semibold text-accent hover:border-accent"
         >
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           Back to Clients
         </Link>
       </section>
@@ -69,26 +82,31 @@ export function ClientDetailPage() {
             {
               id: 'policy',
               label: 'Policy',
+              icon: Settings2,
               content: <PolicyTab client={client} />,
             },
             {
               id: 'redirect-uris',
               label: 'Redirect URIs',
+              icon: LinkIcon,
               content: <RedirectUrisTab client={client} />,
             },
             {
               id: 'credentials',
               label: 'Credentials',
+              icon: KeyRound,
               content: <CredentialsTab client={client} />,
             },
             {
               id: 'status',
               label: 'Status',
+              icon: client.status === 'active' ? CircleCheck : Ban,
               content: <StatusTab client={client} />,
             },
             {
               id: 'activity',
               label: 'Activity',
+              icon: Activity,
               content: <ActivityTab client={client} />,
             },
           ]}
@@ -214,8 +232,9 @@ function RedirectUrisTab({ client }: { client: ClientDetail }) {
               <button
                 type="button"
                 onClick={() => setRemoving(redirectUri)}
-                className="shrink-0 text-xs font-semibold text-danger hover:underline"
+                className="flex shrink-0 items-center gap-1 text-xs font-semibold text-danger hover:underline"
               >
+                <X className="h-3.5 w-3.5" aria-hidden="true" />
                 Remove
               </button>
             </li>
@@ -239,8 +258,9 @@ function RedirectUrisTab({ client }: { client: ClientDetail }) {
             type="button"
             disabled={!uri.trim() || addRedirectUri.isPending}
             onClick={submit}
-            className="rounded-card border border-accent/40 px-4 py-2 text-sm font-semibold text-accent hover:bg-accent/10 disabled:opacity-50"
+            className="flex items-center gap-1.5 rounded-card border border-accent/40 px-4 py-2 text-sm font-semibold text-accent hover:bg-accent/10 disabled:opacity-50"
           >
+            <Plus className="h-4 w-4" aria-hidden="true" />
             Add
           </button>
         </div>
@@ -341,8 +361,13 @@ function CredentialsTab({ client }: { client: ClientDetail }) {
         <button
           type="button"
           onClick={() => setConfirming(true)}
-          className="mt-4 rounded-card border border-accent/40 px-4 py-2 text-sm font-semibold text-accent hover:bg-accent/10"
+          className="mt-4 flex items-center gap-1.5 rounded-card border border-accent/40 px-4 py-2 text-sm font-semibold text-accent hover:bg-accent/10"
         >
+          {client.hasSecret ? (
+            <RefreshCw className="h-4 w-4" aria-hidden="true" />
+          ) : (
+            <KeyRound className="h-4 w-4" aria-hidden="true" />
+          )}
           {client.hasSecret ? 'Rotate secret' : 'Issue secret'}
         </button>
       )}
@@ -408,12 +433,17 @@ function StatusTab({ client }: { client: ClientDetail }) {
         type="button"
         onClick={() => (disabling ? setConfirming(true) : apply())}
         disabled={setStatus.isPending}
-        className={`mt-4 rounded-card border px-4 py-2 text-sm font-semibold disabled:opacity-50 ${
+        className={`mt-4 flex items-center gap-1.5 rounded-card border px-4 py-2 text-sm font-semibold disabled:opacity-50 ${
           disabling
             ? 'border-danger/40 text-danger hover:bg-danger/10'
             : 'border-accent/40 text-accent hover:bg-accent/10'
         }`}
       >
+        {disabling ? (
+          <Ban className="h-4 w-4" aria-hidden="true" />
+        ) : (
+          <CircleCheck className="h-4 w-4" aria-hidden="true" />
+        )}
         {disabling ? 'Disable client' : 'Reactivate client'}
       </button>
 

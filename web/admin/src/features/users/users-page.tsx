@@ -1,3 +1,4 @@
+import { Plus, RefreshCw, Search } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { TablePagination } from '../../components/table-pagination';
@@ -35,21 +36,28 @@ export function UsersPage() {
         </div>
         <Link
           to="/users/new"
-          className="rounded-card bg-accent px-4 py-2 text-sm font-semibold text-surface hover:opacity-90"
+          className="flex items-center gap-1.5 rounded-card bg-accent px-4 py-2 text-sm font-semibold text-surface hover:opacity-90"
         >
+          <Plus className="h-4 w-4" aria-hidden="true" />
           Create user
         </Link>
       </div>
 
       <div className="mt-6 flex flex-wrap gap-3">
-        <input
-          type="search"
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder="Search email, username, or name"
-          aria-label="Search users"
-          className={`${inputClass} w-72 max-w-full`}
-        />
+        <div className="relative w-72 max-w-full">
+          <Search
+            className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted"
+            aria-hidden="true"
+          />
+          <input
+            type="search"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search email, username, or name"
+            aria-label="Search users"
+            className={`${inputClass} w-full pl-9`}
+          />
+        </div>
         <select
           value={status}
           onChange={(event) => setStatus(event.target.value as UserStatus | '')}
@@ -92,8 +100,9 @@ export function UsersPage() {
                   <button
                     type="button"
                     onClick={() => void query.refetch()}
-                    className="font-semibold text-accent"
+                    className="inline-flex items-center gap-1 font-semibold text-accent"
                   >
+                    <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
                     Retry
                   </button>
                 </td>

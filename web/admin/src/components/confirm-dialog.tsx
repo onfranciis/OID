@@ -1,4 +1,5 @@
 import * as Dialog from '@radix-ui/react-dialog';
+import { AlertTriangle, Info } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
 
 // Reusable confirmation dialog for destructive actions. When
@@ -42,7 +43,20 @@ export function ConfirmDialog({
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-ink/40" />
         <Dialog.Content className="fixed top-1/2 left-1/2 w-[min(28rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-card border border-line bg-surface p-6 font-sans text-ink shadow-lg">
-          <Dialog.Title className="text-lg font-semibold">{title}</Dialog.Title>
+          <Dialog.Title className="flex items-center gap-2 text-lg font-semibold">
+            {tone === 'danger' ? (
+              <AlertTriangle
+                className="h-5 w-5 shrink-0 text-danger"
+                aria-hidden="true"
+              />
+            ) : (
+              <Info
+                className="h-5 w-5 shrink-0 text-accent"
+                aria-hidden="true"
+              />
+            )}
+            {title}
+          </Dialog.Title>
           <Dialog.Description asChild>
             <div className="mt-2 text-sm text-muted">{description}</div>
           </Dialog.Description>

@@ -1,3 +1,4 @@
+import { LogOut, ShieldAlert } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { performLogout } from '../app/logout';
 
@@ -7,7 +8,7 @@ export function FullPageMessage({
   title,
   children,
 }: {
-  title: string;
+  title: ReactNode;
   children?: ReactNode;
 }) {
   return (
@@ -22,7 +23,17 @@ export function FullPageMessage({
 
 export function AccessDeniedScreen() {
   return (
-    <FullPageMessage title="Admin access denied">
+    <FullPageMessage
+      title={
+        <>
+          <ShieldAlert
+            className="mx-auto mb-2 h-8 w-8 text-danger"
+            aria-hidden="true"
+          />
+          Admin access denied
+        </>
+      }
+    >
       <p className="text-sm text-muted">
         Your account is signed in but does not have administrator access to
         Internal ID. Administrators are active members of the bootstrap admin
@@ -32,8 +43,9 @@ export function AccessDeniedScreen() {
         <button
           type="button"
           onClick={() => void performLogout()}
-          className="rounded-card border border-line bg-surface px-4 py-2 text-sm font-semibold hover:border-accent hover:text-accent"
+          className="flex items-center gap-1.5 rounded-card border border-line bg-surface px-4 py-2 text-sm font-semibold hover:border-accent hover:text-accent"
         >
+          <LogOut className="h-4 w-4" aria-hidden="true" />
           Sign out
         </button>
       </div>

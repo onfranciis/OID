@@ -1,3 +1,4 @@
+import { Filter, RefreshCw, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { TablePagination } from '../../components/table-pagination';
@@ -77,8 +78,9 @@ export function AuditPage() {
         <button
           type="button"
           onClick={() => void query.refetch()}
-          className="rounded-card border border-line bg-surface px-4 py-2 text-sm font-semibold text-accent hover:border-accent"
+          className="flex items-center gap-1.5 rounded-card border border-line bg-surface px-4 py-2 text-sm font-semibold text-accent hover:border-accent"
         >
+          <RefreshCw className="h-4 w-4" aria-hidden="true" />
           Refresh
         </button>
       </div>
@@ -86,12 +88,18 @@ export function AuditPage() {
       <div className="mt-6 grid gap-3 rounded-card border border-line bg-surface p-4 sm:grid-cols-2 lg:grid-cols-3">
         <label className="grid gap-1 text-sm">
           <span className="text-muted">Event type</span>
-          <input
-            value={searchParams.get('eventType') ?? ''}
-            onChange={(event) => setParam('eventType', event.target.value)}
-            placeholder="admin.user"
-            className={inputClass}
-          />
+          <div className="relative">
+            <Filter
+              className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted"
+              aria-hidden="true"
+            />
+            <input
+              value={searchParams.get('eventType') ?? ''}
+              onChange={(event) => setParam('eventType', event.target.value)}
+              placeholder="admin.user"
+              className={`${inputClass} w-full pl-9`}
+            />
+          </div>
         </label>
         <label className="grid gap-1 text-sm">
           <span className="text-muted">Severity</span>
@@ -151,8 +159,9 @@ export function AuditPage() {
             <button
               type="button"
               onClick={() => setSearchParams({}, { replace: true })}
-              className="text-sm font-semibold text-accent hover:underline"
+              className="flex items-center gap-1 text-sm font-semibold text-accent hover:underline"
             >
+              <X className="h-3.5 w-3.5" aria-hidden="true" />
               Clear filters
             </button>
           </div>
@@ -186,8 +195,9 @@ export function AuditPage() {
                   <button
                     type="button"
                     onClick={() => void query.refetch()}
-                    className="font-semibold text-accent"
+                    className="inline-flex items-center gap-1 font-semibold text-accent"
                   >
+                    <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
                     Retry
                   </button>
                 </td>

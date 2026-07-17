@@ -1,5 +1,14 @@
+import {
+  ArrowUpRight,
+  CopyPlus,
+  Grid2X2Plus,
+  UserPlus,
+  type LucideIcon,
+  type LucideProps,
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useSession } from '../../app/session';
+import { SECTION_ICONS } from '../../components/app-shell';
 import { StatusBadge } from '../../components/status-badge';
 import { formatDateTime } from '../../lib/format';
 import { useAuditEvents } from '../audit/api';
@@ -36,16 +45,42 @@ export function OverviewPage() {
       </p>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Tile to="/users" label="Users" count={usersCount} />
-        <Tile to="/groups" label="Groups" count={groupsCount} />
-        <Tile to="/clients" label="Clients" count={clientsCount} />
-        <Tile to="/audit" label="Audit" count="View" />
+        <Tile
+          to="/users"
+          label="Users"
+          count={usersCount}
+          icon={SECTION_ICONS.users}
+        />
+
+        <Tile
+          to="/groups"
+          label="Groups"
+          count={groupsCount}
+          icon={SECTION_ICONS.groups}
+        />
+
+        <Tile
+          to="/clients"
+          label="Clients"
+          count={clientsCount}
+          icon={SECTION_ICONS.clients}
+        />
+        <Tile
+          to="/audit"
+          label="Audit"
+          count="View"
+          icon={SECTION_ICONS.audit}
+        />
       </div>
 
       <div className="mt-8 flex flex-wrap gap-2">
-        <QuickAction to="/users/new" label="Create user" />
-        <QuickAction to="/clients/new" label="Create client" />
-        <QuickAction to="/groups/new" label="Create group" />
+        <QuickAction to="/users/new" label="Create user" icon={UserPlus} />
+        <QuickAction
+          to="/clients/new"
+          label="Create client"
+          icon={Grid2X2Plus}
+        />
+        <QuickAction to="/groups/new" label="Create group" icon={CopyPlus} />
       </div>
 
       <section className="mt-8 rounded-xl border border-line bg-surface p-5 shadow-sm">
@@ -53,9 +88,10 @@ export function OverviewPage() {
           <h2 className="text-base font-semibold">Recent activity</h2>
           <Link
             to="/audit"
-            className="text-sm font-semibold text-accent hover:underline"
+            className="inline-flex items-center gap-1 text-sm font-semibold text-accent hover:underline"
           >
             View all
+            <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
           </Link>
         </div>
         <div className="mt-4">
@@ -80,11 +116,13 @@ export function OverviewPage() {
                 >
                   {event.eventType}
                 </Link>
+
                 <div className="flex shrink-0 items-center gap-3">
                   <StatusBadge
                     label={event.severity}
                     tone={auditSeverityTone(event.severity)}
                   />
+
                   <span className="text-xs text-muted">
                     {formatDateTime(event.createdAt)}
                   </span>
@@ -102,28 +140,42 @@ function Tile({
   to,
   label,
   count,
+  icon: Icon,
 }: {
   to: string;
   label: string;
   count: string;
+  icon: LucideIcon;
 }) {
   return (
     <Link
       to={to}
       className="rounded-xl border border-line bg-surface p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-accent/40"
     >
-      <div className="text-3xl font-bold tracking-tight">{count}</div>
+      <Icon className="h-5 w-5 text-accent" aria-hidden="true" />
+      <div className="mt-3 text-3xl font-bold tracking-tight">{count}</div>
       <div className="mt-1 text-sm text-muted">{label}</div>
     </Link>
   );
 }
 
-function QuickAction({ to, label }: { to: string; label: string }) {
+function QuickAction({
+  to,
+  label,
+  icon: Icon,
+}: {
+  to: string;
+  label: string;
+  icon: React.ForwardRefExoticComponent<
+    Omit<LucideProps, 'ref'> & React.RefAttributes<SVGSVGElement>
+  >;
+}) {
   return (
     <Link
       to={to}
-      className="rounded-card border border-accent/40 px-4 py-2 text-sm font-semibold text-accent hover:bg-accent/10"
+      className="flex items-center gap-1.5 rounded-card border border-accent/40 px-4 py-2 text-sm font-semibold text-accent hover:bg-accent/10"
     >
+      <Icon className="h-4 w-4" aria-hidden="true" />
       {label}
     </Link>
   );

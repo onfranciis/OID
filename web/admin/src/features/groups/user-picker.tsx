@@ -1,3 +1,4 @@
+import { Plus, Search } from 'lucide-react';
 import { useState } from 'react';
 import { inputClass } from '../../components/form-field';
 import { useDebouncedValue } from '../../lib/use-debounced-value';
@@ -26,14 +27,20 @@ export function UserPicker({
 
   return (
     <div>
-      <input
-        type="search"
-        value={search}
-        onChange={(event) => setSearch(event.target.value)}
-        placeholder="Search users to add"
-        aria-label="Search users to add"
-        className={`${inputClass} w-full`}
-      />
+      <div className="relative">
+        <Search
+          className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted"
+          aria-hidden="true"
+        />
+        <input
+          type="search"
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder="Search users to add"
+          aria-label="Search users to add"
+          className={`${inputClass} w-full pl-9`}
+        />
+      </div>
       {debouncedSearch ? (
         <ul className="mt-2 grid gap-1">
           {candidates.length === 0 ? (
@@ -54,7 +61,10 @@ export function UserPicker({
                   <span className="font-medium">{user.displayName}</span>{' '}
                   <span className="text-xs text-muted">{user.email}</span>
                 </span>
-                <span className="text-xs font-semibold text-accent">Add</span>
+                <span className="flex items-center gap-1 text-xs font-semibold text-accent">
+                  <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+                  Add
+                </span>
               </button>
             </li>
           ))}

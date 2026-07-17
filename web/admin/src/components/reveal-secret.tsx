@@ -1,3 +1,4 @@
+import { Check, Copy, TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
 
 // One-time secret display. The value is shown once after rotation, offered for
@@ -20,7 +21,8 @@ export function RevealSecret({
 
   return (
     <div className="rounded-card border border-warning/40 bg-warning/10 p-4">
-      <p className="text-sm font-semibold text-warning">
+      <p className="flex items-center gap-2 text-sm font-semibold text-warning">
+        <TriangleAlert className="h-4 w-4 shrink-0" aria-hidden="true" />
         Copy this secret now. It is shown only once and cannot be retrieved
         again.
       </p>
@@ -31,8 +33,13 @@ export function RevealSecret({
         <button
           type="button"
           onClick={copy}
-          className="rounded-card border border-accent/40 px-3 py-2 text-sm font-semibold text-accent hover:bg-accent/10"
+          className="flex items-center gap-1.5 rounded-card border border-accent/40 px-3 py-2 text-sm font-semibold text-accent hover:bg-accent/10"
         >
+          {copied ? (
+            <Check className="h-4 w-4" aria-hidden="true" />
+          ) : (
+            <Copy className="h-4 w-4" aria-hidden="true" />
+          )}
           {copied ? 'Copied' : 'Copy'}
         </button>
       </div>
