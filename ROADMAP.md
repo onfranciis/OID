@@ -812,7 +812,7 @@ Objective: prove an internal app can use Internal ID correctly.
 | ID     | Task                                  | Status   | Acceptance Criteria                                               |
 | ------ | ------------------------------------- | -------- | ----------------------------------------------------------------- |
 | P11-01 | Create sample confidential client     | Done     | Server-rendered sample app can complete code flow.                |
-| P11-02 | Create sample public client if needed | Deferred | Public client can complete PKCE without secret.                   |
+| P11-02 | Create sample public client if needed | Done     | Public client can complete PKCE without secret. Verified by `src/oidc/oidc-public-client-pkce.integration-spec.ts` (real authorize -> token round trip against Postgres) rather than a dedicated sample app. |
 | P11-03 | Validate ID token in sample client    | Done     | Client checks signature, issuer, audience, expiration, and nonce. |
 | P11-04 | Establish local app session           | Done     | Sample app uses its own session cookie after login.               |
 | P11-05 | Test provider logout                  | Done     | Provider logout clears provider session and redirects safely.     |

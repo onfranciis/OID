@@ -59,6 +59,12 @@ jobs:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/internal_id
           BETTER_AUTH_SECRET: ci-only-better-auth-secret-32-characters
 
+      - name: Integration tests
+        run: pnpm test:integration
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/internal_id
+          BETTER_AUTH_SECRET: ci-only-better-auth-secret-32-characters
+
       - name: Dependency audit
         run: pnpm dependency:audit
 

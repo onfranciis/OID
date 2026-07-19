@@ -73,7 +73,7 @@ boundary.
 | Identity conflicts (email/username/slug/clientId) surface inline.     | Covered | Users, groups, and clients feature tests.                           |
 | Unexpected render errors show a safe fallback, not a stack trace.    | Covered | `web/admin/src/components/error-boundary.test.tsx`                   |
 | User-controlled content is escaped (React/Radix; no `dangerouslySetInnerHTML`). | Covered by review | No `dangerouslySetInnerHTML` in `web/admin`; verify in review. |
-| Full browser login-to-manage e2e (Playwright).                       | Planned | Deferred to F6 with the real `/admin/api/*` backend and `/admin/login`.    |
+| Full browser login-to-manage e2e (Playwright).                       | Covered | `web/admin/e2e/admin.e2e.spec.ts`, run against a live backend + seeded DB. |
 
 ## Audit And Secrets
 
