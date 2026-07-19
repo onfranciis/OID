@@ -277,5 +277,6 @@ filters.
   `AdminRecentAuthGuard` + `AdminCsrfGuard`.
 - Create/update mutations return the **enriched detail shape** (`UserDetail`,
   `GroupDetail`, `ClientDetail`) by re-composing after the write.
-- Remaining follow-up: user status change does not yet return revocation counts
-  (`revoked*Count`); the UI already treats them as optional.
+- User status change returns revocation counts (`revoked*Count`) when
+  deactivation revokes live security state; absent otherwise (the UI already
+  treats them as optional).

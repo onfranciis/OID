@@ -182,14 +182,16 @@ describe('AdminUserService', () => {
       deactivatedAt: null,
     });
 
-    const user = await service.setUserStatus(
+    const result = await service.setUserStatus(
       'usr_target',
       UserStatus.DEACTIVATED,
       context,
     );
 
-    expect(user.status).toBe(UserStatus.DEACTIVATED);
-    expect(user.deactivatedAt).toBeInstanceOf(Date);
+    expect(result.user.status).toBe(UserStatus.DEACTIVATED);
+    expect(result.user.deactivatedAt).toBeInstanceOf(Date);
+    expect(result.revokedProviderSessionCount).toBe(2);
+    expect(result.revokedRefreshTokenCount).toBe(3);
     expect(updateProviderSessions).toHaveBeenCalledWith(
       expect.objectContaining({
         userId: 'usr_target',

@@ -174,7 +174,9 @@ describe('AdminApiController', () => {
   });
 
   it('wraps a status change as { user } after re-fetching detail', async () => {
-    const setUserStatus = vi.fn().mockResolvedValue(undefined);
+    const setUserStatus = vi
+      .fn()
+      .mockResolvedValue({ user: { id: 'usr_1', status: 'suspended' } });
     const controller = makeController({
       user: {
         setUserStatus,
@@ -210,6 +212,47 @@ describe('AdminApiController', () => {
       expect.objectContaining({ ipAddress: '127.0.0.1', userAgent: 'vitest' }),
     );
     expect(result.user.status).toBe('suspended');
+    expect(result.revokedProviderSessionCount).toBeUndefined();
+    expect(result.revokedRefreshTokenCount).toBeUndefined();
+  });
+
+  it('surfaces revocation counts when deactivation revokes live security state', async () => {
+    const setUserStatus = vi.fn().mockResolvedValue({
+      user: { id: 'usr_1', status: 'deactivated' },
+      revokedProviderSessionCount: 2,
+      revokedRefreshTokenCount: 1,
+    });
+    const controller = makeController({
+      user: {
+        setUserStatus,
+        getUserById: vi.fn().mockResolvedValue({
+          id: 'usr_1',
+          email: 'a@company.com',
+          username: null,
+          displayName: 'Ann',
+          givenName: null,
+          familyName: null,
+          emailVerifiedAt: null,
+          profileType: 'employee',
+          status: 'deactivated',
+          createdAt: CREATED,
+          updatedAt: CREATED,
+          deactivatedAt: CREATED,
+        }),
+      },
+      group: {
+        getGroupsForUser: vi.fn().mockResolvedValue([]),
+      },
+    });
+
+    const result = await controller.setUserStatus(
+      adminRequest(),
+      'usr_1',
+      'deactivated' as never,
+    );
+
+    expect(result.revokedProviderSessionCount).toBe(2);
+    expect(result.revokedRefreshTokenCount).toBe(1);
   });
 
   it('maps audit events, renaming metadataJson to metadata, and forwards the cursor page', async () => {

@@ -54,6 +54,13 @@ export interface AdminMutationContext {
   userAgent: string | null;
 }
 
+export interface SetUserStatusResult {
+  user: UserEntity;
+  // Present only when deactivation revoked live security state.
+  revokedProviderSessionCount?: number;
+  revokedRefreshTokenCount?: number;
+}
+
 export interface AdminUserListParams {
   cursor?: string;
   limit?: number;
@@ -213,7 +220,7 @@ export class AdminUserService {
     userId: string,
     status: UserStatus,
     context: AdminMutationContext,
-  ): Promise<UserEntity> {
+  ): Promise<SetUserStatusResult> {
     const user = await this.getExistingUser(userId);
 
     user.status = status;
@@ -236,7 +243,10 @@ export class AdminUserService {
       },
     );
 
-    return savedUser;
+    return {
+      user: savedUser,
+      ...revocationMetadata,
+    };
   }
 
   private async getExistingUser(userId: string): Promise<UserEntity> {

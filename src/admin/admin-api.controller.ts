@@ -186,13 +186,21 @@ export class AdminApiController {
     @Param('userId') userId: string,
     @Body('status') status: UserStatus,
   ) {
-    await this.adminUserService.setUserStatus(
+    const result = await this.adminUserService.setUserStatus(
       userId,
       status,
       buildMutationContext(req),
     );
 
-    return { user: await this.buildUserDetail(userId) };
+    return {
+      user: await this.buildUserDetail(userId),
+      ...(result.revokedProviderSessionCount !== undefined
+        ? { revokedProviderSessionCount: result.revokedProviderSessionCount }
+        : {}),
+      ...(result.revokedRefreshTokenCount !== undefined
+        ? { revokedRefreshTokenCount: result.revokedRefreshTokenCount }
+        : {}),
+    };
   }
 
   // Groups ------------------------------------------------------------------

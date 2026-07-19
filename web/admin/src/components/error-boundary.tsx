@@ -9,7 +9,8 @@ function ErrorFallback({ onReload }: { onReload: () => void }) {
       <p className="text-sm text-muted">
         The admin console hit an unexpected error. Reloading usually clears it.
       </p>
-      <div>
+
+      <div className="w-full justify-center">
         <button
           type="button"
           onClick={onReload}
