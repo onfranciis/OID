@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import {
   buildAuthorizationRequest,
+  buildEndSessionUrl,
   createLocalSession,
   exchangeAuthorizationCode,
   parseLocalSession,
@@ -16,6 +17,7 @@ const discovery: DiscoveryDocument = {
   authorization_endpoint: 'https://auth.company.com/oauth/authorize',
   token_endpoint: 'https://auth.company.com/oauth/token',
   revocation_endpoint: 'https://auth.company.com/oauth/revoke',
+  end_session_endpoint: 'https://auth.company.com/oauth/end-session',
   jwks_uri: 'https://auth.company.com/.well-known/jwks.json',
 };
 const config: SampleClientConfig = {
@@ -42,6 +44,27 @@ describe('sample OIDC client', () => {
     expect(request.state).toHaveLength(43);
     expect(request.nonce).toHaveLength(43);
     expect(request.codeVerifier.length).toBeGreaterThan(43);
+  });
+
+  it('builds an RP-initiated logout URL hinted with the id_token', () => {
+    const url = new URL(buildEndSessionUrl(discovery, config, 'the-id-token'));
+
+    expect(url.origin + url.pathname).toBe(discovery.end_session_endpoint);
+    expect(url.searchParams.get('id_token_hint')).toBe('the-id-token');
+    expect(url.searchParams.get('client_id')).toBe(config.clientId);
+    expect(url.searchParams.get('post_logout_redirect_uri')).toBe(
+      config.postLogoutRedirectUri,
+    );
+  });
+
+  it('throws when the provider does not advertise an end_session_endpoint', () => {
+    expect(() =>
+      buildEndSessionUrl(
+        { ...discovery, end_session_endpoint: undefined },
+        config,
+        'the-id-token',
+      ),
+    ).toThrow(/end_session_endpoint/);
   });
 
   it('exchanges authorization codes with client authentication and verifier', async () => {
@@ -138,6 +161,8 @@ describe('sample OIDC client', () => {
       {
         sub: 'usr_123',
         email: 'admin@company.com',
+        idToken: 'id-token',
+        accessToken: 'access-token',
         expiresAt: 2_000_000_000,
       },
       config.sessionSecret,

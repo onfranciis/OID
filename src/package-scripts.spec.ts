@@ -15,7 +15,7 @@ describe('package scripts', () => {
     );
     expect(packageJson.scripts.typecheck).toBe('tsc --noEmit -p tsconfig.json');
     expect(packageJson.scripts['start:prod:migrate']).toBe(
-      'pnpm migration:run && node dist/main',
+      'pnpm migration:run && node dist/src/main',
     );
     expect(packageJson.scripts['sample-client:start']).toContain(
       'sample-client/src/server.ts',

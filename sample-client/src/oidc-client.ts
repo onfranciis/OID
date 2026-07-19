@@ -12,6 +12,7 @@ export interface DiscoveryDocument {
   authorization_endpoint: string;
   token_endpoint: string;
   revocation_endpoint?: string;
+  end_session_endpoint?: string;
   jwks_uri: string;
 }
 
@@ -60,6 +61,8 @@ export interface LocalSession {
   sub: string;
   email?: string;
   name?: string;
+  idToken: string;
+  accessToken: string;
   refreshToken?: string;
   expiresAt: number;
 }
@@ -123,6 +126,32 @@ export async function exchangeAuthorizationCode(
   }
 
   return (await response.json()) as TokenResponse;
+}
+
+// OIDC RP-Initiated Logout 1.0: hints the provider at who is logging out and
+// where to send the browser back to afterward. The provider only honors
+// post_logout_redirect_uri when it's registered for this client_id (see
+// docs/CLIENT_INTEGRATION.md) — an unregistered one is silently ignored in
+// favor of the provider's own login page, never followed blindly.
+export function buildEndSessionUrl(
+  discovery: DiscoveryDocument,
+  config: SampleClientConfig,
+  idTokenHint: string,
+): string {
+  if (!discovery.end_session_endpoint) {
+    throw new Error('Provider does not advertise an end_session_endpoint.');
+  }
+
+  const url = new URL(discovery.end_session_endpoint);
+
+  url.searchParams.set('id_token_hint', idTokenHint);
+  url.searchParams.set('client_id', config.clientId);
+  url.searchParams.set(
+    'post_logout_redirect_uri',
+    config.postLogoutRedirectUri,
+  );
+
+  return url.toString();
 }
 
 export async function revokeRefreshToken(
