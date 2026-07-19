@@ -6,6 +6,9 @@ export default defineConfig({
   fullyParallel: false,
   retries: 0,
   use: {
-    baseURL: 'http://127.0.0.1:3000',
+    // Must match APP_BASE_URL (.env) — the app derives its OIDC issuer and
+    // endpoint URLs from that value, and the discovery-document test compares
+    // against it directly.
+    baseURL: process.env.E2E_BASE_URL ?? 'http://localhost:3000',
   },
 });
