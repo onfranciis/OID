@@ -14,6 +14,30 @@ test('users list renders seeded users with status badges', async () => {
   ).toBeGreaterThan(0);
 });
 
+test('the logged-in admin is marked "(you)" in the users list but nobody else is', async () => {
+  renderApp('/users');
+
+  await screen.findByText('Alice Adeyemi');
+
+  const adminRow = screen
+    .getAllByText('Internal ID Administrator')
+    .map((node) => node.closest('td'))
+    .find((node) => node !== null);
+  expect(adminRow).not.toBeNull();
+  expect(within(adminRow!).getByText('(you)')).toBeDefined();
+
+  const aliceRow = screen.getByText('Alice Adeyemi').closest('td');
+  expect(aliceRow).not.toBeNull();
+  expect(within(aliceRow!).queryByText('(you)')).toBeNull();
+});
+
+test('the logged-in admin is marked "(you)" on their own detail page', async () => {
+  renderApp(`/users/${mockSession.user.id}`);
+
+  await screen.findByRole('heading', { name: 'Internal ID Administrator' });
+  expect(screen.getByText('(you)')).toBeDefined();
+});
+
 test('search narrows the users list', async () => {
   renderApp('/users');
 

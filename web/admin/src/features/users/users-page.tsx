@@ -1,6 +1,7 @@
 import { Plus, RefreshCw, Search } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useSession } from '../../app/session';
 import { TablePagination } from '../../components/table-pagination';
 import { inputClass } from '../../components/form-field';
 import { StatusBadge } from '../../components/status-badge';
@@ -12,6 +13,7 @@ import { USER_STATUSES, userStatusTone, type UserStatus } from './types';
 
 export function UsersPage() {
   const navigate = useNavigate();
+  const session = useSession();
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<UserStatus | ''>('');
   const debouncedSearch = useDebouncedValue(search.trim());
@@ -134,6 +136,11 @@ export function UsersPage() {
                   >
                     {user.displayName}
                   </Link>
+                  {user.id === session.user.id ? (
+                    <span className="ml-1.5 text-xs font-normal text-muted">
+                      (you)
+                    </span>
+                  ) : null}
                 </td>
                 <td className="px-4 py-3 text-muted">{user.email}</td>
                 <td className="px-4 py-3 text-muted">{user.username ?? '—'}</td>

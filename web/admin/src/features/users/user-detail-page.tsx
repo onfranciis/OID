@@ -41,6 +41,7 @@ import { UserFormFields } from './user-fields';
 
 export function UserDetailPage() {
   const { userId = '' } = useParams();
+  const session = useSession();
   const query = useUserDetail(userId);
 
   if (query.isPending) {
@@ -69,6 +70,9 @@ export function UserDetailPage() {
     <section>
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="text-2xl font-semibold">{user.displayName}</h1>
+        {user.id === session.user.id ? (
+          <span className="text-sm font-normal text-muted">(you)</span>
+        ) : null}
         <StatusBadge label={user.status} tone={userStatusTone(user.status)} />
       </div>
       <p className="mt-1 text-sm text-muted">{user.email}</p>
