@@ -82,11 +82,18 @@ interface MockClient {
   redirectUris: Array<{ id: string; uri: string }>;
 }
 
+interface MockInvite {
+  token: string;
+  userId: string;
+  consumed: boolean;
+}
+
 interface MockDb {
   users: MockUser[];
   groups: MockGroup[];
   clients: MockClient[];
   auditEvents: AuditEvent[];
+  invites: MockInvite[];
   counter: number;
 }
 
@@ -371,7 +378,7 @@ function createMockDb(): MockDb {
       }),
   );
 
-  return { users, groups, clients, auditEvents, counter: 0 };
+  return { users, groups, clients, auditEvents, invites: [], counter: 0 };
 }
 
 let db = createMockDb();
@@ -684,6 +691,87 @@ export const handlers = [
         ? { revokedProviderSessionCount: 2, revokedRefreshTokenCount: 1 }
         : {}),
     });
+  }),
+
+  http.post('/admin/api/users/:userId/invite', ({ params, request }) => {
+    const csrfError = requireCsrf(request);
+
+    if (csrfError) {
+      return csrfError;
+    }
+
+    const user = db.users.find((candidate) => candidate.id === params.userId);
+
+    if (!user) {
+      return errorResponse(404, 'User not found.', 'Not Found');
+    }
+
+    db.invites = db.invites.filter((invite) => invite.userId !== user.id);
+    db.invites.push({
+      token: `mock-invite-token-${user.id}`,
+      userId: user.id,
+      consumed: false,
+    });
+
+    return HttpResponse.json({ success: true });
+  }),
+
+  http.get('/admin/api/invites/:token', ({ params }) => {
+    const invite = db.invites.find(
+      (candidate) => candidate.token === params.token && !candidate.consumed,
+    );
+    const user = invite
+      ? db.users.find((candidate) => candidate.id === invite.userId)
+      : null;
+
+    if (!invite || !user) {
+      return errorResponse(
+        404,
+        'This invite link is invalid or has expired.',
+        'Not Found',
+      );
+    }
+
+    return HttpResponse.json({
+      email: user.email,
+      displayName: user.displayName,
+    });
+  }),
+
+  http.post('/admin/api/invites/:token/accept', async ({ params, request }) => {
+    const invite = db.invites.find(
+      (candidate) => candidate.token === params.token && !candidate.consumed,
+    );
+    const user = invite
+      ? db.users.find((candidate) => candidate.id === invite.userId)
+      : null;
+
+    if (!invite || !user) {
+      return errorResponse(
+        404,
+        'This invite link is invalid or has expired.',
+        'Not Found',
+      );
+    }
+
+    const { password } = (await request.json()) as { password?: string };
+
+    if (!password || password.length < 8) {
+      return errorResponse(
+        400,
+        'Password must be at least 8 characters.',
+        'Bad Request',
+      );
+    }
+
+    invite.consumed = true;
+
+    if (user.status === 'pending') {
+      user.status = 'active';
+      user.updatedAt = new Date().toISOString();
+    }
+
+    return HttpResponse.json({ success: true });
   }),
 
   http.post('/admin/api/users/:userId', async ({ params, request }) => {

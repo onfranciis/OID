@@ -71,6 +71,11 @@ export class BetterAuthService implements OnModuleDestroy {
           'authentication.tokenRateLimitIpMaxAttempts',
         ),
       },
+      mail: {
+        resendApiKey: configService.get('mail.resendApiKey'),
+        fromEmail: configService.get('mail.fromEmail'),
+        inviteTtlHours: configService.get('mail.inviteTtlHours'),
+      },
       bootstrap: {
         adminEmail: configService.get('bootstrap.adminEmail'),
         adminDisplayName: configService.get('bootstrap.adminDisplayName'),

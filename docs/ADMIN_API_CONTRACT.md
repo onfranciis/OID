@@ -117,6 +117,7 @@ interface SetUserStatusResponse {
 | `POST /admin/api/users`                              | Exists\* | Body = `AdminCreateUserInput`. Returns `UserDetail`.        |
 | `POST /admin/api/users/:id`                          | Exists\* | Body = `AdminUpdateUserInput` (partial). Returns `UserDetail`. |
 | `POST /admin/api/users/:id/status`                   | Exists\* | Body `{ status: UserStatus }`. Returns `SetUserStatusResponse`. Deactivation revokes sessions + refresh tokens. |
+| `POST /admin/api/users/:id/invite`                   | Implemented | No body. Emails a one-time password-setup link via Resend (`MailService`); supersedes any prior outstanding invite for the user. `400` if the user is deactivated. |
 
 All of the above are implemented by `AdminApiController` under `/admin/api/*`
 (the legacy SSR routes under `/admin/*` remain until F6 retires them). Create,

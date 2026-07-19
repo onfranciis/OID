@@ -101,6 +101,13 @@ export function useSetUserStatus(userId: string) {
   });
 }
 
+export function useInviteUser(userId: string) {
+  return useAdminMutation<{ success: true }, void>({
+    mutationFn: () =>
+      apiPost<{ success: true }>(`/admin/api/users/${userId}/invite`),
+  });
+}
+
 export function useAddUserToGroup(userId: string) {
   const invalidateUsers = useInvalidateUsers();
 

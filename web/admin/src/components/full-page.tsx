@@ -39,7 +39,8 @@ export function AccessDeniedScreen() {
         Internal ID. Administrators are active members of the bootstrap admin
         group.
       </p>
-      <div>
+
+      <div className="w-full flex justify-center">
         <button
           type="button"
           onClick={() => void performLogout()}

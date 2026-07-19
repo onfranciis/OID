@@ -8,6 +8,7 @@ import type { AdminAuditService } from './admin-audit.service';
 import type { AdminClientService } from './admin-client.service';
 import type { AdminCsrfService } from './admin-csrf.service';
 import type { AdminGroupService } from './admin-group.service';
+import type { AdminInviteService } from './admin-invite.service';
 import type { AdminUserService } from './admin-user.service';
 
 const CREATED = new Date('2026-01-02T03:04:05.000Z');
@@ -18,6 +19,7 @@ function makeController(overrides: {
   client?: Partial<AdminClientService>;
   csrf?: Partial<AdminCsrfService>;
   group?: Partial<AdminGroupService>;
+  invite?: Partial<AdminInviteService>;
   user?: Partial<AdminUserService>;
 }) {
   return new AdminApiController(
@@ -29,6 +31,7 @@ function makeController(overrides: {
     (overrides.client ?? {}) as AdminClientService,
     (overrides.csrf ?? {}) as AdminCsrfService,
     (overrides.group ?? {}) as AdminGroupService,
+    (overrides.invite ?? {}) as AdminInviteService,
     (overrides.user ?? {}) as AdminUserService,
   );
 }
@@ -253,6 +256,26 @@ describe('AdminApiController', () => {
 
     expect(result.revokedProviderSessionCount).toBe(2);
     expect(result.revokedRefreshTokenCount).toBe(1);
+  });
+
+  it('delegates invite requests to AdminInviteService with the mutation context', async () => {
+    const createInvite = vi.fn().mockResolvedValue(undefined);
+    const controller = makeController({
+      invite: { createInvite },
+    });
+    const req = adminRequest();
+
+    const result = await controller.inviteUser(req, 'usr_1');
+
+    expect(result).toEqual({ success: true });
+    expect(createInvite).toHaveBeenCalledWith(
+      'usr_1',
+      expect.objectContaining({
+        principal: req.adminPrincipal,
+        ipAddress: '127.0.0.1',
+        userAgent: 'vitest',
+      }),
+    );
   });
 
   it('maps audit events, renaming metadataJson to metadata, and forwards the cursor page', async () => {

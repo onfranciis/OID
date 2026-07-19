@@ -90,6 +90,15 @@ export function configuration(): AppEnvironment {
         60,
       ),
     },
+    mail: {
+      // Only RESEND_API_KEY is required to actually deliver invite emails;
+      // the sandbox sender works without a verified domain. Swap
+      // MAIL_FROM_EMAIL once a domain is verified in Resend.
+      resendApiKey: process.env.RESEND_API_KEY ?? null,
+      fromEmail:
+        process.env.MAIL_FROM_EMAIL ?? 'Internal ID <onboarding@resend.dev>',
+      inviteTtlHours: parseNumber(process.env.MAIL_INVITE_TTL_HOURS, 72),
+    },
     bootstrap: {
       adminEmail: process.env.BOOTSTRAP_ADMIN_EMAIL ?? 'admin@company.com',
       adminDisplayName:

@@ -1,9 +1,12 @@
 import { existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { loadEnvFile } from 'node:process';
-import { hashPassword } from 'better-auth/crypto';
 import { monotonicFactory } from 'ulid';
 import { DataSource } from 'typeorm';
+import {
+  hasBetterAuthCredentialTables,
+  upsertBetterAuthCredential,
+} from '../../better-auth/better-auth-credential';
 import { configuration } from '../../config/configuration';
 import { createTypeOrmOptions } from '../typeorm.config';
 import { GroupMembershipEntity } from '../entities/group-membership.entity';
@@ -282,71 +285,12 @@ async function ensureBetterAuthCredentialUser(
     return;
   }
 
-  const passwordHash = await hashPassword(password);
-  const now = new Date();
-  const existingUserRows: Array<{ id: string }> = await dataSource.query(
-    'SELECT "id" FROM "user" WHERE "id" = $1 OR "email" = $2 LIMIT 1',
-    [userId, email.toLowerCase()],
-  );
-
-  if (existingUserRows.length === 0) {
-    await dataSource.query(
-      'INSERT INTO "user" ("id", "name", "email", "emailVerified", "image", "createdAt", "updatedAt") VALUES ($1, $2, $3, $4, $5, $6, $7)',
-      [userId, displayName, email.toLowerCase(), false, null, now, now],
-    );
-  } else {
-    await dataSource.query(
-      'UPDATE "user" SET "name" = $2, "email" = $3, "updatedAt" = $4 WHERE "id" = $1',
-      [existingUserRows[0].id, displayName, email.toLowerCase(), now],
-    );
-
-    if (existingUserRows[0].id !== userId) {
-      throw new Error(
-        `Better Auth user ${existingUserRows[0].id} already exists for ${email} and does not match Internal ID user ${userId}.`,
-      );
-    }
-  }
-
-  const existingCredentialRows: Array<{ id: string }> = await dataSource.query(
-    'SELECT "id" FROM "account" WHERE "userId" = $1 AND "providerId" = $2 LIMIT 1',
-    [userId, 'credential'],
-  );
-
-  if (existingCredentialRows.length === 0) {
-    await dataSource.query(
-      'INSERT INTO "account" ("id", "accountId", "providerId", "userId", "password", "createdAt", "updatedAt") VALUES ($1, $2, $3, $4, $5, $6, $7)',
-      [
-        prefixedUlid('bac'),
-        userId,
-        'credential',
-        userId,
-        passwordHash,
-        now,
-        now,
-      ],
-    );
-    return;
-  }
-
-  await dataSource.query(
-    'UPDATE "account" SET "accountId" = $2, "password" = $3, "updatedAt" = $4 WHERE "id" = $1',
-    [existingCredentialRows[0].id, userId, passwordHash, now],
-  );
-}
-
-async function hasBetterAuthCredentialTables(
-  dataSource: DataSource,
-): Promise<boolean> {
-  const rows: Array<{ table_name: string }> = await dataSource.query(
-    `SELECT "table_name"
-     FROM "information_schema"."tables"
-     WHERE "table_schema" = 'public'
-       AND "table_name" IN ('user', 'account')`,
-  );
-
-  const tableNames = new Set(rows.map((row) => row.table_name));
-
-  return tableNames.has('user') && tableNames.has('account');
+  await upsertBetterAuthCredential(dataSource, {
+    userId,
+    email,
+    displayName,
+    password,
+  });
 }
 
 void bootstrap().catch((error: unknown) => {

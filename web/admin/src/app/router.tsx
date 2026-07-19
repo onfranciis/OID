@@ -11,6 +11,7 @@ import { ClientsPage } from '../features/clients/clients-page';
 import { GroupCreatePage } from '../features/groups/group-create-page';
 import { GroupDetailPage } from '../features/groups/group-detail-page';
 import { GroupsPage } from '../features/groups/groups-page';
+import { AcceptInvitePage } from '../features/invite/accept-invite-page';
 import { NotFoundPage } from '../features/not-found-page';
 import { OverviewPage } from '../features/overview/overview-page';
 import { UserCreatePage } from '../features/users/user-create-page';
@@ -40,6 +41,16 @@ export const routes: RouteObject[] = [
     element: (
       <ToastProvider>
         <LoginPage />
+      </ToastProvider>
+    ),
+  },
+  // Accept-invite is likewise outside the session boundary — the emailed
+  // token in the URL is the bearer secret, not a session cookie.
+  {
+    path: '/invite/:token',
+    element: (
+      <ToastProvider>
+        <AcceptInvitePage />
       </ToastProvider>
     ),
   },

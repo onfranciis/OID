@@ -5,6 +5,7 @@ import {
   Ban,
   CircleCheck,
   CirclePause,
+  Mail,
   Pencil,
   Plus,
   X,
@@ -22,6 +23,7 @@ import { formatDate, formatDateTime } from '../../lib/format';
 import { useGroupsList } from '../groups/api';
 import {
   useAddUserToGroup,
+  useInviteUser,
   useRemoveUserFromGroup,
   useSetUserStatus,
   useUpdateUser,
@@ -278,9 +280,34 @@ function availableTransitions(status: UserStatus): StatusTransition[] {
 
 function LifecyclePanel({ user }: { user: UserDetail }) {
   const { toast } = useToast();
+  const session = useSession();
   const setStatus = useSetUserStatus(user.id);
+  const inviteUser = useInviteUser(user.id);
   const [pendingTransition, setPendingTransition] =
     useState<StatusTransition | null>(null);
+  const isSelf = user.id === session.user.id;
+
+  const sendInvite = () => {
+    inviteUser.mutate(undefined, {
+      onSuccess: () => {
+        toast({
+          title: 'Invite sent',
+          description: `${user.email} can now set their password.`,
+        });
+      },
+      onError: (error) => {
+        if (isReauthCancelled(error)) {
+          return;
+        }
+
+        toast({
+          title: 'Could not send invite',
+          description: error.message,
+          variant: 'danger',
+        });
+      },
+    });
+  };
 
   const runTransition = (transition: StatusTransition) => {
     setStatus.mutate(transition.target, {
@@ -344,6 +371,17 @@ function LifecyclePanel({ user }: { user: UserDetail }) {
             </button>
           );
         })}
+        {user.status !== 'deactivated' && !isSelf ? (
+          <button
+            type="button"
+            disabled={inviteUser.isPending}
+            onClick={sendInvite}
+            className="flex items-center gap-1.5 rounded-card border border-line px-3 py-1.5 text-sm font-semibold text-muted hover:border-accent hover:text-accent disabled:opacity-50"
+          >
+            <Mail className="h-4 w-4" aria-hidden="true" />
+            {inviteUser.isPending ? 'Sending invite…' : 'Send invite'}
+          </button>
+        ) : null}
       </div>
       <ConfirmDialog
         open={pendingTransition !== null}

@@ -8,6 +8,7 @@ import { OidcProviderSessionEntity } from './oidc-provider-session.entity';
 import { OidcRedirectUriEntity } from './oidc-redirect-uri.entity';
 import { OidcRefreshTokenEntity } from './oidc-refresh-token.entity';
 import { SigningKeyEntity } from './signing-key.entity';
+import { UserInviteEntity } from './user-invite.entity';
 import { UserEntity } from './user.entity';
 
 export const DATABASE_ENTITIES = [
@@ -21,5 +22,6 @@ export const DATABASE_ENTITIES = [
   OidcRedirectUriEntity,
   OidcRefreshTokenEntity,
   SigningKeyEntity,
+  UserInviteEntity,
   UserEntity,
 ] as const;

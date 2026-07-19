@@ -36,6 +36,7 @@ import {
   type AdminUpdateGroupInput,
 } from './admin-group.service';
 import { AdminGuard } from './admin.guard';
+import { AdminInviteService } from './admin-invite.service';
 import { normalizeLimit } from './admin-pagination';
 import {
   toAuditEvent,
@@ -72,6 +73,7 @@ export class AdminApiController {
     private readonly adminClientService: AdminClientService,
     private readonly adminCsrfService: AdminCsrfService,
     private readonly adminGroupService: AdminGroupService,
+    private readonly adminInviteService: AdminInviteService,
     private readonly adminUserService: AdminUserService,
   ) {
     this.adminGroupSlug = configService.get('bootstrap.adminGroupSlug');
@@ -201,6 +203,20 @@ export class AdminApiController {
         ? { revokedRefreshTokenCount: result.revokedRefreshTokenCount }
         : {}),
     };
+  }
+
+  @Post('users/:userId/invite')
+  @UseGuards(AdminRecentAuthGuard, AdminCsrfGuard)
+  async inviteUser(
+    @Req() req: AdminRequest,
+    @Param('userId') userId: string,
+  ): Promise<{ success: true }> {
+    await this.adminInviteService.createInvite(
+      userId,
+      buildMutationContext(req),
+    );
+
+    return { success: true };
   }
 
   // Groups ------------------------------------------------------------------

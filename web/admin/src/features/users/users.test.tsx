@@ -1,4 +1,4 @@
-import { fireEvent, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, screen, within } from '@testing-library/react';
 import { expect, test } from 'vitest';
 import { mockSession } from '../../mocks/handlers';
 import { renderApp } from '../../test/render';
@@ -142,6 +142,63 @@ test('deactivation requires confirmation and reports revocation counts', async (
     ),
   ).toBeDefined();
   expect(await screen.findByText('Reactivate')).toBeDefined();
+});
+
+test('sending an invite lets the invited user set a password and activates them', async () => {
+  const created = renderApp('/users/new');
+
+  fireEvent.change(await screen.findByLabelText('Email'), {
+    target: { value: 'invitee@company.com' },
+  });
+  fireEvent.change(screen.getByLabelText('Display name'), {
+    target: { value: 'Invitee Person' },
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Create user' }));
+  await screen.findByRole('heading', { name: 'Invitee Person' });
+  expect(screen.getAllByText('pending').length).toBeGreaterThan(0);
+
+  const userId = created.router.state.location.pathname.split('/').pop();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Send invite' }));
+  expect(await screen.findByText('Invite sent')).toBeDefined();
+  cleanup();
+
+  // The invited user opens the emailed link in a fresh, unauthenticated tab.
+  renderApp(`/invite/mock-invite-token-${userId}`);
+
+  await screen.findByRole('heading', { name: 'Welcome, Invitee Person' });
+  fireEvent.change(screen.getByLabelText('New password'), {
+    target: { value: 'a-good-password' },
+  });
+  fireEvent.change(screen.getByLabelText('Confirm password'), {
+    target: { value: 'a-good-password' },
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Set password' }));
+
+  expect(
+    await screen.findByRole('heading', { name: 'Password set' }),
+  ).toBeDefined();
+  cleanup();
+
+  // Back in the admin console, the user is now active.
+  renderApp(`/users/${userId}`);
+  await screen.findByRole('heading', { name: 'Invitee Person' });
+  expect(screen.getAllByText('active').length).toBeGreaterThan(0);
+});
+
+test('an admin cannot send themselves an invite', async () => {
+  renderApp(`/users/${mockSession.user.id}`);
+
+  await screen.findByRole('heading', { name: 'Internal ID Administrator' });
+  expect(screen.queryByRole('button', { name: 'Send invite' })).toBeNull();
+});
+
+test('an invalid invite token shows an error instead of a form', async () => {
+  renderApp('/invite/not-a-real-token');
+
+  expect(
+    await screen.findByRole('heading', { name: 'Invite not available' }),
+  ).toBeDefined();
 });
 
 test('removing your own admin-group membership requires typed confirmation', async () => {

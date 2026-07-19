@@ -10,7 +10,9 @@ import { OidcClientEntity } from '../database/entities/oidc-client.entity';
 import { OidcProviderSessionEntity } from '../database/entities/oidc-provider-session.entity';
 import { OidcRedirectUriEntity } from '../database/entities/oidc-redirect-uri.entity';
 import { OidcRefreshTokenEntity } from '../database/entities/oidc-refresh-token.entity';
+import { UserInviteEntity } from '../database/entities/user-invite.entity';
 import { UserEntity } from '../database/entities/user.entity';
+import { MailModule } from '../mail/mail.module';
 import { AdminAccessService } from './admin-access.service';
 import { AdminAccountService } from './admin-account.service';
 import { AdminApiController } from './admin-api.controller';
@@ -20,6 +22,7 @@ import { AdminCsrfGuard } from './admin-csrf.guard';
 import { AdminCsrfService } from './admin-csrf.service';
 import { AdminGroupService } from './admin-group.service';
 import { AdminGuard } from './admin.guard';
+import { AdminInviteService } from './admin-invite.service';
 import { AdminRecentAuthGuard } from './admin-recent-auth.guard';
 import { AdminUserService } from './admin-user.service';
 
@@ -28,9 +31,11 @@ import { AdminUserService } from './admin-user.service';
     ConfigModule,
     AuditModule,
     BetterAuthModule,
+    MailModule,
     TypeOrmModule.forFeature([
       AuditEventEntity,
       UserEntity,
+      UserInviteEntity,
       GroupEntity,
       GroupMembershipEntity,
       OidcClientEntity,
@@ -49,6 +54,7 @@ import { AdminUserService } from './admin-user.service';
     AdminCsrfService,
     AdminGroupService,
     AdminGuard,
+    AdminInviteService,
     AdminRecentAuthGuard,
     AdminUserService,
   ],

@@ -103,15 +103,17 @@ export function ClientsPage() {
             {query.isError ? (
               <tr>
                 <td colSpan={7} className="px-4 py-8 text-center">
-                  <span className="text-danger">Could not load clients.</span>{' '}
-                  <button
-                    type="button"
-                    onClick={() => void query.refetch()}
-                    className="inline-flex items-center gap-1 font-semibold text-accent"
-                  >
-                    <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
-                    Retry
-                  </button>
+                  <div className="flex items-center justify-center gap-1">
+                    <span className="text-danger">Could not load clients.</span>{' '}
+                    <button
+                      type="button"
+                      onClick={() => void query.refetch()}
+                      className="inline-flex items-center gap-1 font-semibold text-accent"
+                    >
+                      <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
+                      Retry
+                    </button>
+                  </div>
                 </td>
               </tr>
             ) : null}

@@ -32,6 +32,11 @@ export interface AppEnvironment {
     tokenRateLimitWindowSeconds: number;
     tokenRateLimitIpMaxAttempts: number;
   };
+  mail: {
+    resendApiKey: string | null;
+    fromEmail: string;
+    inviteTtlHours: number;
+  };
   bootstrap: {
     adminEmail: string;
     adminDisplayName: string;
