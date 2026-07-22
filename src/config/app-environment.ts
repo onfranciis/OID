@@ -36,6 +36,7 @@ export interface AppEnvironment {
     resendApiKey: string | null;
     fromEmail: string;
     inviteTtlHours: number;
+    passwordResetTtlHours: number;
   };
   bootstrap: {
     adminEmail: string;

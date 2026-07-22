@@ -66,6 +66,9 @@ import { createTypeOrmOptions } from './typeorm.config';
             resendApiKey: configService.get('mail.resendApiKey'),
             fromEmail: configService.get('mail.fromEmail'),
             inviteTtlHours: configService.get('mail.inviteTtlHours'),
+            passwordResetTtlHours: configService.get(
+              'mail.passwordResetTtlHours',
+            ),
           },
           bootstrap: {
             adminEmail: configService.get('bootstrap.adminEmail'),

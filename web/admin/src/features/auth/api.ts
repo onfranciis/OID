@@ -68,6 +68,83 @@ export async function submitLogin(
   return data as { redirectTo: string };
 }
 
+export class PasswordResetError extends Error {
+  readonly status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'PasswordResetError';
+    this.status = status;
+  }
+}
+
+export async function requestPasswordReset(email: string): Promise<void> {
+  await fetch(authUrl('/admin/api/auth/forgot-password'), {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'content-type': 'application/json', accept: 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+}
+
+export async function getPasswordReset(
+  token: string,
+): Promise<{ email: string }> {
+  const response = await fetch(
+    authUrl(`/admin/api/auth/password-reset/${encodeURIComponent(token)}`),
+    {
+      credentials: 'include',
+      headers: { accept: 'application/json' },
+    },
+  );
+
+  const data: unknown = response.headers
+    .get('content-type')
+    ?.includes('application/json')
+    ? await response.json()
+    : null;
+
+  if (!response.ok) {
+    throw new PasswordResetError(
+      pickMessage(data) ?? 'This reset link is invalid or has expired.',
+      response.status,
+    );
+  }
+
+  return data as { email: string };
+}
+
+export async function confirmPasswordReset(
+  token: string,
+  password: string,
+): Promise<void> {
+  const response = await fetch(
+    authUrl(`/admin/api/auth/password-reset/${encodeURIComponent(token)}`),
+    {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'content-type': 'application/json',
+        accept: 'application/json',
+      },
+      body: JSON.stringify({ password }),
+    },
+  );
+
+  if (!response.ok) {
+    const data: unknown = response.headers
+      .get('content-type')
+      ?.includes('application/json')
+      ? await response.json()
+      : null;
+
+    throw new PasswordResetError(
+      pickMessage(data) ?? 'Could not set your password. Please try again.',
+      response.status,
+    );
+  }
+}
+
 function pickMessage(data: unknown): string | null {
   if (data !== null && typeof data === 'object' && 'message' in data) {
     const message = data.message;

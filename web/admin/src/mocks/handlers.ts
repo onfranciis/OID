@@ -83,12 +83,19 @@ interface MockInvite {
   consumed: boolean;
 }
 
+interface MockPasswordReset {
+  token: string;
+  userId: string;
+  consumed: boolean;
+}
+
 interface MockDb {
   users: MockUser[];
   groups: MockGroup[];
   clients: MockClient[];
   auditEvents: AuditEvent[];
   invites: MockInvite[];
+  passwordResets: MockPasswordReset[];
   counter: number;
 }
 
@@ -373,7 +380,15 @@ function createMockDb(): MockDb {
       }),
   );
 
-  return { users, groups, clients, auditEvents, invites: [], counter: 0 };
+  return {
+    users,
+    groups,
+    clients,
+    auditEvents,
+    invites: [],
+    passwordResets: [],
+    counter: 0,
+  };
 }
 
 let db = createMockDb();
@@ -764,6 +779,79 @@ export const handlers = [
 
     return HttpResponse.json({ success: true });
   }),
+
+  http.post('/admin/api/auth/forgot-password', async ({ request }) => {
+    const { email } = (await request.json()) as { email?: string };
+    const user = db.users.find(
+      (candidate) => candidate.email.toLowerCase() === email?.toLowerCase(),
+    );
+
+    if (user && user.status === 'active') {
+      db.passwordResets = db.passwordResets.filter(
+        (reset) => reset.userId !== user.id,
+      );
+      db.passwordResets.push({
+        token: `mock-reset-token-${user.id}`,
+        userId: user.id,
+        consumed: false,
+      });
+    }
+
+    return HttpResponse.json({ success: true });
+  }),
+
+  http.get('/admin/api/auth/password-reset/:token', ({ params }) => {
+    const reset = db.passwordResets.find(
+      (candidate) => candidate.token === params.token && !candidate.consumed,
+    );
+    const user = reset
+      ? db.users.find((candidate) => candidate.id === reset.userId)
+      : null;
+
+    if (!reset || !user) {
+      return errorResponse(
+        404,
+        'This reset link is invalid or has expired.',
+        'Not Found',
+      );
+    }
+
+    return HttpResponse.json({ email: user.email });
+  }),
+
+  http.post(
+    '/admin/api/auth/password-reset/:token',
+    async ({ params, request }) => {
+      const reset = db.passwordResets.find(
+        (candidate) => candidate.token === params.token && !candidate.consumed,
+      );
+      const user = reset
+        ? db.users.find((candidate) => candidate.id === reset.userId)
+        : null;
+
+      if (!reset || !user) {
+        return errorResponse(
+          404,
+          'This reset link is invalid or has expired.',
+          'Not Found',
+        );
+      }
+
+      const { password } = (await request.json()) as { password?: string };
+
+      if (!password || password.length < 8) {
+        return errorResponse(
+          400,
+          'Password must be at least 8 characters.',
+          'Bad Request',
+        );
+      }
+
+      reset.consumed = true;
+
+      return HttpResponse.json({ success: true });
+    },
+  ),
 
   http.post('/admin/api/users/:userId', async ({ params, request }) => {
     const csrfError = requireCsrf(request);

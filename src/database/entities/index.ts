@@ -7,6 +7,7 @@ import { OidcPostLogoutRedirectUriEntity } from './oidc-post-logout-redirect-uri
 import { OidcProviderSessionEntity } from './oidc-provider-session.entity';
 import { OidcRedirectUriEntity } from './oidc-redirect-uri.entity';
 import { OidcRefreshTokenEntity } from './oidc-refresh-token.entity';
+import { PasswordResetEntity } from './password-reset.entity';
 import { SigningKeyEntity } from './signing-key.entity';
 import { UserInviteEntity } from './user-invite.entity';
 import { UserEntity } from './user.entity';
@@ -21,6 +22,7 @@ export const DATABASE_ENTITIES = [
   OidcProviderSessionEntity,
   OidcRedirectUriEntity,
   OidcRefreshTokenEntity,
+  PasswordResetEntity,
   SigningKeyEntity,
   UserInviteEntity,
   UserEntity,

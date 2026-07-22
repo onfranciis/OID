@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
-import { hardNavigate } from '../../app/navigation';
+import { FORGOT_PASSWORD_PATH, hardNavigate } from '../../app/navigation';
 import { FormField, inputClass } from '../../components/form-field';
 import { useToast } from '../../components/toaster';
 import { initLogin, LoginError, safeReturnTo, submitLogin } from './api';
@@ -142,6 +142,12 @@ export function LoginPage() {
               />
             </div>
           </FormField>
+          <a
+            href={FORGOT_PASSWORD_PATH}
+            className="-mt-2 justify-self-end text-xs font-semibold text-accent underline"
+          >
+            Forgot password?
+          </a>
           <button
             type="submit"
             disabled={submitting || initQuery.isPending}

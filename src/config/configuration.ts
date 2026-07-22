@@ -96,6 +96,10 @@ export function configuration(): AppEnvironment {
       fromEmail:
         process.env.MAIL_FROM_EMAIL ?? 'Internal ID <onboarding@resend.dev>',
       inviteTtlHours: parseNumber(process.env.MAIL_INVITE_TTL_HOURS, 72),
+      passwordResetTtlHours: parseNumber(
+        process.env.MAIL_PASSWORD_RESET_TTL_HOURS,
+        1,
+      ),
     },
     bootstrap: {
       adminEmail: process.env.BOOTSTRAP_ADMIN_EMAIL ?? 'admin@company.com',

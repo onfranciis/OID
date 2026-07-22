@@ -33,6 +33,8 @@ export const AuditEventTypes = {
   UserLoginRejected: 'user.login.rejected',
   UserLoginSucceeded: 'user.login.succeeded',
   UserLogoutSucceeded: 'user.logout.succeeded',
+  UserPasswordResetCompleted: 'user.password_reset.completed',
+  UserPasswordResetRequested: 'user.password_reset.requested',
 } as const;
 
 export type AuditEventType =

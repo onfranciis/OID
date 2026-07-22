@@ -11,6 +11,8 @@ import { ClientsPage } from '../features/clients/clients-page';
 import { GroupCreatePage } from '../features/groups/group-create-page';
 import { GroupDetailPage } from '../features/groups/group-detail-page';
 import { GroupsPage } from '../features/groups/groups-page';
+import { ForgotPasswordPage } from '../features/auth/forgot-password-page';
+import { ResetPasswordPage } from '../features/auth/reset-password-page';
 import { AcceptInvitePage } from '../features/invite/accept-invite-page';
 import { NotFoundPage } from '../features/not-found-page';
 import { OverviewPage } from '../features/overview/overview-page';
@@ -48,6 +50,22 @@ export const routes: RouteObject[] = [
     element: (
       <ToastProvider>
         <AcceptInvitePage />
+      </ToastProvider>
+    ),
+  },
+  {
+    path: '/forgot-password',
+    element: (
+      <ToastProvider>
+        <ForgotPasswordPage />
+      </ToastProvider>
+    ),
+  },
+  {
+    path: '/reset-password/:token',
+    element: (
+      <ToastProvider>
+        <ResetPasswordPage />
       </ToastProvider>
     ),
   },
