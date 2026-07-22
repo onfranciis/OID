@@ -107,3 +107,20 @@ test('an already-signed-in visitor with a returnTo is redirected there', async (
     expect(vi.mocked(hardNavigate)).toHaveBeenCalledWith('/admin/users');
   });
 });
+
+// Regression: the re-auth flow (app/reauth.tsx) sends an already-signed-in
+// admin back to /login specifically to force a fresh sign-in — the
+// already-signed-in auto-redirect must not fire here, or the admin can never
+// actually re-authenticate (the recent-auth window never resets, so the
+// sensitive action they came from keeps 403ing forever).
+test('the reauth param keeps the login form visible even with an existing session', async () => {
+  server.use(
+    http.get('/admin/api/session', () => HttpResponse.json(mockSession)),
+  );
+
+  renderApp('/login?returnTo=/admin/clients/cli_1&reauth=1');
+
+  expect(await screen.findByRole('heading', { name: 'Sign in' })).toBeDefined();
+  expect(screen.getByLabelText('Email')).toBeDefined();
+  expect(vi.mocked(hardNavigate)).not.toHaveBeenCalled();
+});

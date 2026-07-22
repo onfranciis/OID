@@ -5,7 +5,11 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
-import { FORGOT_PASSWORD_PATH, hardNavigate } from '../../app/navigation';
+import {
+  FORGOT_PASSWORD_PATH,
+  hardNavigate,
+  REAUTH_PARAM,
+} from '../../app/navigation';
 import { useSignedInRedirect } from '../../app/pre-session';
 import { FormField, inputClass } from '../../components/form-field';
 import { FullPageMessage } from '../../components/full-page';
@@ -26,8 +30,11 @@ type LoginValues = z.infer<typeof loginSchema>;
 export function LoginPage() {
   const [searchParams] = useSearchParams();
   const returnTo = safeReturnTo(searchParams.get('returnTo'));
+  const isReauth = searchParams.get(REAUTH_PARAM) === '1';
 
-  const { isChecking, isSignedIn } = useSignedInRedirect(returnTo);
+  const { isChecking, isSignedIn } = useSignedInRedirect(returnTo, {
+    enabled: !isReauth,
+  });
 
   const initQuery = useQuery({
     queryKey: ['auth', 'login-init'],
@@ -98,7 +105,9 @@ export function LoginPage() {
 
         <h1 className="text-2xl font-semibold">Sign in</h1>
         <p className="mt-1.5 text-sm text-muted">
-          Use your Internal ID email and password to continue.
+          {isReauth
+            ? 'Confirm your password to continue with a sensitive action.'
+            : 'Use your Internal ID email and password to continue.'}
         </p>
 
         {initQuery.isError ? (

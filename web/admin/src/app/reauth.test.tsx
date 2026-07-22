@@ -1,12 +1,19 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
-import { expect, test } from 'vitest';
+import { expect, test, vi } from 'vitest';
 import { server } from '../mocks/server';
 import { apiPost } from './api-client';
+import { hardNavigate } from './navigation';
 import { useAdminMutation } from './mutations';
 import { ReauthProvider } from './reauth';
 import { SessionBoundary } from './session';
+
+vi.mock('./navigation', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./navigation')>();
+
+  return { ...actual, hardNavigate: vi.fn() };
+});
 
 function Probe() {
   const mutation = useAdminMutation({
@@ -41,41 +48,21 @@ function renderProbe() {
 }
 
 function useRecentAuthProbeHandler() {
-  let calls = 0;
-
   server.use(
-    http.post('/admin/api/probe', ({ request }) => {
-      calls += 1;
-
-      if (calls === 1) {
-        return HttpResponse.json(
-          {
-            statusCode: 403,
-            message: 'Recent admin authentication required.',
-            error: 'Forbidden',
-          },
-          { status: 403 },
-        );
-      }
-
-      // The retried request must still carry the double-submit CSRF header.
-      if (!request.headers.get('x-csrf-token')) {
-        return HttpResponse.json(
-          {
-            statusCode: 403,
-            message: 'Invalid CSRF token.',
-            error: 'Forbidden',
-          },
-          { status: 403 },
-        );
-      }
-
-      return HttpResponse.json({ ok: true });
-    }),
+    http.post('/admin/api/probe', () =>
+      HttpResponse.json(
+        {
+          statusCode: 403,
+          message: 'Recent admin authentication required.',
+          error: 'Forbidden',
+        },
+        { status: 403 },
+      ),
+    ),
   );
 }
 
-test('recent-auth 403 opens the dialog and retry completes the action', async () => {
+test('recent-auth 403 opens the dialog and "Sign in again" navigates back to the current page', async () => {
   useRecentAuthProbeHandler();
   renderProbe();
 
@@ -83,9 +70,11 @@ test('recent-auth 403 opens the dialog and retry completes the action', async ()
 
   expect(await screen.findByText('Fresh sign-in required')).toBeDefined();
 
-  fireEvent.click(screen.getByRole('button', { name: 'Retry action' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Sign in again' }));
 
-  expect(await screen.findByText('Action succeeded')).toBeDefined();
+  expect(vi.mocked(hardNavigate)).toHaveBeenCalledWith(
+    expect.stringContaining('/admin/login?returnTo='),
+  );
 });
 
 test('cancelling the re-auth dialog fails the pending action', async () => {

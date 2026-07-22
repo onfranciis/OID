@@ -6,11 +6,14 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { loginUrl } from './navigation';
-import { useSession } from './session';
+import { hardNavigate, loginUrl } from './navigation';
 
-// On a recent-auth 403, prompts the admin to sign in again in a new tab
-// (the session cookie is shared browser-wide), then retries the mutation.
+// On a recent-auth 403, prompts the admin to sign in again — a full-page
+// navigation to login and back, so the fresh session cookie is guaranteed to
+// apply here (unlike a second tab, which isn't guaranteed to share cookies in
+// every embedding context). The pending action itself is not resumed
+// automatically: the page reload means there's nothing left to resume, so the
+// admin re-triggers the action once they're back.
 export class ReauthCancelledError extends Error {
   constructor() {
     super('Re-authentication was cancelled.');
@@ -44,7 +47,6 @@ export function useReauth(): ReauthContextValue {
 }
 
 export function ReauthProvider({ children }: { children: ReactNode }) {
-  const { refreshSession } = useSession();
   const [pending, setPending] = useState<PendingReauth | null>(null);
 
   const requestReauth = useCallback(
@@ -55,13 +57,10 @@ export function ReauthProvider({ children }: { children: ReactNode }) {
     [],
   );
 
-  const handleRetry = useCallback(async () => {
-    // Re-fetch the session first: it confirms the fresh sign-in and rotates
-    // the CSRF token before the caller retries its mutation.
-    await refreshSession();
-    pending?.resolve();
-    setPending(null);
-  }, [pending, refreshSession]);
+  const handleSignInAgain = useCallback(() => {
+    const returnTo = `${window.location.pathname}${window.location.search}`;
+    hardNavigate(loginUrl(returnTo, { forceReauth: true }));
+  }, []);
 
   const handleCancel = useCallback(() => {
     pending?.reject(new ReauthCancelledError());
@@ -86,9 +85,9 @@ export function ReauthProvider({ children }: { children: ReactNode }) {
               Fresh sign-in required
             </Dialog.Title>
             <Dialog.Description className="mt-2 text-sm text-muted">
-              This action is sensitive and needs a recent sign-in. Open the
-              provider sign-in in a new tab, complete it, then retry the action
-              here.
+              This action is sensitive and needs a recent sign-in. Sign in again
+              to continue — you&apos;ll return to this page afterward, then you
+              can retry the action.
             </Dialog.Description>
             <div className="mt-6 flex flex-wrap justify-end gap-2">
               <button
@@ -100,19 +99,10 @@ export function ReauthProvider({ children }: { children: ReactNode }) {
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  window.open(loginUrl('/admin'), '_blank', 'noopener');
-                }}
-                className="rounded-card border border-accent px-4 py-2 text-sm font-semibold text-accent hover:bg-accent/10"
-              >
-                Open sign-in
-              </button>
-              <button
-                type="button"
-                onClick={() => void handleRetry()}
+                onClick={handleSignInAgain}
                 className="rounded-card bg-accent px-4 py-2 text-sm font-semibold text-surface hover:opacity-90"
               >
-                Retry action
+                Sign in again
               </button>
             </div>
           </Dialog.Content>
