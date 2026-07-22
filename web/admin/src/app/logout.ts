@@ -1,10 +1,6 @@
 import { getCsrfToken, setCsrfToken } from './api-client';
 import { hardNavigate, LOGIN_PATH } from './navigation';
 
-// Ends the provider session and leaves the SPA. POSTs to the provider-owned
-// `/logout` (which revokes the session, signs out of Better Auth, and clears
-// the session + CSRF cookies), then hard-navigates to `/login`. The backend
-// does not require a CSRF token for logout, but we send it when present.
 export async function performLogout(): Promise<void> {
   const headers: Record<string, string> = {};
   const token = getCsrfToken();
@@ -14,8 +10,6 @@ export async function performLogout(): Promise<void> {
   }
 
   try {
-    // `redirect: 'manual'` keeps us from fetching the /login HTML; the browser
-    // still applies the cookie-clearing Set-Cookie headers from the response.
     await fetch(new URL('/logout', window.location.origin), {
       method: 'POST',
       credentials: 'include',
@@ -23,7 +17,7 @@ export async function performLogout(): Promise<void> {
       headers,
     });
   } catch {
-    // Ignore network failures; still drop client state and leave the app.
+    // Still drop client state and leave even if the request failed.
   }
 
   setCsrfToken(null);

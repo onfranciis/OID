@@ -1,14 +1,3 @@
-// Typed fetch wrapper for /admin/api/*.
-//
-// - Sends cookies (`credentials: 'include'`); the provider session cookie is
-//   HttpOnly and never touched by this code.
-// - Attaches the double-submit CSRF token as `x-csrf-token` on mutations. The
-//   token comes from the session bootstrap (GET /admin/api/session) because the
-//   CSRF cookie itself is HttpOnly.
-// - Maps the NestJS error envelope `{ statusCode, message, error }` to ApiError.
-// - Redirects the whole UI to login whenever a request answers 401 (the session
-//   no longer exists), so a session lost mid-use never leaves the app stranded.
-
 import { hardNavigate, loginUrl } from './navigation';
 
 export class ApiError extends Error {
@@ -27,9 +16,7 @@ export function isUnauthorizedError(error: unknown): boolean {
   return error instanceof ApiError && error.statusCode === 401;
 }
 
-// Once the session no longer exists, every /admin/api/* call answers 401. We
-// redirect the whole UI to the provider login exactly once (a second call while
-// the page is already unloading would be wasted).
+// Guards against redirecting more than once per session loss.
 let redirectingToLogin = false;
 
 export function redirectToLogin(returnTo = '/admin'): void {

@@ -30,8 +30,6 @@ export class AdminAuditService {
   async listRecent(
     input: AdminAuditQueryInput,
   ): Promise<CursorPage<AuditEventEntity>> {
-    // Validate everything up front so an invalid filter never touches the
-    // repository, matching the guard clauses the rest of the admin API uses.
     const limit = normalizeLimit(input.limit);
     const eventType =
       input.eventType !== undefined

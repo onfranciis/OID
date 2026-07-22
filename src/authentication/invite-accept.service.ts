@@ -24,10 +24,9 @@ function hashToken(token: string): string {
   return createHash('sha256').update(token).digest('hex');
 }
 
-// Public (unauthenticated) counterpart to AdminInviteService: resolves the
-// emailed token and, on accept, gives the invited user a real Better Auth
-// credential and activates their account — the step that was previously
-// missing entirely from admin-created users.
+// Public counterpart to AdminInviteService: resolves the emailed token and,
+// on accept, provisions the invitee's Better Auth credential and activates
+// their account.
 @Injectable()
 export class InviteAcceptService {
   constructor(
@@ -72,9 +71,7 @@ export class InviteAcceptService {
     invite.consumedAt = new Date();
     await this.inviteRepository.save(invite);
 
-    // Successfully accepting an emailed, single-use link is proof of control
-    // over that inbox — the standard basis for email verification — in
-    // addition to the more obvious "user is now usable" activation.
+    // Accepting the link proves inbox ownership, so it also verifies the email.
     let userChanged = false;
 
     if (invite.user.status === UserStatus.PENDING) {

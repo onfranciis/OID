@@ -1,8 +1,5 @@
 import type { UserStatus } from '../users/types';
 
-// Shapes from docs/ADMIN_API_CONTRACT.md, mirroring GroupEntity and the
-// AdminGroupService input interfaces.
-
 export interface GroupSummary {
   id: string;
   slug: string;

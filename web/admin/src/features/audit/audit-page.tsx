@@ -27,9 +27,6 @@ const FILTER_KEYS = [
 export function AuditPage() {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Filters are driven by the URL so other sections can deep-link
-  // (e.g. /audit?targetUserId=usr_...). Debounce the serialized params so
-  // typing does not fire a request per keystroke.
   const paramsString = searchParams.toString();
   const debouncedParamsString = useDebouncedValue(paramsString, 300);
 

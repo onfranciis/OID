@@ -80,9 +80,6 @@ const changePasswordSchema = z
 
 type ChangePasswordValues = z.infer<typeof changePasswordSchema>;
 
-// Self-service password change for the signed-in admin (FRONTEND_ROADMAP.md);
-// delegates to Better Auth via POST /admin/api/account/change-password, which
-// re-verifies the current password server-side.
 export function AccountPage() {
   const { toast } = useToast();
   const changePassword = useChangePassword();

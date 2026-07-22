@@ -37,9 +37,6 @@ function buildAuditPath(filters: AuditFilters & { cursor?: string }): string {
   return `/admin/api/audit-events${queryString ? `?${queryString}` : ''}`;
 }
 
-// Cursor-paginated over the prefixed-ULID id, same shape as users/groups/
-// clients. The Audit page pages through this one page at a time; Overview
-// reads just the first page for its "recent activity" widget.
 export function useAuditEvents(filters: AuditFilters) {
   return useInfiniteQuery({
     queryKey: auditKeys.list(filters),

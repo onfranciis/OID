@@ -182,10 +182,8 @@ async function handleRequest(
         return;
       }
 
-      // Clear the local app session first, then hand off to the provider's
-      // RP-Initiated Logout endpoint (docs/CLIENT_INTEGRATION.md) — this app's
-      // own notion of "signed in" is stale the moment the provider session
-      // ends, regardless of which happens first.
+      // Clears the local session and hands off to the provider's own logout,
+      // since this app's "signed in" state is stale the moment either one ends.
       res.writeHead(303, {
         location: buildEndSessionUrl(discovery, config, session.idToken),
         'set-cookie': buildClearedSessionCookieHeader(sessionCookieName),

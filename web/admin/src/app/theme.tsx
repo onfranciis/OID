@@ -51,10 +51,8 @@ function resolveTheme(preference: ThemePreference): ResolvedTheme {
     : preference;
 }
 
-// Persisted light/dark/system preference for the admin console (FRONTEND
-// dark mode). The `.dark` class it applies to <html> is what every Tailwind
-// color token in theme.css repaints against; index.html's inline bootstrap
-// script mirrors this resolution before first paint to avoid a flash.
+// index.html has an inline script mirroring this resolution before first
+// paint, so there's no light-mode flash before React mounts.
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [preference, setPreferenceState] =
     useState<ThemePreference>(readStoredPreference);

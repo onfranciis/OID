@@ -34,8 +34,7 @@ export class UserInviteEntity {
   @Column({ name: 'consumed_at', type: 'timestamptz', nullable: true })
   consumedAt!: Date | null;
 
-  // Set when a newer invite supersedes this one (e.g. "resend invite"), so at
-  // most one invite per user is ever valid at a time.
+  // Set when a resend supersedes this invite.
   @Column({ name: 'revoked_at', type: 'timestamptz', nullable: true })
   revokedAt!: Date | null;
 

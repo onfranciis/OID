@@ -31,11 +31,6 @@ import { RefreshTokenService } from '../tokens/refresh-token.service';
 import { OidcAuthorizationService } from './oidc-authorization.service';
 import { OidcTokenService } from './oidc-token.service';
 
-// Closes the "pure public-client PKCE flow is never exercised end-to-end"
-// gap (ROADMAP.md P11-02, SECURITY_TEST_MATRIX.md): drives the real
-// authorize -> token round trip against a real Postgres database for a
-// PUBLIC client (no client_secret), the same way a browser-based SPA would.
-
 const integrationDatabaseUrl =
   process.env.INTERNAL_ID_INTEGRATION_DATABASE_URL ?? process.env.DATABASE_URL;
 
@@ -53,10 +48,8 @@ describeWithDatabase('Public client PKCE flow integration', () => {
       }
 
       if (key === 'betterAuth.secret') {
-        // Must match whatever secret encrypted any pre-existing ACTIVE signing
-        // key row in this database (getOrCreateActiveSigningKey reuses it
-        // rather than always minting a fresh one) — test/load-env.ts loads
-        // .env, so this is the same secret the real app uses.
+        // Must match whatever secret already encrypted an ACTIVE signing key
+        // in this database, if one exists.
         return process.env.BETTER_AUTH_SECRET ?? 'integration-test-secret';
       }
 

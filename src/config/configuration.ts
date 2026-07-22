@@ -49,8 +49,8 @@ export function configuration(): AppEnvironment {
     authentication: {
       csrfCookieName:
         process.env.AUTHENTICATION_CSRF_COOKIE_NAME ?? 'internal_id_login_csrf',
-      // Distinct from the login CSRF cookie so the two (which live at different
-      // paths, / and /admin) never collide by name on admin mutations.
+      // Distinct name from csrfCookieName: different paths (/ vs /admin) must
+      // not collide.
       adminCsrfCookieName:
         process.env.AUTHENTICATION_ADMIN_CSRF_COOKIE_NAME ??
         'internal_id_admin_csrf',
@@ -91,9 +91,7 @@ export function configuration(): AppEnvironment {
       ),
     },
     mail: {
-      // Only RESEND_API_KEY is required to actually deliver invite emails;
-      // the sandbox sender works without a verified domain. Swap
-      // MAIL_FROM_EMAIL once a domain is verified in Resend.
+      // Sandbox sender works without a verified domain; swap once one exists.
       resendApiKey: process.env.RESEND_API_KEY ?? null,
       fromEmail:
         process.env.MAIL_FROM_EMAIL ?? 'Internal ID <onboarding@resend.dev>',

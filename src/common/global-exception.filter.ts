@@ -19,13 +19,9 @@ interface ErrorEnvelope {
   error: string;
 }
 
-// Catches everything that escapes route handlers/services. Nest's own
-// HttpExceptions (BadRequestException, NotFoundException, etc.) already carry
-// a safe, deliberate message, so those pass through unchanged; anything else
-// (TypeORM errors, programming errors, a mis-thrown 500) is unexpected and
-// must never leak its message/stack to the client (ROADMAP.md B-04) — only
-// into the server-side structured log, keyed by the same x-request-id the
-// access log uses.
+// Known HttpExceptions pass through with their own message; anything else
+// (a raw Error, a TypeORM failure) gets sanitized to a generic 500 — its real
+// message/stack goes only to the server-side log, never the client.
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost): void {

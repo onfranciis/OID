@@ -176,9 +176,6 @@ export class OidcController {
     });
   }
 
-  // OIDC RP-Initiated Logout 1.0: terminates the caller's provider session
-  // (same as POST /logout) and, only for a client_id/id_token_hint-verified
-  // caller with a registered post_logout_redirect_uri, redirects back there.
   @Get('oauth/end-session')
   async endSession(
     @Query() query: EndSessionQuery,

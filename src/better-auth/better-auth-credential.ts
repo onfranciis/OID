@@ -15,11 +15,9 @@ export interface UpsertBetterAuthCredentialInput {
   password: string;
 }
 
-// Shared by the one-time bootstrap seed and the admin-invite accept flow:
-// both need to give an Internal ID user a working Better Auth email/password
-// credential, bridging the internal user id to Better Auth's own `user`/
-// `account` tables (raw SQL, not the TypeORM entities — those tables are
-// materialized by `pnpm better-auth:schema`, owned by Better Auth itself).
+// Raw SQL against Better Auth's own `user`/`account` tables (materialized by
+// `pnpm better-auth:schema`), not TypeORM entities. Shared by the bootstrap
+// seed and the invite-accept flow.
 export async function upsertBetterAuthCredential(
   dataSource: DataSource,
   input: UpsertBetterAuthCredentialInput,

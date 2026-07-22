@@ -19,10 +19,6 @@ import type {
   UserSummary,
 } from '../features/users/types';
 
-// Executable specification of the assumed /admin/api/* contract
-// (docs/ADMIN_API_CONTRACT.md). The backend B-07 work must satisfy the same
-// shapes. State is an in-memory database, reset between tests.
-
 export const mockSession: SessionInfo = {
   user: {
     id: 'usr_01mockadmin0000000000000000',
@@ -34,7 +30,6 @@ export const mockSession: SessionInfo = {
   adminGroupSlug: 'internal-id-admins',
 };
 
-// Credentials the mocked login endpoint accepts (dev + tests).
 export const MOCK_LOGIN_PASSWORD = 'correct-horse-battery';
 
 interface MockUser {
@@ -528,12 +523,8 @@ function conflictOnIdentity(
 export const handlers = [
   http.get('/admin/api/session', () => HttpResponse.json(mockSession)),
 
-  // Provider-owned logout endpoint (SSR route in production). Mocked so dev and
-  // tests exercise the logout flow; real cookie clearing happens on the backend.
   http.post('/logout', () => new HttpResponse(null, { status: 204 })),
 
-  // Login JSON API. GET issues a CSRF token; POST authenticates and returns the
-  // redirect target, or a 401 for bad credentials (mirrors the backend).
   http.get('/admin/api/auth/login', () =>
     HttpResponse.json({ csrfToken: 'login-nonce.login-signature' }),
   ),

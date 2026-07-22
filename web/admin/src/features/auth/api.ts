@@ -1,6 +1,5 @@
-// Login talks to /admin/api/auth/* with dedicated fetch calls rather than the
-// shared api-client, so a 401 (bad credentials) surfaces as an inline error
-// instead of triggering the app-wide "redirect to login" behavior.
+// Uses dedicated fetch calls, not the shared api-client, so a 401 here shows
+// as an inline error instead of triggering the app-wide login redirect.
 
 export interface LoginInit {
   csrfToken: string;

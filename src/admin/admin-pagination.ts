@@ -22,8 +22,7 @@ export function normalizeLimit(raw: string | number | undefined): number {
   return Math.min(parsed, MAX_PAGE_SIZE);
 }
 
-// Given `limit + 1` rows fetched in descending id order, split off the extra row
-// to decide whether another page exists and expose the last id as the cursor.
+// Expects limit + 1 rows fetched in descending id order.
 export function toCursorPage<T extends { id: string }>(
   rows: T[],
   limit: number,

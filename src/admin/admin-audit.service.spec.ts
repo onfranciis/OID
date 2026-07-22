@@ -3,11 +3,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AdminAuditService } from './admin-audit.service';
 import { AuditSeverity } from '../database/entities/audit-event.entity';
 
-// Mirrors the fluent TypeORM query builder just enough to assert the calls
-// AdminAuditService makes, and to let a test control what getMany() resolves.
-// andWhere calls are tracked in a plain array (rather than relying on the
-// mock's own `.mock.calls`) to sidestep circular self-reference typing on the
-// `stub` object literal.
+// Mocks the fluent TypeORM query builder enough to assert calls and control
+// getMany()'s result. andWhere calls go in a plain array instead of relying on
+// the mock's own `.mock.calls`, to avoid circular typing on `stub` itself.
 function createQueryBuilderStub() {
   const andWhereCalls: unknown[][] = [];
   const stub = {

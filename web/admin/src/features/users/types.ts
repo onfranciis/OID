@@ -1,8 +1,5 @@
 import type { BadgeTone } from '../../components/status-badge';
 
-// Shapes from docs/ADMIN_API_CONTRACT.md, mirroring the backend entities and
-// AdminUserService input interfaces.
-
 export type UserStatus = 'pending' | 'active' | 'suspended' | 'deactivated';
 export type UserProfileType = 'employee' | 'contractor' | 'service';
 
@@ -60,8 +57,7 @@ export interface AdminCreateUserInput {
 
 export type AdminUpdateUserInput = Partial<AdminCreateUserInput>;
 
-// Status change response; revocation counts are present when deactivation
-// revoked live sessions/refresh tokens (proposed contract enhancement).
+// Revocation counts are present when deactivation revoked live sessions/tokens.
 export interface SetUserStatusResponse {
   user: UserDetail;
   revokedProviderSessionCount?: number;

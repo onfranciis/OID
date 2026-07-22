@@ -6,10 +6,7 @@ import {
 import { isRecentAuthError } from './api-client';
 import { useReauth } from './reauth';
 
-// useMutation wrapper that handles the recent-auth gate transparently: when
-// the backend answers 403 "Recent admin authentication required.", it opens
-// the re-auth dialog and retries the mutation once after the admin confirms.
-// A cancelled dialog rejects with ReauthCancelledError.
+// On a recent-auth 403, opens the re-auth dialog and retries once confirmed.
 export function useAdminMutation<
   TData = unknown,
   TVariables = void,

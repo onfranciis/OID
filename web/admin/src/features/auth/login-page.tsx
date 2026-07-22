@@ -21,9 +21,6 @@ const loginSchema = z.object({
 
 type LoginValues = z.infer<typeof loginSchema>;
 
-// Client-rendered login (outside the session boundary, so it never bootstraps a
-// session or 401-loops). Submits credentials to /admin/api/auth/login and shows
-// server errors inline.
 export function LoginPage() {
   const [searchParams] = useSearchParams();
   const returnTo = safeReturnTo(searchParams.get('returnTo'));

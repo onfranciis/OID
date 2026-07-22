@@ -22,9 +22,8 @@ const acceptInviteSchema = z
 
 type AcceptInviteValues = z.infer<typeof acceptInviteSchema>;
 
-// Client-rendered accept-invite page (outside the session boundary, like
-// LoginPage): the emailed token in the URL is the bearer secret, so this
-// never bootstraps a session. Submits to /admin/api/invites/:token/accept.
+// Outside the session boundary, like LoginPage: the token in the URL is the
+// bearer secret, so this never bootstraps a session.
 export function AcceptInvitePage() {
   const { token = '' } = useParams<{ token: string }>();
   const { toast } = useToast();

@@ -58,9 +58,6 @@ interface AdminRequest extends Request {
   adminPrincipal: AdminPrincipal;
 }
 
-// The hardened JSON API for the React admin app (FRONTEND_ROADMAP.md, backend
-// queue item B-07). Read endpoints and mutations both live here under
-// `/admin/api/*`; the SSR AdminController is retired in F6.
 @Controller('admin/api')
 @UseGuards(AdminGuard)
 export class AdminApiController {

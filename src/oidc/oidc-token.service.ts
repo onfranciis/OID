@@ -292,11 +292,8 @@ export class OidcTokenService {
     });
   }
 
-  // Best-effort identification of the RP-initiated logout caller from
-  // id_token_hint (OIDC RP-Initiated Logout 1.0 §2: expiration is deliberately
-  // not checked here, only the signature). Returns null on any failure rather
-  // than throwing — an unverifiable hint just means end-session falls back to
-  // not trusting a caller-supplied post_logout_redirect_uri.
+  // Per OIDC RP-Initiated Logout §2, expiration isn't checked here, only the
+  // signature. Returns null rather than throwing on any failure.
   async verifyIdTokenHint(
     idToken: string,
   ): Promise<{ sub: string; aud: string } | null> {

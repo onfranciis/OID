@@ -1,7 +1,5 @@
 import type { BadgeTone } from '../../components/status-badge';
 
-// Shapes from docs/ADMIN_API_CONTRACT.md, mirroring AuditEventEntity.
-
 export type AuditSeverity = 'info' | 'warning' | 'critical';
 
 export const AUDIT_SEVERITIES: AuditSeverity[] = [

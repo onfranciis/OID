@@ -26,10 +26,6 @@ function hashToken(token: string): string {
   return createHash('sha256').update(token).digest('hex');
 }
 
-// Sends (or resends) a one-time invite link for a user to set their own
-// password. This is the missing piece that lets an admin-created user
-// actually sign in — AdminUserService.createUser only ever provisions the
-// internal user row, never a Better Auth credential.
 @Injectable()
 export class AdminInviteService {
   private readonly inviteTtlHours: number;
@@ -74,10 +70,7 @@ export class AdminInviteService {
       now.getTime() + this.inviteTtlHours * 60 * 60 * 1000,
     );
 
-    // Send before persisting anything: a failed send (bad Resend config, an
-    // unverified domain, a provider outage) must not leave an undelivered
-    // invite silently outstanding, and the admin needs to know it failed
-    // rather than see a generic 500.
+    // Send first: a failed send must not leave an orphaned invite behind.
     try {
       await this.mailService.sendInviteEmail({
         to: user.email,
@@ -94,8 +87,7 @@ export class AdminInviteService {
       );
     }
 
-    // At most one outstanding invite per user: superseding an unconsumed one
-    // (e.g. "resend invite") invalidates the previous link.
+    // Resending supersedes any prior unconsumed invite.
     await this.inviteRepository.update(
       {
         userId: user.id,

@@ -1,7 +1,5 @@
-// Accept-invite talks to /admin/api/invites/:token with dedicated fetch calls,
-// mirroring features/auth/api.ts: this is a public, pre-session flow, so it
-// must never trigger the shared api-client's "redirect to login on 401"
-// behavior — an invalid/expired token surfaces as an inline error instead.
+// Mirrors features/auth/api.ts: dedicated fetch calls so an invalid/expired
+// token surfaces as an inline error, not the shared client's login redirect.
 
 export interface InviteSummary {
   email: string;

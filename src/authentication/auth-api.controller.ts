@@ -10,9 +10,6 @@ interface LoginBody {
   returnTo?: string;
 }
 
-// JSON login API consumed by the React login page. Credential/CSRF/rate-limit
-// failures surface as standard NestJS error responses so the SPA can render them
-// inline instead of a server-rendered page reload.
 @Controller('admin/api/auth')
 export class AuthApiController {
   constructor(private readonly authenticationService: AuthenticationService) {}

@@ -19,8 +19,6 @@ export const queryClient = new QueryClient({
   },
 });
 
-// Per-domain key factories. Domain keys are added when their feature ships
-// (F2+); only the session key exists in F1.
 export const queryKeys = {
   session: ['session'] as const,
 };

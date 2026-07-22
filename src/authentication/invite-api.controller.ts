@@ -9,11 +9,8 @@ interface AcceptInviteBody {
   password?: string;
 }
 
-// Public JSON API consumed by the React accept-invite page. No CSRF cookie
-// dance here (unlike login): the emailed token itself is the bearer secret
-// that authorizes this request, the same trust model as a password-reset
-// link — there's no ambient session/cookie for a forged cross-site request
-// to ride along with.
+// No CSRF cookie here (unlike login): the emailed token is itself the bearer
+// secret, same trust model as a password-reset link.
 @Controller('admin/api/invites')
 export class InviteApiController {
   constructor(private readonly inviteAcceptService: InviteAcceptService) {}

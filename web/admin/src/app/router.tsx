@@ -34,8 +34,7 @@ function AdminLayout() {
 
 // Exported separately so tests can mount the same tree on a memory router.
 export const routes: RouteObject[] = [
-  // Login lives outside the session boundary so it never bootstraps a session
-  // or redirect-loops; it is served by the SPA at /admin/login.
+  // Outside the session boundary: never bootstraps a session or redirect-loops.
   {
     path: '/login',
     element: (
@@ -44,8 +43,6 @@ export const routes: RouteObject[] = [
       </ToastProvider>
     ),
   },
-  // Accept-invite is likewise outside the session boundary — the emailed
-  // token in the URL is the bearer secret, not a session cookie.
   {
     path: '/invite/:token',
     element: (
@@ -76,7 +73,6 @@ export const routes: RouteObject[] = [
   },
 ];
 
-// The SPA is mounted at /admin (same-origin under NestJS in F6; Vite base in dev).
 export function createAppRouter() {
   return createBrowserRouter(routes, { basename: '/admin' });
 }

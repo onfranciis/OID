@@ -12,11 +12,6 @@ import {
   UserStatus,
 } from '../database/entities/user.entity';
 
-// Presenters map internal entities to the hardened `/admin/api/*` contract
-// documented in docs/ADMIN_API_CONTRACT.md. They deliberately return only the
-// contract fields (never secret hashes or normalized/internal columns) and emit
-// ISO-8601 strings for dates.
-
 export interface UserSummaryDto {
   id: string;
   email: string;

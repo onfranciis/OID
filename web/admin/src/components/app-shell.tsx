@@ -14,8 +14,7 @@ import { performLogout } from '../app/logout';
 import { useSession } from '../app/session';
 import { useDocumentTitle } from '../lib/use-document-title';
 
-// Shared with the Overview tiles so the same section always reads with the
-// same icon everywhere in the app.
+// Shared with the Overview tiles so each section uses one icon everywhere.
 export const SECTION_ICONS: Record<
   'overview' | 'users' | 'groups' | 'clients' | 'audit',
   LucideIcon
@@ -38,9 +37,6 @@ function initials(name: string): string {
   return letters.join('').toUpperCase() || '?';
 }
 
-// Dashboard chrome (FRONTEND_ROADMAP.md 7.1): a rounded sidebar card holding the
-// brand, section navigation, and the signed-in admin; the routed content sits
-// beside it on the page.
 export function AppShell() {
   const { user } = useSession();
   useDocumentTitle();

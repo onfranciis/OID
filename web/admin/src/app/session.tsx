@@ -21,8 +21,6 @@ export interface SessionInfo {
   user: SessionUser;
   isAdmin: boolean;
   csrfToken: string;
-  // Slug of the bootstrap admin group; the UI uses it for self-lockout guards
-  // (e.g. removing your own admin membership requires typed confirmation).
   adminGroupSlug: string;
 }
 
@@ -54,9 +52,6 @@ async function fetchSession(): Promise<SessionInfo> {
   return session;
 }
 
-// The auth boundary from FRONTEND_ROADMAP.md 7.1/7.7: bootstraps the session,
-// hard-redirects unauthenticated visitors to provider login, and blocks
-// non-admins with a quiet access-denied screen.
 export function SessionBoundary({ children }: { children: ReactNode }) {
   const query = useQuery({
     queryKey: queryKeys.session,

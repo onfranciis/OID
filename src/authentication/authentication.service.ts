@@ -67,8 +67,6 @@ export class AuthenticationService {
     );
   }
 
-  // Issues a login CSRF token (double-submit) for the React login page. The SPA
-  // fetches this before submitting credentials to POST /admin/api/auth/login.
   initLogin(): LoginInitResult {
     const csrfToken = this.generateCsrfToken();
 

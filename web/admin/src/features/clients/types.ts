@@ -1,8 +1,5 @@
 import type { BadgeTone } from '../../components/status-badge';
 
-// Shapes from docs/ADMIN_API_CONTRACT.md, mirroring OidcClientEntity and the
-// AdminClientService input interfaces.
-
 export type OidcClientType = 'confidential' | 'public';
 export type OidcClientStatus = 'active' | 'disabled';
 

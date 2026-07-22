@@ -128,11 +128,8 @@ export async function exchangeAuthorizationCode(
   return (await response.json()) as TokenResponse;
 }
 
-// OIDC RP-Initiated Logout 1.0: hints the provider at who is logging out and
-// where to send the browser back to afterward. The provider only honors
-// post_logout_redirect_uri when it's registered for this client_id (see
-// docs/CLIENT_INTEGRATION.md) — an unregistered one is silently ignored in
-// favor of the provider's own login page, never followed blindly.
+// post_logout_redirect_uri only takes effect if registered for this client_id;
+// otherwise the provider silently falls back to its own login page.
 export function buildEndSessionUrl(
   discovery: DiscoveryDocument,
   config: SampleClientConfig,

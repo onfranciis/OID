@@ -24,9 +24,7 @@ export class MailService {
 
   async sendInviteEmail(input: SendInviteEmailInput): Promise<void> {
     if (!this.resend) {
-      // Dev/CI fallback: no RESEND_API_KEY configured. Log the invite link
-      // instead of failing outright, so the flow stays testable locally
-      // without a Resend account.
+      // No API key: log the link instead of failing, for local/CI testing.
       this.logger.warn(
         `RESEND_API_KEY is not configured; logging the invite link for ${input.to} instead of emailing it.`,
       );

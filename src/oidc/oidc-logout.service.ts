@@ -23,11 +23,9 @@ export interface EndSessionResult {
   responseHeaders: string[];
 }
 
-// OIDC RP-Initiated Logout 1.0: terminates the caller's provider session (the
-// same work POST /logout does) and, only when the caller's identity can be
-// established, redirects back to a post_logout_redirect_uri registered for
-// that client. An untrusted or unregistered redirect target is silently
-// ignored in favor of the provider's own login page — never followed.
+// Always terminates the provider session; only redirects to
+// post_logout_redirect_uri when it's registered to a resolvable client,
+// otherwise falls back to the login page.
 @Injectable()
 export class OidcLogoutService {
   private readonly defaultRedirect: string;
