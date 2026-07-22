@@ -6,7 +6,9 @@ import { useForm } from 'react-hook-form';
 import { useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
 import { FORGOT_PASSWORD_PATH, hardNavigate } from '../../app/navigation';
+import { useSignedInRedirect } from '../../app/pre-session';
 import { FormField, inputClass } from '../../components/form-field';
+import { FullPageMessage } from '../../components/full-page';
 import { useToast } from '../../components/toaster';
 import { initLogin, LoginError, safeReturnTo, submitLogin } from './api';
 
@@ -24,6 +26,8 @@ type LoginValues = z.infer<typeof loginSchema>;
 export function LoginPage() {
   const [searchParams] = useSearchParams();
   const returnTo = safeReturnTo(searchParams.get('returnTo'));
+
+  const { isChecking, isSignedIn } = useSignedInRedirect(returnTo);
 
   const initQuery = useQuery({
     queryKey: ['auth', 'login-init'],
@@ -71,6 +75,16 @@ export function LoginPage() {
       setSubmitting(false);
     }
   });
+
+  if (isChecking || isSignedIn) {
+    return (
+      <FullPageMessage title="Internal ID Admin">
+        <p className="text-sm text-muted">
+          {isSignedIn ? 'Redirecting…' : 'Checking your session…'}
+        </p>
+      </FullPageMessage>
+    );
+  }
 
   return (
     <div className="grid min-h-screen place-items-center bg-page p-6 font-sans text-ink">

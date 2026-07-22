@@ -6,7 +6,9 @@ import { useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom';
 import { z } from 'zod';
 import { LOGIN_PATH } from '../../app/navigation';
+import { useSignedInRedirect } from '../../app/pre-session';
 import { FormField, inputClass } from '../../components/form-field';
+import { FullPageMessage } from '../../components/full-page';
 import { useToast } from '../../components/toaster';
 import { acceptInvite, getInvite, InviteError } from './api';
 
@@ -25,6 +27,7 @@ type AcceptInviteValues = z.infer<typeof acceptInviteSchema>;
 // Outside the session boundary, like LoginPage: the token in the URL is the
 // bearer secret, so this never bootstraps a session.
 export function AcceptInvitePage() {
+  const { isChecking, isSignedIn } = useSignedInRedirect('/admin');
   const { token = '' } = useParams<{ token: string }>();
   const { toast } = useToast();
   const [submitted, setSubmitted] = useState(false);
@@ -56,6 +59,16 @@ export function AcceptInvitePage() {
       });
     }
   });
+
+  if (isChecking || isSignedIn) {
+    return (
+      <FullPageMessage title="Internal ID Admin">
+        <p className="text-sm text-muted">
+          {isSignedIn ? 'Redirecting…' : 'Checking your session…'}
+        </p>
+      </FullPageMessage>
+    );
+  }
 
   return (
     <div className="grid min-h-screen place-items-center bg-page p-6 font-sans text-ink">

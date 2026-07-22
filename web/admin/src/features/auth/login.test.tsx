@@ -1,7 +1,9 @@
 import { fireEvent, screen } from '@testing-library/react';
+import { http, HttpResponse } from 'msw';
 import { beforeEach, expect, test, vi } from 'vitest';
 import { hardNavigate } from '../../app/navigation';
 import { mockSession, MOCK_LOGIN_PASSWORD } from '../../mocks/handlers';
+import { server } from '../../mocks/server';
 import { renderApp } from '../../test/render';
 
 vi.mock('../../app/navigation', async (importOriginal) => {
@@ -10,8 +12,22 @@ vi.mock('../../app/navigation', async (importOriginal) => {
   return { ...actual, hardNavigate: vi.fn() };
 });
 
+// The login page checks for an existing session before rendering the form;
+// simulate the common case of an unauthenticated visitor for most tests.
+function mockLoggedOut() {
+  server.use(
+    http.get('/admin/api/session', () =>
+      HttpResponse.json(
+        { statusCode: 401, message: 'Unauthorized', error: 'Unauthorized' },
+        { status: 401 },
+      ),
+    ),
+  );
+}
+
 beforeEach(() => {
   vi.mocked(hardNavigate).mockClear();
+  mockLoggedOut();
 });
 
 // Fills the form once the CSRF init query has enabled the submit button.
@@ -64,5 +80,30 @@ test('an unsafe returnTo falls back to the admin home', async () => {
 
   await vi.waitFor(() => {
     expect(vi.mocked(hardNavigate)).toHaveBeenCalledWith('/admin');
+  });
+});
+
+test('an already-signed-in visitor is redirected away from the login page', async () => {
+  server.use(
+    http.get('/admin/api/session', () => HttpResponse.json(mockSession)),
+  );
+
+  renderApp('/login');
+
+  await vi.waitFor(() => {
+    expect(vi.mocked(hardNavigate)).toHaveBeenCalledWith('/admin');
+  });
+  expect(screen.queryByLabelText('Email')).toBeNull();
+});
+
+test('an already-signed-in visitor with a returnTo is redirected there', async () => {
+  server.use(
+    http.get('/admin/api/session', () => HttpResponse.json(mockSession)),
+  );
+
+  renderApp('/login?returnTo=/admin/users');
+
+  await vi.waitFor(() => {
+    expect(vi.mocked(hardNavigate)).toHaveBeenCalledWith('/admin/users');
   });
 });

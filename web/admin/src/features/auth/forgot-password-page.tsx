@@ -4,7 +4,9 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { LOGIN_PATH } from '../../app/navigation';
+import { useSignedInRedirect } from '../../app/pre-session';
 import { FormField, inputClass } from '../../components/form-field';
+import { FullPageMessage } from '../../components/full-page';
 import { requestPasswordReset } from './api';
 
 const forgotPasswordSchema = z.object({
@@ -18,6 +20,7 @@ const forgotPasswordSchema = z.object({
 type ForgotPasswordValues = z.infer<typeof forgotPasswordSchema>;
 
 export function ForgotPasswordPage() {
+  const { isChecking, isSignedIn } = useSignedInRedirect('/admin');
   const [submitted, setSubmitted] = useState(false);
   const form = useForm<ForgotPasswordValues>({
     resolver: zodResolver(forgotPasswordSchema),
@@ -28,6 +31,16 @@ export function ForgotPasswordPage() {
     await requestPasswordReset(values.email);
     setSubmitted(true);
   });
+
+  if (isChecking || isSignedIn) {
+    return (
+      <FullPageMessage title="Internal ID Admin">
+        <p className="text-sm text-muted">
+          {isSignedIn ? 'Redirecting…' : 'Checking your session…'}
+        </p>
+      </FullPageMessage>
+    );
+  }
 
   return (
     <div className="grid min-h-screen place-items-center bg-page p-6 font-sans text-ink">

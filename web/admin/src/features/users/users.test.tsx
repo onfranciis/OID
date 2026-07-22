@@ -1,7 +1,22 @@
 import { cleanup, fireEvent, screen, within } from '@testing-library/react';
+import { http, HttpResponse } from 'msw';
 import { expect, test } from 'vitest';
 import { mockSession } from '../../mocks/handlers';
+import { server } from '../../mocks/server';
 import { renderApp } from '../../test/render';
+
+// The invite-accept page checks for an existing session before rendering the
+// form; simulate the invitee's fresh, unauthenticated tab.
+function mockLoggedOut() {
+  server.use(
+    http.get('/admin/api/session', () =>
+      HttpResponse.json(
+        { statusCode: 401, message: 'Unauthorized', error: 'Unauthorized' },
+        { status: 401 },
+      ),
+    ),
+  );
+}
 
 test('users list renders seeded users with status badges', async () => {
   renderApp('/users');
@@ -188,6 +203,7 @@ test('sending an invite lets the invited user set a password and activates them'
   cleanup();
 
   // The invited user opens the emailed link in a fresh, unauthenticated tab.
+  mockLoggedOut();
   renderApp(`/invite/mock-invite-token-${userId}`);
 
   await screen.findByRole('heading', { name: 'Welcome, Invitee Person' });
@@ -205,6 +221,9 @@ test('sending an invite lets the invited user set a password and activates them'
   cleanup();
 
   // Back in the admin console, the user is now active.
+  server.use(
+    http.get('/admin/api/session', () => HttpResponse.json(mockSession)),
+  );
   renderApp(`/users/${userId}`);
   await screen.findByRole('heading', { name: 'Invitee Person' });
   expect(screen.getAllByText('active').length).toBeGreaterThan(0);
@@ -218,6 +237,7 @@ test('an admin cannot send themselves an invite', async () => {
 });
 
 test('an invalid invite token shows an error instead of a form', async () => {
+  mockLoggedOut();
   renderApp('/invite/not-a-real-token');
 
   expect(

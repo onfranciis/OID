@@ -222,7 +222,7 @@ function RedirectUrisTab({ client }: { client: ClientDetail }) {
       {client.redirectUris.length === 0 ? (
         <p className="text-sm text-muted">No redirect URIs registered yet.</p>
       ) : (
-        <ul className="grid gap-2">
+        <ul className="grid gap-2 mb-3">
           {client.redirectUris.map((redirectUri) => (
             <li
               key={redirectUri.id}

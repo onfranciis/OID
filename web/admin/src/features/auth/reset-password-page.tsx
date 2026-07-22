@@ -6,7 +6,9 @@ import { useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom';
 import { z } from 'zod';
 import { LOGIN_PATH } from '../../app/navigation';
+import { useSignedInRedirect } from '../../app/pre-session';
 import { FormField, inputClass } from '../../components/form-field';
+import { FullPageMessage } from '../../components/full-page';
 import { useToast } from '../../components/toaster';
 import {
   confirmPasswordReset,
@@ -27,6 +29,7 @@ const resetPasswordSchema = z
 type ResetPasswordValues = z.infer<typeof resetPasswordSchema>;
 
 export function ResetPasswordPage() {
+  const { isChecking, isSignedIn } = useSignedInRedirect('/admin');
   const { token = '' } = useParams<{ token: string }>();
   const { toast } = useToast();
   const [submitted, setSubmitted] = useState(false);
@@ -58,6 +61,16 @@ export function ResetPasswordPage() {
       });
     }
   });
+
+  if (isChecking || isSignedIn) {
+    return (
+      <FullPageMessage title="Internal ID Admin">
+        <p className="text-sm text-muted">
+          {isSignedIn ? 'Redirecting…' : 'Checking your session…'}
+        </p>
+      </FullPageMessage>
+    );
+  }
 
   return (
     <div className="grid min-h-screen place-items-center bg-page p-6 font-sans text-ink">

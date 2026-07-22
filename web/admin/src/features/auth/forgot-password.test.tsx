@@ -1,7 +1,22 @@
 import { cleanup, fireEvent, screen } from '@testing-library/react';
-import { expect, test } from 'vitest';
+import { http, HttpResponse } from 'msw';
+import { beforeEach, expect, test } from 'vitest';
 import { mockSession } from '../../mocks/handlers';
+import { server } from '../../mocks/server';
 import { renderApp } from '../../test/render';
+
+// These pages check for an existing session before rendering the form;
+// simulate the common case of an unauthenticated visitor for all of them.
+beforeEach(() => {
+  server.use(
+    http.get('/admin/api/session', () =>
+      HttpResponse.json(
+        { statusCode: 401, message: 'Unauthorized', error: 'Unauthorized' },
+        { status: 401 },
+      ),
+    ),
+  );
+});
 
 test('the login page links to forgot-password', async () => {
   renderApp('/login');
