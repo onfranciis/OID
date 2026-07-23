@@ -1,4 +1,9 @@
+import { readEnv } from './env';
 import type { AppEnvironment, NodeEnvironment } from './app-environment';
+
+function env(key: string): string | undefined {
+  return readEnv(process.env, key);
+}
 
 function parseBoolean(
   value: string | undefined,
@@ -24,105 +29,100 @@ function parseNumber(value: string | undefined, defaultValue: number): number {
 export function configuration(): AppEnvironment {
   return {
     app: {
-      name: process.env.APP_NAME ?? 'internal-id',
-      env:
-        (process.env.NODE_ENV as NodeEnvironment | undefined) ?? 'development',
-      host: process.env.HOST ?? '0.0.0.0',
-      port: parseNumber(process.env.PORT, 3000),
-      baseUrl: process.env.APP_BASE_URL ?? 'http://localhost:3000',
+      name: env('APP_NAME') ?? 'internal-id',
+      env: (env('NODE_ENV') as NodeEnvironment | undefined) ?? 'development',
+      host: env('HOST') ?? '0.0.0.0',
+      port: parseNumber(env('PORT'), 3000),
+      // Required by validateEnvironment(); never falls back silently.
+      baseUrl: env('APP_BASE_URL') as string,
     },
     database: {
-      url:
-        process.env.DATABASE_URL ??
-        'postgres://postgres:postgres@localhost:5432/internal_id',
-      logging: parseBoolean(process.env.DATABASE_LOGGING, false),
+      // Required by validateEnvironment(); never falls back silently.
+      url: env('DATABASE_URL') as string,
+      logging: parseBoolean(env('DATABASE_LOGGING'), false),
     },
     betterAuth: {
-      basePath: process.env.BETTER_AUTH_BASE_PATH ?? '/api/auth',
-      cookieName: process.env.BETTER_AUTH_COOKIE_NAME ?? 'internal_id_session',
-      secret:
-        process.env.BETTER_AUTH_SECRET ??
-        'development-only-better-auth-secret-change-me',
-      loginPath: process.env.BETTER_AUTH_LOGIN_PATH ?? '/admin/login',
-      consentPath: process.env.BETTER_AUTH_CONSENT_PATH ?? '/consent',
+      basePath: env('BETTER_AUTH_BASE_PATH') ?? '/api/auth',
+      cookieName: env('BETTER_AUTH_COOKIE_NAME') ?? 'internal_id_session',
+      // Required by validateEnvironment(); never falls back silently.
+      secret: env('BETTER_AUTH_SECRET') as string,
+      loginPath: env('BETTER_AUTH_LOGIN_PATH') ?? '/admin/login',
+      consentPath: env('BETTER_AUTH_CONSENT_PATH') ?? '/consent',
     },
     authentication: {
       csrfCookieName:
-        process.env.AUTHENTICATION_CSRF_COOKIE_NAME ?? 'internal_id_login_csrf',
+        env('AUTHENTICATION_CSRF_COOKIE_NAME') ?? 'internal_id_login_csrf',
       // Distinct name from csrfCookieName: different paths (/ vs /admin) must
       // not collide.
       adminCsrfCookieName:
-        process.env.AUTHENTICATION_ADMIN_CSRF_COOKIE_NAME ??
+        env('AUTHENTICATION_ADMIN_CSRF_COOKIE_NAME') ??
         'internal_id_admin_csrf',
       providerSessionCookieName:
-        process.env.AUTHENTICATION_PROVIDER_SESSION_COOKIE_NAME ??
+        env('AUTHENTICATION_PROVIDER_SESSION_COOKIE_NAME') ??
         'internal_id_provider_session',
       providerSessionIdleTtlSeconds: parseNumber(
-        process.env.AUTHENTICATION_PROVIDER_SESSION_IDLE_TTL_SECONDS,
+        env('AUTHENTICATION_PROVIDER_SESSION_IDLE_TTL_SECONDS'),
         43200,
       ),
       providerSessionAbsoluteTtlSeconds: parseNumber(
-        process.env.AUTHENTICATION_PROVIDER_SESSION_ABSOLUTE_TTL_SECONDS,
+        env('AUTHENTICATION_PROVIDER_SESSION_ABSOLUTE_TTL_SECONDS'),
         604800,
       ),
       adminRecentAuthWindowSeconds: parseNumber(
-        process.env.AUTHENTICATION_ADMIN_RECENT_AUTH_WINDOW_SECONDS,
+        env('AUTHENTICATION_ADMIN_RECENT_AUTH_WINDOW_SECONDS'),
         600,
       ),
       loginRateLimitWindowSeconds: parseNumber(
-        process.env.AUTHENTICATION_LOGIN_RATE_LIMIT_WINDOW_SECONDS,
+        env('AUTHENTICATION_LOGIN_RATE_LIMIT_WINDOW_SECONDS'),
         600,
       ),
       loginRateLimitIpMaxAttempts: parseNumber(
-        process.env.AUTHENTICATION_LOGIN_RATE_LIMIT_IP_MAX_ATTEMPTS,
+        env('AUTHENTICATION_LOGIN_RATE_LIMIT_IP_MAX_ATTEMPTS'),
         10,
       ),
       loginRateLimitAccountMaxAttempts: parseNumber(
-        process.env.AUTHENTICATION_LOGIN_RATE_LIMIT_ACCOUNT_MAX_ATTEMPTS,
+        env('AUTHENTICATION_LOGIN_RATE_LIMIT_ACCOUNT_MAX_ATTEMPTS'),
         5,
       ),
       tokenRateLimitWindowSeconds: parseNumber(
-        process.env.AUTHENTICATION_TOKEN_RATE_LIMIT_WINDOW_SECONDS,
+        env('AUTHENTICATION_TOKEN_RATE_LIMIT_WINDOW_SECONDS'),
         60,
       ),
       tokenRateLimitIpMaxAttempts: parseNumber(
-        process.env.AUTHENTICATION_TOKEN_RATE_LIMIT_IP_MAX_ATTEMPTS,
+        env('AUTHENTICATION_TOKEN_RATE_LIMIT_IP_MAX_ATTEMPTS'),
         60,
       ),
     },
     mail: {
       // Sandbox sender works without a verified domain; swap once one exists.
-      resendApiKey: process.env.RESEND_API_KEY ?? null,
+      resendApiKey: env('RESEND_API_KEY') ?? null,
       fromEmail:
-        process.env.MAIL_FROM_EMAIL ?? 'Internal ID <onboarding@resend.dev>',
-      inviteTtlHours: parseNumber(process.env.MAIL_INVITE_TTL_HOURS, 72),
+        env('MAIL_FROM_EMAIL') ?? 'Internal ID <onboarding@resend.dev>',
+      inviteTtlHours: parseNumber(env('MAIL_INVITE_TTL_HOURS'), 72),
       passwordResetTtlHours: parseNumber(
-        process.env.MAIL_PASSWORD_RESET_TTL_HOURS,
+        env('MAIL_PASSWORD_RESET_TTL_HOURS'),
         1,
       ),
     },
     bootstrap: {
-      adminEmail: process.env.BOOTSTRAP_ADMIN_EMAIL ?? 'admin@company.com',
+      adminEmail: env('BOOTSTRAP_ADMIN_EMAIL') ?? 'admin@company.com',
       adminDisplayName:
-        process.env.BOOTSTRAP_ADMIN_DISPLAY_NAME ?? 'Internal ID Administrator',
-      adminGivenName: process.env.BOOTSTRAP_ADMIN_GIVEN_NAME ?? 'Internal',
-      adminFamilyName:
-        process.env.BOOTSTRAP_ADMIN_FAMILY_NAME ?? 'Administrator',
-      adminUsername: process.env.BOOTSTRAP_ADMIN_USERNAME ?? 'internal.admin',
-      adminPassword: process.env.BOOTSTRAP_ADMIN_PASSWORD ?? null,
-      adminGroupSlug:
-        process.env.BOOTSTRAP_ADMIN_GROUP_SLUG ?? 'internal-id-admins',
+        env('BOOTSTRAP_ADMIN_DISPLAY_NAME') ?? 'Internal ID Administrator',
+      adminGivenName: env('BOOTSTRAP_ADMIN_GIVEN_NAME') ?? 'Internal',
+      adminFamilyName: env('BOOTSTRAP_ADMIN_FAMILY_NAME') ?? 'Administrator',
+      adminUsername: env('BOOTSTRAP_ADMIN_USERNAME') ?? 'internal.admin',
+      adminPassword: env('BOOTSTRAP_ADMIN_PASSWORD') ?? null,
+      adminGroupSlug: env('BOOTSTRAP_ADMIN_GROUP_SLUG') ?? 'internal-id-admins',
       adminGroupName:
-        process.env.BOOTSTRAP_ADMIN_GROUP_NAME ?? 'Internal ID Administrators',
-      clientId: process.env.BOOTSTRAP_CLIENT_ID ?? 'internal-id-sample-client',
-      clientName:
-        process.env.BOOTSTRAP_CLIENT_NAME ?? 'Internal ID Sample Client',
-      clientSecret: process.env.BOOTSTRAP_CLIENT_SECRET ?? null,
+        env('BOOTSTRAP_ADMIN_GROUP_NAME') ?? 'Internal ID Administrators',
+      clientId: env('BOOTSTRAP_CLIENT_ID') ?? 'internal-id-sample-client',
+      clientName: env('BOOTSTRAP_CLIENT_NAME') ?? 'Internal ID Sample Client',
+      clientSecret: env('BOOTSTRAP_CLIENT_SECRET') ?? null,
       clientRedirectUri:
-        process.env.BOOTSTRAP_CLIENT_REDIRECT_URI ??
+        env('BOOTSTRAP_CLIENT_REDIRECT_URI') ??
         'http://localhost:4000/auth/callback',
       clientPostLogoutRedirectUri:
-        process.env.BOOTSTRAP_CLIENT_POST_LOGOUT_REDIRECT_URI ??
+        env('BOOTSTRAP_CLIENT_POST_LOGOUT_REDIRECT_URI') ??
         'http://localhost:4000/logout/callback',
     },
   };

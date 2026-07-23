@@ -27,7 +27,7 @@ describe('validateEnvironment', () => {
     expect(() =>
       validateEnvironment({
         ...baseConfig,
-        BETTER_AUTH_SECRET: 'replace-this-before-production',
+        BETTER_AUTH_SECRET: 'replace-this-before-production-with-32-plus-chars',
       }),
     ).toThrow(/development default/);
     expect(() =>
@@ -42,6 +42,58 @@ describe('validateEnvironment', () => {
         BOOTSTRAP_CLIENT_SECRET: 'replace-this-sample-client-secret',
       }),
     ).toThrow(/sample development default/);
+  });
+
+  it('requires APP_BASE_URL, DATABASE_URL, and BETTER_AUTH_SECRET even outside production', () => {
+    const devConfig = { NODE_ENV: 'development' };
+
+    expect(() => validateEnvironment(devConfig)).toThrow(/DATABASE_URL/);
+    expect(() =>
+      validateEnvironment({
+        ...devConfig,
+        DATABASE_URL: baseConfig.DATABASE_URL,
+      }),
+    ).toThrow(/APP_BASE_URL/);
+    expect(() =>
+      validateEnvironment({
+        ...devConfig,
+        DATABASE_URL: baseConfig.DATABASE_URL,
+        APP_BASE_URL: 'http://localhost:3000',
+      }),
+    ).toThrow(/BETTER_AUTH_SECRET/);
+    expect(
+      validateEnvironment({
+        ...devConfig,
+        DATABASE_URL: baseConfig.DATABASE_URL,
+        APP_BASE_URL: 'http://localhost:3000',
+        BETTER_AUTH_SECRET: baseConfig.BETTER_AUTH_SECRET,
+      }),
+    ).toBeDefined();
+  });
+
+  it('treats a whitespace-only required value as missing', () => {
+    expect(() =>
+      validateEnvironment({
+        ...baseConfig,
+        DATABASE_URL: '   ',
+      }),
+    ).toThrow(/DATABASE_URL/);
+  });
+
+  it('trims surrounding whitespace before checking length and defaults', () => {
+    expect(() =>
+      validateEnvironment({
+        ...baseConfig,
+        BETTER_AUTH_SECRET: `  ${baseConfig.BETTER_AUTH_SECRET}  `,
+      }),
+    ).not.toThrow();
+    expect(() =>
+      validateEnvironment({
+        ...baseConfig,
+        BETTER_AUTH_SECRET:
+          '  replace-this-before-production-with-32-plus-chars  ',
+      }),
+    ).toThrow(/development default/);
   });
 
   it('rejects malformed bootstrap values before production checks', () => {

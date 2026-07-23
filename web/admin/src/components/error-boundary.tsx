@@ -24,8 +24,6 @@ function ErrorFallback({ onReload }: { onReload: () => void }) {
   );
 }
 
-// Outermost safety net for render-time throws that escape a feature's own
-// error handling. Never exposes the error/stack to the user.
 export class ErrorBoundary extends Component<
   { children: ReactNode },
   { hasError: boolean }
