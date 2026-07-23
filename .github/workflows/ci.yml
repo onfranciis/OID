@@ -57,16 +57,28 @@ jobs:
         run: pnpm test:migrations
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/internal_id
+          APP_BASE_URL: http://localhost:3000
           BETTER_AUTH_SECRET: ci-only-better-auth-secret-32-characters
 
       - name: Integration tests
         run: pnpm test:integration
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/internal_id
+          APP_BASE_URL: http://localhost:3000
           BETTER_AUTH_SECRET: ci-only-better-auth-secret-32-characters
 
       - name: Dependency audit
         run: pnpm dependency:audit
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Docker build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: production
+          push: false
 
   admin-verify:
     runs-on: ubuntu-latest
