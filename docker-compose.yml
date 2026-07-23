@@ -6,16 +6,28 @@ services:
     container_name: internal-id-app
     restart: unless-stopped
     env_file:
-      - .env
+      - path: .env
+        required: false
     environment:
-      DATABASE_URL: postgres://postgres:postgres@postgres:5432/internal_id
+      NODE_ENV: ${NODE_ENV:-development}
       HOST: 0.0.0.0
       PORT: 3000
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/internal_id
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:3000}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-docker-compose-default-secret-change-before-production}
+      BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD:-change-this-for-local-bootstrap}
+      BOOTSTRAP_CLIENT_SECRET: ${BOOTSTRAP_CLIENT_SECRET:-replace-this-sample-client-secret}
     ports:
       - '3000:3000'
     depends_on:
       postgres:
         condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'node', '-e', "fetch('http://localhost:3000/health').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
 
   postgres:
     image: postgres:17-alpine

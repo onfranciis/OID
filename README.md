@@ -71,20 +71,30 @@ See `web/admin/e2e/README.md` for the full prerequisites.
 
 ## Docker
 
-Run PostgreSQL only:
-
-```bash
-docker compose up -d postgres
-```
-
-Run app and PostgreSQL:
+Zero-config: clone the repo and run
 
 ```bash
 docker compose up --build
 ```
 
+No `.env` needed for this — `docker-compose.yml` already carries working
+defaults for everything the app requires, migrates the database, materializes
+Better Auth's tables, and seeds the bootstrap admin/client on every start (all
+idempotent). Sign in at `http://localhost:3000/admin/login` with
+`admin@company.com` / `change-this-for-local-bootstrap`.
+
+To override anything (a real `RESEND_API_KEY`, a non-default admin password,
+etc.), copy `.env.example` to `.env` first — `docker compose` picks it up
+automatically, no flags needed.
+
 The image builds the admin SPA and serves it at `/admin`, so no separate
 frontend deployment is needed.
+
+Run PostgreSQL only (for the non-Docker `pnpm start:dev` flow above):
+
+```bash
+docker compose up -d postgres
+```
 
 ## Operations
 
