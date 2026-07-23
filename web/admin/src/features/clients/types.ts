@@ -6,6 +6,35 @@ export type OidcClientStatus = 'active' | 'disabled';
 export const CLIENT_TYPES: OidcClientType[] = ['confidential', 'public'];
 export const CLIENT_STATUSES: OidcClientStatus[] = ['active', 'disabled'];
 
+// Mirrors the provider's advertised scopes_supported/claims_supported
+// (src/better-auth/better-auth.factory.ts) — the set an admin will pick from
+// most of the time. Not an enforced enum: the backend accepts any non-empty
+// string list, so the policy editor still allows adding others beyond these.
+export const KNOWN_SCOPES = [
+  'openid',
+  'profile',
+  'email',
+  'groups',
+  'offline_access',
+];
+export const KNOWN_CLAIMS = [
+  'sub',
+  'iss',
+  'aud',
+  'exp',
+  'iat',
+  'auth_time',
+  'nonce',
+  'email',
+  'email_verified',
+  'name',
+  'given_name',
+  'family_name',
+  'preferred_username',
+  'groups',
+  'profile_type',
+];
+
 export interface ClientSummary {
   id: string;
   clientId: string;

@@ -10,7 +10,7 @@ function ErrorFallback({ onReload }: { onReload: () => void }) {
         The admin console hit an unexpected error. Reloading usually clears it.
       </p>
 
-      <div className="w-full justify-center">
+      <div className="w-full justify-center bg-amber-500 mx-auto">
         <button
           type="button"
           onClick={onReload}

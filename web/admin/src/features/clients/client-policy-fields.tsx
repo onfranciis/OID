@@ -1,7 +1,8 @@
 import { Controller, type UseFormReturn } from 'react-hook-form';
-import { ChipInput } from '../../components/chip-input';
+import { ChoiceChips } from '../../components/choice-chips';
 import { FormField, inputClass } from '../../components/form-field';
 import type { ClientPolicyValues } from './client-form';
+import { KNOWN_CLAIMS, KNOWN_SCOPES } from './types';
 
 // Shared policy editor for the create form and the detail Policy tab. The form
 // type is a superset in create (adds clientId/type), so we accept any form
@@ -37,9 +38,9 @@ export function ClientPolicyFields<T extends ClientPolicyValues>({
             label="Allowed scopes"
             error={errors.allowedScopes?.message}
           >
-            <ChipInput
+            <ChoiceChips
               ariaLabel="Allowed scopes"
-              placeholder="openid, profile, email"
+              options={KNOWN_SCOPES}
               values={field.value}
               onChange={field.onChange}
             />
@@ -55,9 +56,9 @@ export function ClientPolicyFields<T extends ClientPolicyValues>({
             label="Allowed claims"
             error={errors.allowedClaims?.message}
           >
-            <ChipInput
+            <ChoiceChips
               ariaLabel="Allowed claims"
-              placeholder="sub, email, name"
+              options={KNOWN_CLAIMS}
               values={field.value}
               onChange={field.onChange}
             />

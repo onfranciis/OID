@@ -41,6 +41,37 @@ test('creating a client navigates to its detail page', async () => {
   ).toBeDefined();
 });
 
+test('toggling a scope chip on creation persists it on the client', async () => {
+  renderApp('/clients/new');
+
+  fireEvent.change(await screen.findByLabelText('Client ID'), {
+    target: { value: 'chip-toggle-client' },
+  });
+  fireEvent.change(screen.getByLabelText('Name'), {
+    target: { value: 'Chip Toggle Client' },
+  });
+
+  const scopesGroup = screen.getByRole('group', { name: 'Allowed scopes' });
+  const profileChip = within(scopesGroup).getByRole('button', {
+    name: 'profile',
+  });
+  expect(profileChip.getAttribute('aria-pressed')).toBe('false');
+  fireEvent.click(profileChip);
+  expect(profileChip.getAttribute('aria-pressed')).toBe('true');
+
+  fireEvent.click(screen.getByRole('button', { name: 'Create client' }));
+  await screen.findByRole('heading', { name: 'Chip Toggle Client' });
+
+  const policyScopesGroup = await screen.findByRole('group', {
+    name: 'Allowed scopes',
+  });
+  expect(
+    within(policyScopesGroup)
+      .getByRole('button', { name: 'profile' })
+      .getAttribute('aria-pressed'),
+  ).toBe('true');
+});
+
 test('duplicate client ID surfaces an inline conflict error', async () => {
   renderApp('/clients/new');
 
