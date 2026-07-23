@@ -20,9 +20,17 @@ test('severity filter narrows to critical events', async () => {
     target: { value: 'critical' },
   });
 
-  await expect.poll(() => screen.queryByText('admin.user.created')).toBeNull();
+  // The filter change goes through a 300ms debounce before refetching;
+  // give this comfortable headroom over the default 1s poll timeout so it
+  // doesn't flake under CI load.
+  await expect
+    .poll(() => screen.queryByText('admin.user.created'), { timeout: 2000 })
+    .toBeNull();
+  // Awaited rather than a synchronous getAllByText: the row list briefly
+  // empties between the old and new filtered results landing, so asserting
+  // immediately after the poll above can catch that empty transition.
   expect(
-    screen.getAllByText('oidc.refresh_token.replayed').length,
+    (await screen.findAllByText('oidc.refresh_token.replayed')).length,
   ).toBeGreaterThan(0);
 });
 
@@ -33,7 +41,12 @@ test('deep-linked target filter is applied from the URL', async () => {
   expect(
     await screen.findAllByText('oidc.refresh_token.replayed'),
   ).toBeDefined();
-  await expect.poll(() => screen.queryByText('admin.user.created')).toBeNull();
+  // The filter change goes through a 300ms debounce before refetching;
+  // give this comfortable headroom over the default 1s poll timeout so it
+  // doesn't flake under CI load.
+  await expect
+    .poll(() => screen.queryByText('admin.user.created'), { timeout: 2000 })
+    .toBeNull();
 });
 
 test('expanding a row reveals metadata JSON', async () => {
@@ -79,8 +92,12 @@ test('changing a filter resets pagination back to page 1', async () => {
   });
 
   // Only 4 critical events at limit=10: single page, no pagination controls.
+  // The filter change goes through a 300ms debounce before refetching; give
+  // this comfortable headroom over the default 1s poll timeout.
   await screen.findAllByText('oidc.refresh_token.replayed');
-  await expect.poll(() => screen.queryByText(/^Page /)).toBeNull();
+  await expect
+    .poll(() => screen.queryByText(/^Page /), { timeout: 2000 })
+    .toBeNull();
 });
 
 test('clear filters resets the URL-driven query', async () => {

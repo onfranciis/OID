@@ -63,7 +63,11 @@ test('search narrows the users list', async () => {
   });
 
   expect(await screen.findByText('Alice Adeyemi')).toBeDefined();
-  await expect.poll(() => screen.queryByText('Bola Okafor')).toBeNull();
+  // The search input goes through a 300ms debounce before refetching; give
+  // this comfortable headroom over the default 1s poll timeout.
+  await expect
+    .poll(() => screen.queryByText('Bola Okafor'), { timeout: 2000 })
+    .toBeNull();
 });
 
 test('pagination moves to the next page and back', async () => {
@@ -107,8 +111,12 @@ test('searching resets pagination back to page 1', async () => {
   });
 
   expect(await screen.findByText('Alice Adeyemi')).toBeDefined();
-  // Single-page result: pagination controls disappear entirely.
-  await expect.poll(() => screen.queryByText(/^Page /)).toBeNull();
+  // Single-page result: pagination controls disappear entirely. The search
+  // input goes through a 300ms debounce before refetching; give this
+  // comfortable headroom over the default 1s poll timeout.
+  await expect
+    .poll(() => screen.queryByText(/^Page /), { timeout: 2000 })
+    .toBeNull();
 });
 
 test('creating a user navigates to its detail page', async () => {

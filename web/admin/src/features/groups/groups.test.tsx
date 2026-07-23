@@ -37,7 +37,11 @@ test('search narrows the groups list', async () => {
   });
 
   expect(await screen.findByText('People Operations')).toBeDefined();
-  await expect.poll(() => screen.queryByText('Engineering')).toBeNull();
+  // The search input goes through a 300ms debounce before refetching; give
+  // this comfortable headroom over the default 1s poll timeout.
+  await expect
+    .poll(() => screen.queryByText('Engineering'), { timeout: 2000 })
+    .toBeNull();
 });
 
 test('creating a group navigates to its detail page', async () => {
