@@ -1,4 +1,8 @@
-FROM node:22-alpine AS base
+# Debian-based (glibc), not Alpine: Rollup/esbuild's native binaries have a
+# well-documented history of musl-detection failures under Docker on Alpine,
+# especially cross-building for arm64 — glibc sidesteps that class of bug
+# entirely rather than fighting it.
+FROM node:22-bookworm-slim AS base
 WORKDIR /app
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
