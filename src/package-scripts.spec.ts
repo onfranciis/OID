@@ -11,7 +11,7 @@ describe('package scripts', () => {
 
   it('exposes operations workflows', () => {
     expect(packageJson.scripts['dependency:audit']).toBe(
-      'pnpm audit --audit-level moderate',
+      'pnpm audit --audit-level moderate --ignore GHSA-p2fr-6hmx-4528',
     );
     expect(packageJson.scripts.typecheck).toBe('tsc --noEmit -p tsconfig.json');
     expect(packageJson.scripts['start:prod:migrate']).toBe(

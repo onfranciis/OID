@@ -67,6 +67,11 @@ jobs:
           APP_BASE_URL: http://localhost:3000
           BETTER_AUTH_SECRET: ci-only-better-auth-secret-32-characters
 
+      # GHSA-p2fr-6hmx-4528 (@better-auth/oauth-provider) is explicitly
+      # ignored: the only fix ships in a prerelease (>=1.7.0-beta.4, no
+      # stable 1.7.0 yet) whose migration does `ALTER TABLE account ADD
+      # COLUMN issuer NOT NULL` with no backfill, breaking any database
+      # that already has rows. Revisit once a GA release adds one.
       - name: Dependency audit
         run: pnpm dependency:audit
 
