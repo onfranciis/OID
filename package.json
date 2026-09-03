@@ -65,7 +65,7 @@
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/serve-static": "^5.0.5",
     "@nestjs/typeorm": "^11.0.1",
-    "better-auth": "^1.6.20",
+    "better-auth": "^1.7.2",
     "express": "5.2.1",
     "kysely": "^0.29.2",
     "nunjucks": "^3.2.4",
