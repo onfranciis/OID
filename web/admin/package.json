@@ -29,7 +29,7 @@
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-hook-form": "^7.59.0",
-    "react-router-dom": "^7.6.3",
+    "react-router-dom": "^7.18.3",
     "zod": "^3.25.67"
   },
   "devDependencies": {
