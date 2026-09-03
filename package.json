@@ -71,7 +71,7 @@
     "nunjucks": "^3.2.4",
     "pg": "^8.21.0",
     "reflect-metadata": "^0.2.2",
-    "resend": "^6.17.2",
+    "resend": "^6.25.0",
     "rxjs": "^7.8.1",
     "typeorm": "^0.3.31",
     "ulid": "^3.0.2"
