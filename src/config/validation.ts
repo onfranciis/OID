@@ -12,6 +12,7 @@ export function validateEnvironment(
   const betterAuthSecret = readEnv(config, 'BETTER_AUTH_SECRET');
   const bootstrapAdminPassword = readEnv(config, 'BOOTSTRAP_ADMIN_PASSWORD');
   const bootstrapClientSecret = readEnv(config, 'BOOTSTRAP_CLIENT_SECRET');
+  const resendApiKey = readEnv(config, 'RESEND_API_KEY');
 
   if (config.NODE_ENV !== undefined && typeof config.NODE_ENV !== 'string') {
     throw new Error('NODE_ENV must be a string when provided.');
@@ -69,6 +70,7 @@ export function validateEnvironment(
       betterAuthSecret,
       bootstrapAdminPassword,
       bootstrapClientSecret,
+      resendApiKey,
     });
   }
 
@@ -84,6 +86,7 @@ function validateProductionEnvironment(env: {
   betterAuthSecret: string;
   bootstrapAdminPassword: string | undefined;
   bootstrapClientSecret: string | undefined;
+  resendApiKey: string | undefined;
 }): void {
   if (!env.appBaseUrl.startsWith('https://')) {
     throw new Error('APP_BASE_URL must use https:// in production.');
@@ -105,6 +108,12 @@ function validateProductionEnvironment(env: {
   if (env.bootstrapClientSecret === 'replace-this-sample-client-secret') {
     throw new Error(
       'BOOTSTRAP_CLIENT_SECRET must not use the sample development default.',
+    );
+  }
+
+  if (!env.resendApiKey) {
+    throw new Error(
+      'RESEND_API_KEY is required in production so account emails are delivered instead of logged.',
     );
   }
 }

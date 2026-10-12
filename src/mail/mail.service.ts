@@ -22,15 +22,18 @@ export class MailService {
   private readonly logger = new Logger(MailService.name);
   private readonly resend: Resend | null;
   private readonly fromEmail: string;
+  private readonly nodeEnv: string;
 
   constructor(configService: AppConfigService) {
     const apiKey = configService.get('mail.resendApiKey');
     this.resend = apiKey ? new Resend(apiKey) : null;
     this.fromEmail = configService.get('mail.fromEmail');
+    this.nodeEnv = configService.get('app.env');
   }
 
   async sendInviteEmail(input: SendInviteEmailInput): Promise<void> {
     if (!this.resend) {
+      this.assertLogFallbackAllowed();
       // No API key: log the link instead of failing, for local/CI testing.
       this.logger.warn(
         `RESEND_API_KEY is not configured; logging the invite link for ${input.to} instead of emailing it.`,
@@ -56,6 +59,7 @@ export class MailService {
     input: SendPasswordResetEmailInput,
   ): Promise<void> {
     if (!this.resend) {
+      this.assertLogFallbackAllowed();
       this.logger.warn(
         `RESEND_API_KEY is not configured; logging the password reset link for ${input.to} instead of emailing it.`,
       );
@@ -74,6 +78,14 @@ export class MailService {
     if (result.error) {
       throw new Error(
         `Failed to send password reset email: ${result.error.message}`,
+      );
+    }
+  }
+
+  private assertLogFallbackAllowed(): void {
+    if (this.nodeEnv === 'production') {
+      throw new Error(
+        'RESEND_API_KEY is required in production; refusing to log email links containing live tokens.',
       );
     }
   }

@@ -23,12 +23,16 @@ describe('MailService', () => {
     send.mockReset();
   });
 
-  function makeConfigService(resendApiKey: string | null) {
+  function makeConfigService(
+    resendApiKey: string | null,
+    nodeEnv = 'development',
+  ) {
     return {
       get: vi.fn((key: string) => {
         if (key === 'mail.resendApiKey') return resendApiKey;
         if (key === 'mail.fromEmail')
           return 'Internal ID <onboarding@resend.dev>';
+        if (key === 'app.env') return nodeEnv;
         throw new Error(`Unexpected config key: ${key}`);
       }),
     } as unknown as AppConfigService;
@@ -68,6 +72,23 @@ describe('MailService', () => {
     const service = new MailService(makeConfigService(null));
 
     await expect(service.sendInviteEmail(invite)).resolves.toBeUndefined();
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it('refuses to log live token links in production without an API key', async () => {
+    const service = new MailService(makeConfigService(null, 'production'));
+
+    await expect(service.sendInviteEmail(invite)).rejects.toThrow(
+      /RESEND_API_KEY is required in production/,
+    );
+    await expect(
+      service.sendPasswordResetEmail({
+        to: invite.to,
+        displayName: invite.displayName,
+        resetUrl: 'https://auth.company.com/reset/raw-token',
+        expiresAt: invite.expiresAt,
+      }),
+    ).rejects.toThrow(/RESEND_API_KEY is required in production/);
     expect(send).not.toHaveBeenCalled();
   });
 });

@@ -8,10 +8,20 @@ describe('validateEnvironment', () => {
     APP_BASE_URL: 'https://auth.company.com',
     BETTER_AUTH_SECRET: 'production-secret-with-at-least-32-characters',
     BOOTSTRAP_ADMIN_PASSWORD: 'not-the-local-default',
+    RESEND_API_KEY: 're_production-key',
   };
 
   it('accepts secure production configuration', () => {
     expect(validateEnvironment(baseConfig)).toBe(baseConfig);
+  });
+
+  it('rejects production without a mail provider key', () => {
+    expect(() =>
+      validateEnvironment({
+        ...baseConfig,
+        RESEND_API_KEY: undefined,
+      }),
+    ).toThrow(/RESEND_API_KEY/);
   });
 
   it('rejects insecure production base URLs', () => {
