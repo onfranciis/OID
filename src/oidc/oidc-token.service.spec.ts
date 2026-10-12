@@ -38,6 +38,10 @@ describe('OidcTokenService', () => {
             return userRepository;
           }
 
+          if (entity.name === 'GroupMembershipEntity') {
+            return transactionMembershipRepository;
+          }
+
           throw new Error(`Unexpected repository: ${entity.name}`);
         },
       }),
@@ -53,6 +57,18 @@ describe('OidcTokenService', () => {
   };
   const topLevelClientRepository = {
     findOne: vi.fn(),
+  };
+  const topLevelMembershipRepository = {
+    find: vi.fn(
+      (): Promise<Array<{ group: { slug: string } }>> =>
+        Promise.resolve([]),
+    ),
+  };
+  const transactionMembershipRepository = {
+    find: vi.fn(
+      (): Promise<Array<{ group: { slug: string } }>> =>
+        Promise.resolve([]),
+    ),
   };
   const record = vi.fn<(input: unknown) => Promise<string>>(() =>
     Promise.resolve('evt_123'),
@@ -116,6 +132,7 @@ describe('OidcTokenService', () => {
       rotateTokenForClient,
       revokePresentedToken,
     } as never,
+    topLevelMembershipRepository as never,
   );
 
   beforeEach(() => {
@@ -130,6 +147,10 @@ describe('OidcTokenService', () => {
     signingRepository.save.mockClear();
     topLevelUserRepository.findOne.mockReset();
     topLevelClientRepository.findOne.mockReset();
+    topLevelMembershipRepository.find.mockReset();
+    topLevelMembershipRepository.find.mockResolvedValue([]);
+    transactionMembershipRepository.find.mockReset();
+    transactionMembershipRepository.find.mockResolvedValue([]);
     record.mockClear();
     issueRefreshToken.mockClear();
     rotateTokenForClient.mockClear();
@@ -400,6 +421,101 @@ describe('OidcTokenService', () => {
       email: 'admin@company.com',
       email_verified: true,
       name: 'Internal Admin',
+    });
+  });
+
+  it('emits sorted group slugs in the id token when granted', async () => {
+    codeRepository.findOne.mockResolvedValueOnce({
+      ...validCode(),
+      scope: 'openid groups',
+    });
+    clientRepository.findOne.mockResolvedValueOnce({
+      ...validClient(),
+      allowedClaims: ['groups'],
+    });
+    transactionMembershipRepository.find.mockResolvedValueOnce([
+      { group: { slug: 'identity-admins' } },
+      { group: { slug: 'engineering' } },
+    ]);
+
+    const result = await service.exchangeAuthorizationCode(validInput());
+    const idTokenPayload = decodeJwtPayload(result.id_token ?? '');
+
+    expect(idTokenPayload.groups).toEqual([
+      'engineering',
+      'identity-admins',
+    ]);
+    expect(transactionMembershipRepository.find).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { userId: 'usr_123' },
+      }),
+    );
+  });
+
+  it('omits groups when the scope or client claim is missing', async () => {
+    transactionMembershipRepository.find.mockResolvedValue([
+      { group: { slug: 'engineering' } },
+    ]);
+
+    codeRepository.findOne.mockResolvedValueOnce({
+      ...validCode(),
+      scope: 'openid profile',
+    });
+    clientRepository.findOne.mockResolvedValueOnce({
+      ...validClient(),
+      allowedClaims: ['groups'],
+    });
+
+    const withoutScope = await service.exchangeAuthorizationCode(validInput());
+
+    expect(decodeJwtPayload(withoutScope.id_token ?? '')).not.toHaveProperty(
+      'groups',
+    );
+
+    codeRepository.findOne.mockResolvedValueOnce({
+      ...validCode(),
+      scope: 'openid groups',
+    });
+    clientRepository.findOne.mockResolvedValueOnce({
+      ...validClient(),
+      allowedClaims: ['email'],
+    });
+
+    const withoutClaim = await service.exchangeAuthorizationCode(validInput());
+
+    expect(decodeJwtPayload(withoutClaim.id_token ?? '')).not.toHaveProperty(
+      'groups',
+    );
+  });
+
+  it('returns groups from userinfo when granted', async () => {
+    codeRepository.findOne.mockResolvedValueOnce({
+      ...validCode(),
+      scope: 'openid groups',
+    });
+    clientRepository.findOne.mockResolvedValueOnce({
+      ...validClient(),
+      allowedClaims: ['groups'],
+    });
+    const tokenResponse = await service.exchangeAuthorizationCode(validInput());
+    const savedSigningKey = signingRepository.save.mock.calls[0]?.[0] as object;
+    signingRepository.findOne.mockResolvedValueOnce(savedSigningKey);
+    topLevelUserRepository.findOne.mockResolvedValueOnce(validUser());
+    topLevelClientRepository.findOne.mockResolvedValueOnce({
+      ...validClient(),
+      allowedClaims: ['groups'],
+    });
+    topLevelMembershipRepository.find.mockResolvedValueOnce([
+      { group: { slug: 'engineering' } },
+    ]);
+
+    await expect(
+      service.userInfo({
+        authorizationHeader: `Bearer ${tokenResponse.access_token}`,
+      }),
+    ).resolves.toMatchObject({
+      sub: 'usr_123',
+      groups: ['engineering'],
     });
   });
 

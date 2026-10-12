@@ -26,6 +26,7 @@ import {
   OidcClientStatus,
   OidcClientType,
 } from '../database/entities/oidc-client.entity';
+import { GroupMembershipEntity } from '../database/entities/group-membership.entity';
 import {
   SigningKeyEntity,
   SigningKeyStatus,
@@ -83,6 +84,8 @@ export class OidcTokenService {
     private readonly clientRepository: Repository<OidcClientEntity>,
     private readonly auditService: AuditService,
     private readonly refreshTokenService: RefreshTokenService,
+    @InjectRepository(GroupMembershipEntity)
+    private readonly membershipRepository: Repository<GroupMembershipEntity>,
   ) {
     this.issuer = configService.get('app.baseUrl');
     this.signingSecret = configService.get('betterAuth.secret');
@@ -193,7 +196,12 @@ export class OidcTokenService {
           ...(authorizationCode.nonce
             ? { nonce: authorizationCode.nonce }
             : {}),
-          ...buildUserClaims(user, scope, client.allowedClaims),
+          ...(await this.buildUserClaims(
+            user,
+            scope,
+            client.allowedClaims,
+            manager.getRepository(GroupMembershipEntity),
+          )),
         },
         signingKey,
         this.signingSecret,
@@ -341,7 +349,12 @@ export class OidcTokenService {
 
     return {
       sub: user.id,
-      ...buildUserClaims(user, String(payload.scope), client.allowedClaims),
+      ...(await this.buildUserClaims(
+        user,
+        String(payload.scope),
+        client.allowedClaims,
+        this.membershipRepository,
+      )),
     };
   }
 
@@ -399,6 +412,66 @@ export class OidcTokenService {
 
     return this.signingKeyRepository.save(signingKey);
   }
+
+  private async buildUserClaims(
+    user: UserEntity,
+    scope: string,
+    allowedClaims: string[],
+    membershipRepository: Pick<Repository<GroupMembershipEntity>, 'find'>,
+  ): Promise<Record<string, unknown>> {
+    const scopes = new Set(scope.split(' '));
+    const claims: Record<string, unknown> = {};
+
+    if (scopes.has('email') && allowedClaims.includes('email')) {
+      claims.email = user.email;
+      claims.email_verified = user.emailVerifiedAt !== null;
+    }
+
+    if (scopes.has('profile')) {
+      if (allowedClaims.includes('name')) {
+        claims.name = user.displayName;
+      }
+
+      if (allowedClaims.includes('given_name')) {
+        claims.given_name = user.givenName;
+      }
+
+      if (allowedClaims.includes('family_name')) {
+        claims.family_name = user.familyName;
+      }
+
+      if (allowedClaims.includes('preferred_username')) {
+        claims.preferred_username = user.username;
+      }
+
+      if (allowedClaims.includes('profile_type')) {
+        claims.profile_type = user.profileType;
+      }
+    }
+
+    if (scopes.has('groups') && allowedClaims.includes('groups')) {
+      claims.groups = await this.resolveGroupSlugs(
+        user.id,
+        membershipRepository,
+      );
+    }
+
+    return claims;
+  }
+
+  private async resolveGroupSlugs(
+    userId: string,
+    membershipRepository: Pick<Repository<GroupMembershipEntity>, 'find'>,
+  ): Promise<string[]> {
+    const memberships = await membershipRepository.find({
+      where: { userId },
+      relations: { group: true },
+    });
+
+    return memberships
+      .map((membership) => membership.group.slug)
+      .sort((a, b) => a.localeCompare(b));
+  }
 }
 
 function normalizeRequired(
@@ -454,44 +527,6 @@ function verifyS256Pkce(verifier: string, challenge: string): boolean {
 
 function hashSecret(secret: string): string {
   return createHash('sha256').update(secret).digest('hex');
-}
-
-function buildUserClaims(
-  user: UserEntity,
-  scope: string,
-  allowedClaims: string[],
-): Record<string, unknown> {
-  const scopes = new Set(scope.split(' '));
-  const claims: Record<string, unknown> = {};
-
-  if (scopes.has('email') && allowedClaims.includes('email')) {
-    claims.email = user.email;
-    claims.email_verified = user.emailVerifiedAt !== null;
-  }
-
-  if (scopes.has('profile')) {
-    if (allowedClaims.includes('name')) {
-      claims.name = user.displayName;
-    }
-
-    if (allowedClaims.includes('given_name')) {
-      claims.given_name = user.givenName;
-    }
-
-    if (allowedClaims.includes('family_name')) {
-      claims.family_name = user.familyName;
-    }
-
-    if (allowedClaims.includes('preferred_username')) {
-      claims.preferred_username = user.username;
-    }
-
-    if (allowedClaims.includes('profile_type')) {
-      claims.profile_type = user.profileType;
-    }
-  }
-
-  return claims;
 }
 
 function signJwt(

@@ -18,6 +18,7 @@ import {
   OidcClientStatus,
   OidcClientType,
 } from '../database/entities/oidc-client.entity';
+import { GroupMembershipEntity } from '../database/entities/group-membership.entity';
 import { OidcProviderSessionEntity } from '../database/entities/oidc-provider-session.entity';
 import { OidcRedirectUriEntity } from '../database/entities/oidc-redirect-uri.entity';
 import { SigningKeyEntity } from '../database/entities/signing-key.entity';
@@ -103,6 +104,7 @@ describeWithDatabase('Public client PKCE flow integration', () => {
       dataSource.getRepository(OidcClientEntity),
       auditService as never,
       refreshTokenService,
+      dataSource.getRepository(GroupMembershipEntity),
     );
   });
 

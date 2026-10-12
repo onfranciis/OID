@@ -4,6 +4,7 @@ import { AuditModule } from '../audit/audit.module';
 import { AuthenticationModule } from '../authentication/authentication.module';
 import { AppConfigModule } from '../config/app-config.module';
 import { OidcAuthorizationCodeEntity } from '../database/entities/oidc-authorization-code.entity';
+import { GroupMembershipEntity } from '../database/entities/group-membership.entity';
 import { OidcClientEntity } from '../database/entities/oidc-client.entity';
 import { OidcPostLogoutRedirectUriEntity } from '../database/entities/oidc-post-logout-redirect-uri.entity';
 import { OidcProviderSessionEntity } from '../database/entities/oidc-provider-session.entity';
@@ -26,6 +27,7 @@ import { TokenRateLimitService } from './token-rate-limit.service';
     TypeOrmModule.forFeature([
       OidcAuthorizationCodeEntity,
       OidcClientEntity,
+      GroupMembershipEntity,
       OidcPostLogoutRedirectUriEntity,
       OidcProviderSessionEntity,
       OidcRedirectUriEntity,
