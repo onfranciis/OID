@@ -51,6 +51,16 @@ Every client must validate the ID token before creating an app session:
 
 The sample implementation lives in `sample-client/src/oidc-client.ts`.
 
+## Browser Clients And CORS
+
+The bundled admin SPA is same-origin and needs no CORS configuration.
+Third-party browser clients calling `/oauth/token` or `/oauth/userinfo`
+cross-origin with `fetch`/XHR must have their origin listed in
+`CORS_ALLOWED_ORIGINS` (comma separated, exact `https://` origins), otherwise
+the browser blocks the calls. Public (PKCE, no secret) clients are supported
+for this pattern; confidential clients must keep their secret server side and
+should call the token endpoint from their backend instead.
+
 ## Session Boundary
 
 Do not use provider access tokens as application sessions by default. The sample

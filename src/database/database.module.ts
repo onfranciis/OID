@@ -17,6 +17,7 @@ import { createTypeOrmOptions } from './typeorm.config';
             host: configService.get('app.host'),
             port: configService.get('app.port'),
             baseUrl: configService.get('app.baseUrl'),
+            corsAllowedOrigins: configService.get('app.corsAllowedOrigins'),
           },
           database: {
             url: configService.get('database.url'),

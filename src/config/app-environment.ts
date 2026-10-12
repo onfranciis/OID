@@ -7,6 +7,7 @@ export interface AppEnvironment {
     host: string;
     port: number;
     baseUrl: string;
+    corsAllowedOrigins: string[];
   };
   database: {
     url: string;

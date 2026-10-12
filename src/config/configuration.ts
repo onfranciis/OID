@@ -1,4 +1,5 @@
 import { readEnv } from './env';
+import { parseCorsAllowedOrigins } from './cors';
 import type { AppEnvironment, NodeEnvironment } from './app-environment';
 
 function env(key: string): string | undefined {
@@ -35,6 +36,9 @@ export function configuration(): AppEnvironment {
       port: parseNumber(env('PORT'), 3000),
       // Required by validateEnvironment(); never falls back silently.
       baseUrl: env('APP_BASE_URL') as string,
+      // Browser clients calling /oauth/token or /oauth/userinfo cross-origin
+      // need their origin listed here. Empty by default (same-origin only).
+      corsAllowedOrigins: parseCorsAllowedOrigins(env('CORS_ALLOWED_ORIGINS')),
     },
     database: {
       // Required by validateEnvironment(); never falls back silently.

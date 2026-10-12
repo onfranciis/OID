@@ -16,6 +16,19 @@ async function bootstrap() {
   const configService = app.get(AppConfigService);
   const port = configService.get('app.port');
   const host = configService.get('app.host');
+  const corsAllowedOrigins = configService.get('app.corsAllowedOrigins');
+
+  if (corsAllowedOrigins.length > 0) {
+    app.enableCors({
+      origin: corsAllowedOrigins,
+      methods: ['GET', 'POST', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization'],
+      maxAge: 86400,
+    });
+    logger.log(
+      `CORS enabled for ${corsAllowedOrigins.length} origin(s): ${corsAllowedOrigins.join(', ')}`,
+    );
+  }
 
   await app.listen(port, host);
   logger.log(`Server started on ${await app.getUrl()}`);
