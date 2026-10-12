@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs';
 import { loadEnvFile } from 'node:process';
 import { getMigrations } from 'better-auth/db/migration';
 import { configuration } from '../../config/configuration';
+import { validateEnvironment } from '../../config/validation';
 import { createBetterAuthRuntime } from '../better-auth.factory';
 
 if (existsSync('.env')) {
@@ -13,6 +14,7 @@ if (existsSync('.env.local')) {
 }
 
 async function materializeBetterAuthSchema(): Promise<void> {
+  validateEnvironment(process.env);
   const runtime = createBetterAuthRuntime(configuration());
 
   try {

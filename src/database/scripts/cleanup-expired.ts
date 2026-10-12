@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs';
 import { loadEnvFile } from 'node:process';
 import { DataSource } from 'typeorm';
 import { configuration } from '../../config/configuration';
+import { validateEnvironment } from '../../config/validation';
 import { createTypeOrmOptions } from '../typeorm.config';
 
 if (existsSync('.env')) {
@@ -13,6 +14,7 @@ if (existsSync('.env.local')) {
 }
 
 async function cleanupExpiredState(): Promise<void> {
+  validateEnvironment(process.env);
   const dataSource = new DataSource(createTypeOrmOptions(configuration()));
   await dataSource.initialize();
 

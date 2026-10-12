@@ -4,6 +4,7 @@ import { loadEnvFile } from 'node:process';
 import { Client } from 'pg';
 import { DataSource } from 'typeorm';
 import { configuration } from '../../config/configuration';
+import { validateEnvironment } from '../../config/validation';
 import { createTypeOrmOptions } from '../typeorm.config';
 
 if (existsSync('.env')) {
@@ -21,6 +22,7 @@ function getAdminDatabaseUrl(databaseUrl: URL): URL {
 }
 
 async function verifyMigrations(): Promise<void> {
+  validateEnvironment(process.env);
   const appEnvironment = configuration();
   const baseDatabaseUrl = new URL(appEnvironment.database.url);
   const tempDatabaseName = `internal_id_verify_${randomUUID().replaceAll('-', '_')}`;

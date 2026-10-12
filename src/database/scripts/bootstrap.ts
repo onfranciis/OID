@@ -8,6 +8,7 @@ import {
   upsertBetterAuthCredential,
 } from '../../better-auth/better-auth-credential';
 import { configuration } from '../../config/configuration';
+import { validateEnvironment } from '../../config/validation';
 import { createTypeOrmOptions } from '../typeorm.config';
 import { GroupMembershipEntity } from '../entities/group-membership.entity';
 import { GroupEntity } from '../entities/group.entity';
@@ -53,6 +54,7 @@ function hashSecret(secret: string): string {
 }
 
 async function bootstrap(): Promise<void> {
+  validateEnvironment(process.env);
   const appEnvironment = configuration();
   const dataSource = new DataSource(createTypeOrmOptions(appEnvironment));
 
