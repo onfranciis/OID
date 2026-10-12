@@ -21,6 +21,10 @@ import { createTypeOrmOptions } from './typeorm.config';
           database: {
             url: configService.get('database.url'),
             logging: configService.get('database.logging'),
+            poolMax: configService.get('database.poolMax'),
+            connectTimeoutMs: configService.get('database.connectTimeoutMs'),
+            retryAttempts: configService.get('database.retryAttempts'),
+            retryDelayMs: configService.get('database.retryDelayMs'),
           },
           betterAuth: {
             basePath: configService.get('betterAuth.basePath'),

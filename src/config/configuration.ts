@@ -40,6 +40,10 @@ export function configuration(): AppEnvironment {
       // Required by validateEnvironment(); never falls back silently.
       url: env('DATABASE_URL') as string,
       logging: parseBoolean(env('DATABASE_LOGGING'), false),
+      poolMax: parseNumber(env('DATABASE_POOL_MAX'), 10),
+      connectTimeoutMs: parseNumber(env('DATABASE_CONNECT_TIMEOUT_MS'), 10000),
+      retryAttempts: parseNumber(env('DATABASE_RETRY_ATTEMPTS'), 5),
+      retryDelayMs: parseNumber(env('DATABASE_RETRY_DELAY_MS'), 3000),
     },
     betterAuth: {
       basePath: env('BETTER_AUTH_BASE_PATH') ?? '/api/auth',

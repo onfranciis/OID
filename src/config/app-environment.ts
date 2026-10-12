@@ -11,6 +11,10 @@ export interface AppEnvironment {
   database: {
     url: string;
     logging: boolean;
+    poolMax: number;
+    connectTimeoutMs: number;
+    retryAttempts: number;
+    retryDelayMs: number;
   };
   betterAuth: {
     basePath: string;

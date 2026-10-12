@@ -17,5 +17,11 @@ export function createTypeOrmOptions(
     migrations: [...DATABASE_MIGRATIONS],
     migrationsTableName: 'typeorm_migrations',
     ssl: false,
+    extra: {
+      max: appEnvironment.database.poolMax,
+      connectionTimeoutMillis: appEnvironment.database.connectTimeoutMs,
+    },
+    retryAttempts: appEnvironment.database.retryAttempts,
+    retryDelay: appEnvironment.database.retryDelayMs,
   };
 }

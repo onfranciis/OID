@@ -63,6 +63,15 @@ export function validateEnvironment(
     throw new Error('BOOTSTRAP_CLIENT_SECRET must be a string when provided.');
   }
 
+  for (const key of [
+    'DATABASE_POOL_MAX',
+    'DATABASE_CONNECT_TIMEOUT_MS',
+    'DATABASE_RETRY_ATTEMPTS',
+    'DATABASE_RETRY_DELAY_MS',
+  ]) {
+    assertPositiveInteger(config, key);
+  }
+
   if (nodeEnv === 'production') {
     validateProductionEnvironment({
       appBaseUrl,
@@ -77,6 +86,23 @@ export function validateEnvironment(
   }
 
   return config;
+}
+
+function assertPositiveInteger(
+  config: Record<string, unknown>,
+  key: string,
+): void {
+  const raw = readEnv(config, key);
+
+  if (raw === undefined) {
+    return;
+  }
+
+  const parsed = Number.parseInt(raw, 10);
+
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new Error(`${key} must be a positive integer when provided.`);
+  }
 }
 
 function validateProductionEnvironment(env: {

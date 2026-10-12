@@ -43,6 +43,12 @@ the app process. Do not enable TypeORM `synchronize` in production.
 Required variables:
 
 - `DATABASE_URL`: PostgreSQL connection string.
+- `DATABASE_POOL_MAX`: Connections per app instance (default 10). Multiply by
+  instance count when sizing against the Postgres connection cap.
+- `DATABASE_CONNECT_TIMEOUT_MS`: Connection timeout in milliseconds
+  (default 10000) so boot fails fast instead of hanging.
+- `DATABASE_RETRY_ATTEMPTS` / `DATABASE_RETRY_DELAY_MS`: Boot retries
+  against a briefly unreachable database (defaults 5 / 3000ms).
 - `APP_BASE_URL`: Public issuer origin. Must use `https://` in production.
 - `BETTER_AUTH_SECRET`: Random secret with at least 32 characters.
 - `BETTER_AUTH_BASE_PATH`: Better Auth mount path, normally `/api/auth`.

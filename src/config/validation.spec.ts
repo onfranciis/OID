@@ -110,4 +110,23 @@ describe('validateEnvironment', () => {
       }),
     ).toThrow(/BOOTSTRAP_CLIENT_SECRET/);
   });
+
+  it('rejects non positive database pool settings', () => {
+    expect(() =>
+      validateEnvironment({ ...baseConfig, DATABASE_POOL_MAX: '0' }),
+    ).toThrow(/DATABASE_POOL_MAX/);
+    expect(() =>
+      validateEnvironment({ ...baseConfig, DATABASE_CONNECT_TIMEOUT_MS: '-5' }),
+    ).toThrow(/DATABASE_CONNECT_TIMEOUT_MS/);
+    expect(() =>
+      validateEnvironment({ ...baseConfig, DATABASE_RETRY_ATTEMPTS: 'lots' }),
+    ).toThrow(/DATABASE_RETRY_ATTEMPTS/);
+    expect(
+      validateEnvironment({
+        ...baseConfig,
+        DATABASE_POOL_MAX: '25',
+        DATABASE_RETRY_DELAY_MS: '1000',
+      }),
+    ).toBeDefined();
+  });
 });
