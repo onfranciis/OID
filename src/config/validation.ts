@@ -12,6 +12,8 @@ export function validateEnvironment(
   const betterAuthSecret = readEnv(config, 'BETTER_AUTH_SECRET');
   const bootstrapAdminPassword = readEnv(config, 'BOOTSTRAP_ADMIN_PASSWORD');
   const bootstrapClientSecret = readEnv(config, 'BOOTSTRAP_CLIENT_SECRET');
+  const databaseSsl = readEnv(config, 'DATABASE_SSL');
+  const pgsslmode = readEnv(config, 'PGSSLMODE');
 
   if (config.NODE_ENV !== undefined && typeof config.NODE_ENV !== 'string') {
     throw new Error('NODE_ENV must be a string when provided.');
@@ -69,6 +71,9 @@ export function validateEnvironment(
       betterAuthSecret,
       bootstrapAdminPassword,
       bootstrapClientSecret,
+      databaseUrl,
+      databaseSsl,
+      pgsslmode,
     });
   }
 
@@ -84,6 +89,9 @@ function validateProductionEnvironment(env: {
   betterAuthSecret: string;
   bootstrapAdminPassword: string | undefined;
   bootstrapClientSecret: string | undefined;
+  databaseUrl: string;
+  databaseSsl: string | undefined;
+  pgsslmode: string | undefined;
 }): void {
   if (!env.appBaseUrl.startsWith('https://')) {
     throw new Error('APP_BASE_URL must use https:// in production.');
@@ -106,5 +114,42 @@ function validateProductionEnvironment(env: {
     throw new Error(
       'BOOTSTRAP_CLIENT_SECRET must not use the sample development default.',
     );
+  }
+
+  if (
+    !databaseConnectionHasTls(env.databaseUrl, env.databaseSsl, env.pgsslmode)
+  ) {
+    throw new Error(
+      'DATABASE_URL must use TLS in production. Set DATABASE_SSL=true, ' +
+        'PGSSLMODE=require (or a verify mode), or add sslmode=require to ' +
+        'DATABASE_URL. Only set DATABASE_SSL=false explicitly when the ' +
+        'database is reachable over a trusted private network.',
+    );
+  }
+}
+
+function databaseConnectionHasTls(
+  databaseUrl: string,
+  databaseSsl: string | undefined,
+  pgsslmode: string | undefined,
+): boolean {
+  if (databaseSsl !== undefined) {
+    return databaseSsl === 'true' || databaseSsl === 'false';
+  }
+
+  const sslmode = pgsslmode ?? sslmodeFromConnectionString(databaseUrl);
+
+  return (
+    sslmode === 'require' ||
+    sslmode === 'verify-ca' ||
+    sslmode === 'verify-full'
+  );
+}
+
+function sslmodeFromConnectionString(databaseUrl: string): string | undefined {
+  try {
+    return new URL(databaseUrl).searchParams.get('sslmode') ?? undefined;
+  } catch {
+    return undefined;
   }
 }

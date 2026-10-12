@@ -5,6 +5,7 @@ describe('validateEnvironment', () => {
   const baseConfig = {
     NODE_ENV: 'production',
     DATABASE_URL: 'postgres://postgres:postgres@localhost:5432/internal_id',
+    DATABASE_SSL: 'true',
     APP_BASE_URL: 'https://auth.company.com',
     BETTER_AUTH_SECRET: 'production-secret-with-at-least-32-characters',
     BOOTSTRAP_ADMIN_PASSWORD: 'not-the-local-default',
@@ -12,6 +13,36 @@ describe('validateEnvironment', () => {
 
   it('accepts secure production configuration', () => {
     expect(validateEnvironment(baseConfig)).toBe(baseConfig);
+  });
+
+  it('rejects production database connections without TLS', () => {
+    const { DATABASE_SSL: _ignored, ...withoutSsl } = baseConfig;
+
+    expect(() => validateEnvironment(withoutSsl)).toThrow(/TLS/);
+    expect(() =>
+      validateEnvironment({
+        ...withoutSsl,
+        DATABASE_SSL: 'true',
+      }),
+    ).not.toThrow();
+    expect(() =>
+      validateEnvironment({
+        ...withoutSsl,
+        PGSSLMODE: 'require',
+      }),
+    ).not.toThrow();
+    expect(() =>
+      validateEnvironment({
+        ...withoutSsl,
+        DATABASE_URL: `${baseConfig.DATABASE_URL}?sslmode=require`,
+      }),
+    ).not.toThrow();
+    expect(() =>
+      validateEnvironment({
+        ...withoutSsl,
+        DATABASE_SSL: 'false',
+      }),
+    ).not.toThrow();
   });
 
   it('rejects insecure production base URLs', () => {

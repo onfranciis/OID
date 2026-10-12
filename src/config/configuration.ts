@@ -40,6 +40,11 @@ export function configuration(): AppEnvironment {
       // Required by validateEnvironment(); never falls back silently.
       url: env('DATABASE_URL') as string,
       logging: parseBoolean(env('DATABASE_LOGGING'), false),
+      sslEnabled: parseBoolean(env('DATABASE_SSL'), false),
+      sslRejectUnauthorized: parseBoolean(
+        env('DATABASE_SSL_REJECT_UNAUTHORIZED'),
+        true,
+      ),
     },
     betterAuth: {
       basePath: env('BETTER_AUTH_BASE_PATH') ?? '/api/auth',

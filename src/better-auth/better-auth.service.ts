@@ -30,6 +30,10 @@ export class BetterAuthService implements OnModuleDestroy {
       database: {
         url: configService.get('database.url'),
         logging: configService.get('database.logging'),
+        sslEnabled: configService.get('database.sslEnabled'),
+        sslRejectUnauthorized: configService.get(
+          'database.sslRejectUnauthorized',
+        ),
       },
       betterAuth: {
         basePath: configService.get('betterAuth.basePath'),

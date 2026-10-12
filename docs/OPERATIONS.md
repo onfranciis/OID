@@ -43,6 +43,10 @@ the app process. Do not enable TypeORM `synchronize` in production.
 Required variables:
 
 - `DATABASE_URL`: PostgreSQL connection string.
+- `DATABASE_SSL`: Set `true` in production so the connection uses TLS.
+  `PGSSLMODE=require` (or `verify-ca` / `verify-full`) and
+  `?sslmode=require` on `DATABASE_URL` are honored too. Only `false`
+  set explicitly is accepted for a database on a trusted private network.
 - `APP_BASE_URL`: Public issuer origin. Must use `https://` in production.
 - `BETTER_AUTH_SECRET`: Random secret with at least 32 characters.
 - `BETTER_AUTH_BASE_PATH`: Better Auth mount path, normally `/api/auth`.
@@ -59,7 +63,9 @@ Bootstrap variables are only required when creating or updating the initial
 admin/group/client records through `pnpm seed:bootstrap`.
 
 Production validation rejects insecure defaults for `APP_BASE_URL`,
-`BETTER_AUTH_SECRET`, and `BOOTSTRAP_ADMIN_PASSWORD`.
+`BETTER_AUTH_SECRET`, and `BOOTSTRAP_ADMIN_PASSWORD`, and refuses an
+unencrypted database connection unless TLS is configured or explicitly
+acknowledged as unnecessary.
 
 ## Backup And Restore
 

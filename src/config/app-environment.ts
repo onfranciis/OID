@@ -11,6 +11,8 @@ export interface AppEnvironment {
   database: {
     url: string;
     logging: boolean;
+    sslEnabled: boolean;
+    sslRejectUnauthorized: boolean;
   };
   betterAuth: {
     basePath: string;

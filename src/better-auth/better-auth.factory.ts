@@ -6,6 +6,7 @@ import { Kysely, PostgresDialect } from 'kysely';
 import { Pool } from 'pg';
 import type { AuditEventRecordInput } from '../audit/audit.types';
 import type { AppEnvironment } from '../config/app-environment';
+import { buildPostgresSslConfig } from '../database/postgres-ssl';
 import { getAdditionalUserInfoClaims } from './claim-policy';
 import { createInternalAuditPlugin } from './internal-audit.plugin';
 
@@ -37,6 +38,7 @@ export function createBetterAuthRuntime(
 ): BetterAuthRuntime {
   const pool = new Pool({
     connectionString: appEnvironment.database.url,
+    ssl: buildPostgresSslConfig(appEnvironment),
   });
 
   const db = new Kysely<unknown>({
