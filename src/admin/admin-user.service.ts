@@ -221,6 +221,10 @@ export class AdminUserService {
     status: UserStatus,
     context: AdminMutationContext,
   ): Promise<SetUserStatusResult> {
+    if (!Object.values(UserStatus).includes(status)) {
+      throw new BadRequestException('Unsupported user status.');
+    }
+
     const user = await this.getExistingUser(userId);
 
     user.status = status;

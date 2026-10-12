@@ -1,4 +1,4 @@
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { AdminUserService } from './admin-user.service';
 import { AuditSeverity } from '../database/entities/audit-event.entity';
@@ -173,6 +173,19 @@ describe('AdminUserService', () => {
         context,
       ),
     ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('rejects unsupported user statuses with a bad request', async () => {
+    await expect(
+      service.setUserStatus(
+        'usr_target',
+        'banned' as unknown as UserStatus,
+        context,
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(findOne).not.toHaveBeenCalled();
+    expect(save).not.toHaveBeenCalled();
   });
 
   it('sets deactivated timestamps on deactivation and audits status changes', async () => {
