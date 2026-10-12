@@ -72,6 +72,9 @@ jobs:
       # stable 1.7.0 yet) whose migration does `ALTER TABLE account ADD
       # COLUMN issuer NOT NULL` with no backfill, breaking any database
       # that already has rows. Revisit once a GA release adds one.
+      # Tracking: https://github.com/onfranciis/OID/issues/52
+      # Re-evaluate no later than 2026-12-01 or when better-auth 1.7.x GA
+      # ships, whichever comes first.
       - name: Dependency audit
         run: pnpm dependency:audit
 
