@@ -28,6 +28,22 @@ export interface IssuedProviderSession {
   token: string;
 }
 
+// Extends the idle window on activity without moving the absolute deadline.
+// Mutates lastSeenAt/idleExpiresAt in place; the caller persists the record.
+export function slideSessionIdleExpiry(
+  session: OidcProviderSessionEntity,
+  idleTtlSeconds: number,
+  now: Date,
+): void {
+  session.lastSeenAt = now;
+  session.idleExpiresAt = new Date(
+    Math.min(
+      now.getTime() + idleTtlSeconds * 1000,
+      session.absoluteExpiresAt.getTime(),
+    ),
+  );
+}
+
 @Injectable()
 export class ProviderSessionService {
   private readonly idleTtlSeconds: number;

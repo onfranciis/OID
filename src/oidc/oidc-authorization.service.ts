@@ -9,6 +9,7 @@ import { Repository } from 'typeorm';
 import { monotonicFactory } from 'ulid';
 import { AuditService } from '../audit/audit.service';
 import { AuditEventTypes } from '../audit/audit.types';
+import { slideSessionIdleExpiry } from '../authentication/provider-session.service';
 import { AppConfigService } from '../config/app-config.service';
 import { AuditSeverity } from '../database/entities/audit-event.entity';
 import {
@@ -54,6 +55,7 @@ export interface AuthorizeRedirectResult {
 @Injectable()
 export class OidcAuthorizationService {
   private readonly loginPath: string;
+  private readonly sessionIdleTtlSeconds: number;
 
   constructor(
     configService: AppConfigService,
@@ -70,6 +72,9 @@ export class OidcAuthorizationService {
     private readonly auditService: AuditService,
   ) {
     this.loginPath = configService.get('betterAuth.loginPath');
+    this.sessionIdleTtlSeconds = configService.get(
+      'authentication.providerSessionIdleTtlSeconds',
+    );
   }
 
   async authorize(
@@ -143,7 +148,7 @@ export class OidcAuthorizationService {
       throw new UnauthorizedException('Active user session required.');
     }
 
-    session.lastSeenAt = now;
+    slideSessionIdleExpiry(session, this.sessionIdleTtlSeconds, now);
     await this.providerSessionRepository.save(session);
 
     const rawCode = randomBytes(32).toString('base64url');

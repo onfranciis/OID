@@ -7,6 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { createHash } from 'node:crypto';
 import { Repository } from 'typeorm';
 import { AppConfigService } from '../config/app-config.service';
+import { slideSessionIdleExpiry } from '../authentication/provider-session.service';
 import { GroupEntity } from '../database/entities/group.entity';
 import { GroupMembershipEntity } from '../database/entities/group-membership.entity';
 import { OidcProviderSessionEntity } from '../database/entities/oidc-provider-session.entity';
@@ -25,6 +26,7 @@ export interface AdminPrincipal {
 @Injectable()
 export class AdminAccessService {
   private readonly adminGroupSlug: string;
+  private readonly sessionIdleTtlSeconds: number;
 
   constructor(
     configService: AppConfigService,
@@ -38,6 +40,9 @@ export class AdminAccessService {
     private readonly providerSessionRepository: Repository<OidcProviderSessionEntity>,
   ) {
     this.adminGroupSlug = configService.get('bootstrap.adminGroupSlug');
+    this.sessionIdleTtlSeconds = configService.get(
+      'authentication.providerSessionIdleTtlSeconds',
+    );
   }
 
   async requireAdminAccess(
@@ -96,6 +101,13 @@ export class AdminAccessService {
     if (!membership) {
       throw new ForbiddenException('Admin access denied.');
     }
+
+    slideSessionIdleExpiry(
+      providerSession,
+      this.sessionIdleTtlSeconds,
+      now,
+    );
+    await this.providerSessionRepository.save(providerSession);
 
     return {
       user,

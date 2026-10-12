@@ -27,7 +27,17 @@ describe('OidcAuthorizationService', () => {
   );
   const service = new OidcAuthorizationService(
     {
-      get: vi.fn(() => '/login'),
+      get: vi.fn((key: string) => {
+        if (key === 'betterAuth.loginPath') {
+          return '/login';
+        }
+
+        if (key === 'authentication.providerSessionIdleTtlSeconds') {
+          return 43200;
+        }
+
+        throw new Error(`Unexpected config key: ${key}`);
+      }),
     } as unknown as AppConfigService,
     {
       findOne: findClient,
@@ -97,6 +107,7 @@ describe('OidcAuthorizationService', () => {
     expect(saveProviderSession).toHaveBeenCalledWith(
       expect.objectContaining({
         lastSeenAt: now,
+        idleExpiresAt: new Date('2026-06-22T00:00:00.000Z'),
       }),
     );
     expect(record).toHaveBeenCalledWith(
@@ -246,6 +257,28 @@ describe('OidcAuthorizationService', () => {
 
     await expect(service.authorize(validInput())).rejects.toBeInstanceOf(
       UnauthorizedException,
+    );
+  });
+
+  it('caps the sliding idle window at the absolute deadline', async () => {
+    findProviderSession.mockResolvedValueOnce({
+      id: 'psn_123',
+      userId: 'usr_123',
+      sessionHash: 'hash',
+      authTime: new Date('2026-06-21T11:55:00.000Z'),
+      lastSeenAt: new Date('2026-06-21T11:59:00.000Z'),
+      idleExpiresAt: new Date('2026-06-21T13:00:00.000Z'),
+      absoluteExpiresAt: new Date('2026-06-21T12:30:00.000Z'),
+      revokedAt: null,
+    });
+
+    await service.authorize(validInput());
+
+    expect(saveProviderSession).toHaveBeenCalledWith(
+      expect.objectContaining({
+        lastSeenAt: now,
+        idleExpiresAt: new Date('2026-06-21T12:30:00.000Z'),
+      }),
     );
   });
 

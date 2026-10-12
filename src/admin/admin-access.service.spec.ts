@@ -11,14 +11,25 @@ describe('AdminAccessService', () => {
   const findGroup = vi.fn();
   const findMembership = vi.fn();
   const findProviderSession = vi.fn();
+  const saveProviderSession = vi.fn((input: unknown) => Promise.resolve(input));
   const service = new AdminAccessService(
     {
-      get: vi.fn(() => 'internal-id-admins'),
+      get: vi.fn((key: string) => {
+        if (key === 'bootstrap.adminGroupSlug') {
+          return 'internal-id-admins';
+        }
+
+        if (key === 'authentication.providerSessionIdleTtlSeconds') {
+          return 43200;
+        }
+
+        throw new Error(`Unexpected config key: ${key}`);
+      }),
     } as unknown as AppConfigService,
     { findOne: findUser } as never,
     { findOne: findGroup } as never,
     { findOne: findMembership } as never,
-    { findOne: findProviderSession } as never,
+    { findOne: findProviderSession, save: saveProviderSession } as never,
   );
 
   beforeEach(() => {
@@ -26,6 +37,7 @@ describe('AdminAccessService', () => {
     findGroup.mockReset();
     findMembership.mockReset();
     findProviderSession.mockReset();
+    saveProviderSession.mockClear();
 
     findProviderSession.mockResolvedValue({
       id: 'psn_123',
@@ -69,6 +81,12 @@ describe('AdminAccessService', () => {
         sessionHash: createHash('sha256').update('session-token').digest('hex'),
       },
     });
+    expect(saveProviderSession).toHaveBeenCalledWith(
+      expect.objectContaining({
+        lastSeenAt: now,
+        idleExpiresAt: new Date('2026-06-22T00:00:00.000Z'),
+      }),
+    );
   });
 
   it('rejects missing provider session cookies', async () => {
