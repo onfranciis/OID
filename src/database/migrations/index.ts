@@ -4,6 +4,7 @@ import { AlignBetterAuthOauthProviderSchema1718109000000 } from './1718109000000
 import { RepointBetterAuthOauthProviderClientFks1718109100000 } from './1718109100000-repoint-better-auth-oauth-provider-client-fks';
 import { CreateUserInvites1718110000000 } from './1718110000000-create-user-invites';
 import { CreatePasswordResets1718111000000 } from './1718111000000-create-password-resets';
+import { AddHotLookupIndexes1718112000000 } from './1718112000000-add-hot-lookup-indexes';
 
 export const DATABASE_MIGRATIONS = [
   CreateInternalIdFoundation1718107200000,
@@ -12,4 +13,5 @@ export const DATABASE_MIGRATIONS = [
   RepointBetterAuthOauthProviderClientFks1718109100000,
   CreateUserInvites1718110000000,
   CreatePasswordResets1718111000000,
+  AddHotLookupIndexes1718112000000,
 ] as const;
