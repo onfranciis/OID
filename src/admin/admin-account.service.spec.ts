@@ -9,9 +9,13 @@ describe('AdminAccountService', () => {
   const record = vi.fn<(input: unknown) => Promise<string>>(() =>
     Promise.resolve('evt_123'),
   );
+  const updateProviderSessions = vi.fn(() => Promise.resolve({ affected: 2 }));
+  const updateRefreshTokens = vi.fn(() => Promise.resolve({ affected: 3 }));
   const service = new AdminAccountService(
     { changePassword } as never,
     { record } as never,
+    { update: updateProviderSessions } as never,
+    { update: updateRefreshTokens } as never,
   );
   const context = {
     principal: {
@@ -25,6 +29,8 @@ describe('AdminAccountService', () => {
   beforeEach(() => {
     changePassword.mockReset();
     record.mockClear();
+    updateProviderSessions.mockClear();
+    updateRefreshTokens.mockClear();
   });
 
   it('forwards the cookie header and records an audit event on success', async () => {
@@ -44,6 +50,14 @@ describe('AdminAccountService', () => {
       newPassword: 'new-password-123',
       cookieHeader: 'internal_id_session=sess-token',
     });
+    expect(updateProviderSessions).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: 'usr_admin' }),
+      expect.objectContaining({ revocationReason: 'password_changed' }),
+    );
+    expect(updateRefreshTokens).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: 'usr_admin' }),
+      expect.objectContaining({ revocationReason: 'password_changed' }),
+    );
     expect(record).toHaveBeenCalledWith({
       eventType: AuditEventTypes.AdminAccountPasswordChanged,
       severity: AuditSeverity.INFO,
@@ -52,6 +66,10 @@ describe('AdminAccountService', () => {
       providerSessionId: 'psn_admin',
       ipAddress: '127.0.0.1',
       userAgent: 'vitest',
+      metadata: {
+        revokedProviderSessionCount: 2,
+        revokedRefreshTokenCount: 3,
+      },
     });
   });
 
