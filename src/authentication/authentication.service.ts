@@ -302,6 +302,10 @@ function buildReturnTo(returnTo?: string | null): string {
   }
 
   if (returnTo.startsWith('/')) {
+    if (returnTo.startsWith('//') || returnTo.startsWith('/\\')) {
+      return '/';
+    }
+
     return returnTo;
   }
 

@@ -252,6 +252,34 @@ describe('AuthenticationService', () => {
     );
   });
 
+  it.each(['//evil.com/x', '/\\evil.com/x'])(
+    'falls back to home for protocol-relative returnTo values (%s)',
+    async (returnTo) => {
+      const csrfToken = readCookieValue(service.initLogin().csrfCookieHeader);
+
+      const result = await service.login(
+        {
+          email: 'Admin@Company.com',
+          password: 'password',
+          csrfToken,
+          returnTo,
+        },
+        {
+          ipAddress: '127.0.0.1',
+          userAgent: 'vitest',
+          headers: {
+            host: 'localhost:3000',
+          },
+          cookies: {
+            internal_id_login_csrf: csrfToken,
+          },
+        },
+      );
+
+      expect(result.redirectTo).toBe('/');
+    },
+  );
+
   it('turns Better Auth failures into a generic unauthorized response', async () => {
     signInWithEmail.mockResolvedValueOnce(
       new Response(JSON.stringify({ code: 'INVALID_EMAIL_OR_PASSWORD' }), {
