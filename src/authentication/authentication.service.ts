@@ -108,7 +108,7 @@ export class AuthenticationService {
         localUser.id,
         `user_status_${localUser.status}`,
       );
-      throw new ForbiddenException(GENERIC_LOGIN_ERROR);
+      throw new UnauthorizedException(GENERIC_LOGIN_ERROR);
     }
 
     const authResponse = await this.betterAuthService.signInWithEmail({

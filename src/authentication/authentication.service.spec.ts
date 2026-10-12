@@ -193,7 +193,7 @@ describe('AuthenticationService', () => {
           },
         },
       ),
-    ).rejects.toBeInstanceOf(ForbiddenException);
+    ).rejects.toBeInstanceOf(UnauthorizedException);
 
     expect(signInWithEmail).not.toHaveBeenCalled();
     expect(record).toHaveBeenCalledWith(
