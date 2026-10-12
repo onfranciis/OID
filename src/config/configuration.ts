@@ -35,6 +35,9 @@ export function configuration(): AppEnvironment {
       port: parseNumber(env('PORT'), 3000),
       // Required by validateEnvironment(); never falls back silently.
       baseUrl: env('APP_BASE_URL') as string,
+      // Reverse proxy hop config for Express `trust proxy`. Null means direct
+      // exposure (no proxy); set to a hop count or CIDR behind a proxy.
+      trustProxy: env('TRUST_PROXY') ?? null,
     },
     database: {
       // Required by validateEnvironment(); never falls back silently.

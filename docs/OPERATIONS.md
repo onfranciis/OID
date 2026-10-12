@@ -38,6 +38,12 @@ pnpm start:prod:migrate
 In production, prefer a one-shot migration job followed by `node dist/main` for
 the app process. Do not enable TypeORM `synchronize` in production.
 
+When running behind a reverse proxy or load balancer, set `TRUST_PROXY` to
+the proxy hop count (usually `1`) or the proxy CIDR. Without it, Express
+reports the proxy address as `req.ip` for every request, which collapses
+per-IP rate limiting into one shared bucket and records the wrong address in
+audit logs.
+
 ## Environment Reference
 
 Required variables:

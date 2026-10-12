@@ -26,6 +26,7 @@ export class BetterAuthService implements OnModuleDestroy {
         host: configService.get('app.host'),
         port: configService.get('app.port'),
         baseUrl: configService.get('app.baseUrl'),
+        trustProxy: configService.get('app.trustProxy'),
       },
       database: {
         url: configService.get('database.url'),

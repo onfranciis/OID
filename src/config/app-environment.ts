@@ -7,6 +7,7 @@ export interface AppEnvironment {
     host: string;
     port: number;
     baseUrl: string;
+    trustProxy: string | null;
   };
   database: {
     url: string;
