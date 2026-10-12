@@ -276,6 +276,28 @@ async function addOauthAccessTokenColumns(
       "expiresAt" = COALESCE("expiresAt", "accessTokenExpiresAt")
     WHERE "token" IS NULL OR "expiresAt" IS NULL
   `);
+  const remainingNulls = (await queryRunner.query(`
+    SELECT "id" FROM "oauthAccessToken"
+    WHERE "token" IS NULL OR "expiresAt" IS NULL
+    LIMIT 10
+  `)) as Array<{ id: string }>;
+
+  if (remainingNulls.length > 0) {
+    const sampleIds = remainingNulls
+      .map((row) => row.id)
+      .filter((id) => typeof id === 'string')
+      .slice(0, 10)
+      .join(', ');
+
+    throw new Error(
+      `Refusing to enforce NOT NULL on oauthAccessToken.token/expiresAt: ` +
+        `${remainingNulls.length >= 10 ? 'at least ' : ''}${remainingNulls.length} row(s) still have NULL values` +
+        (sampleIds ? ` (e.g. ids: ${sampleIds})` : '') +
+        `. These rows have neither the new nor the legacy accessToken/accessTokenExpiresAt values; ` +
+        `backfill or remove them manually and re-run the migration.`,
+    );
+  }
+
   await queryRunner.query(`
     ALTER TABLE "oauthAccessToken"
     ALTER COLUMN "token" SET NOT NULL,
