@@ -33,41 +33,66 @@ async function verifyMigrations(): Promise<void> {
   try {
     await adminClient.query(`CREATE DATABASE "${tempDatabaseName}"`);
 
-    const verificationUrl = new URL(baseDatabaseUrl.toString());
-    verificationUrl.pathname = `/${tempDatabaseName}`;
-
-    const verificationDataSource = new DataSource(
-      createTypeOrmOptions({
-        ...appEnvironment,
-        database: {
-          ...appEnvironment.database,
-          url: verificationUrl.toString(),
-        },
-      }),
-    );
-
-    await verificationDataSource.initialize();
-
     try {
-      await verificationDataSource.runMigrations();
-      await verificationDataSource.undoLastMigration();
-    } finally {
-      await verificationDataSource.destroy();
+      const verificationUrl = new URL(baseDatabaseUrl.toString());
+      verificationUrl.pathname = `/${tempDatabaseName}`;
+
+      const verificationDataSource = new DataSource(
+        createTypeOrmOptions({
+          ...appEnvironment,
+          database: {
+            ...appEnvironment.database,
+            url: verificationUrl.toString(),
+          },
+        }),
+      );
+
+      await verificationDataSource.initialize();
+
+      try {
+        await verificationDataSource.runMigrations();
+        await verificationDataSource.undoLastMigration();
+      } finally {
+        await verificationDataSource.destroy();
+      }
+
+      await adminClient.query(
+        `DROP DATABASE "${tempDatabaseName}" WITH (FORCE)`,
+      );
+
+      console.log(
+        JSON.stringify(
+          {
+            status: 'ok',
+            database: tempDatabaseName,
+            verification: 'migration run and rollback succeeded',
+          },
+          null,
+          2,
+        ),
+      );
+    } catch (verificationError) {
+      try {
+        await adminClient.query(
+          `DROP DATABASE "${tempDatabaseName}" WITH (FORCE)`,
+        );
+      } catch (dropError) {
+        console.error(
+          JSON.stringify({
+            level: 'error',
+            service: 'internal-id',
+            message: 'failed to drop temporary verification database',
+            database: tempDatabaseName,
+            error:
+              dropError instanceof Error
+                ? dropError.message
+                : String(dropError),
+          }),
+        );
+      }
+
+      throw verificationError;
     }
-
-    await adminClient.query(`DROP DATABASE "${tempDatabaseName}" WITH (FORCE)`);
-
-    console.log(
-      JSON.stringify(
-        {
-          status: 'ok',
-          database: tempDatabaseName,
-          verification: 'migration run and rollback succeeded',
-        },
-        null,
-        2,
-      ),
-    );
   } finally {
     await adminClient.end();
   }
