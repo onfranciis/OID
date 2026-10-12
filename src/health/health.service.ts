@@ -22,7 +22,7 @@ export class HealthService {
 
     return {
       service: 'internal-id',
-      status: 'ok',
+      status: databaseStatus === 'up' ? 'ok' : 'error',
       database: databaseStatus,
     };
   }

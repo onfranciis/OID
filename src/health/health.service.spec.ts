@@ -13,4 +13,16 @@ describe('HealthService', () => {
       database: 'up',
     });
   });
+
+  it('reports an error status when the database is unreachable', async () => {
+    const service = new HealthService({
+      query: () => Promise.reject(new Error('connection refused')),
+    } as never);
+
+    await expect(service.getStatus()).resolves.toEqual({
+      service: 'internal-id',
+      status: 'error',
+      database: 'down',
+    });
+  });
 });
