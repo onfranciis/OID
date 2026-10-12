@@ -110,6 +110,12 @@ Currently exported metrics:
 Watch these routes closely: `/admin/login`, `/oauth/token`, `/oauth/revoke`,
 `/api/auth/*`, and `/oauth/authorize`.
 
+Rate limiting and request metrics are in-memory and per instance. Do not run
+more than one app replica behind a load balancer without moving counters to a
+shared store such as Redis first, or the effective limits multiply by the
+replica count. Bucket maps are capped and prune expired entries, so a single
+instance stays bounded.
+
 ## Alerts
 
 Minimum production alerts:

@@ -1,10 +1,9 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { AppConfigService } from '../config/app-config.service';
-
-interface RateLimitBucket {
-  count: number;
-  resetAt: number;
-}
+import {
+  storeRateLimitBucket,
+  type RateLimitBucket,
+} from '../common/rate-limit-buckets';
 
 @Injectable()
 export class TokenRateLimitService {
@@ -29,10 +28,15 @@ export class TokenRateLimitService {
     const bucket = this.buckets.get(ipAddress);
 
     if (!bucket || bucket.resetAt <= now) {
-      this.buckets.set(ipAddress, {
-        count: 1,
-        resetAt: now + this.windowMs,
-      });
+      storeRateLimitBucket(
+        this.buckets,
+        ipAddress,
+        {
+          count: 1,
+          resetAt: now + this.windowMs,
+        },
+        now,
+      );
       return;
     }
 
