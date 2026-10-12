@@ -42,5 +42,49 @@ function normalizeRoute(path: string): string {
     return '/api/auth/*';
   }
 
+  if (path.startsWith('/admin/api/auth/password-reset')) {
+    return '/admin/api/auth/password-reset/:token';
+  }
+
+  if (path.startsWith('/admin/api/invites')) {
+    return '/admin/api/invites/:token';
+  }
+
+  if (path.startsWith('/admin/reset-password')) {
+    return '/admin/reset-password/:token';
+  }
+
+  if (path === '/admin/invite') {
+    return '/admin/invite';
+  }
+
+  if (path.startsWith('/admin/invite/')) {
+    return '/admin/invite/:token';
+  }
+
+  if (path.startsWith('/admin/api/') || path.startsWith('/admin/')) {
+    return templateAdminSegments(path);
+  }
+
   return path;
+}
+
+const OPAQUE_ID_PATTERN = /^[A-Za-z0-9_.:-]{20,}$/;
+
+function templateAdminSegments(path: string): string {
+  const segments = path.split('/');
+
+  return segments
+    .map((segment, index) => {
+      if (index === 0 || segment.length === 0) {
+        return segment;
+      }
+
+      if (OPAQUE_ID_PATTERN.test(segment)) {
+        return ':id';
+      }
+
+      return segment;
+    })
+    .join('/');
 }

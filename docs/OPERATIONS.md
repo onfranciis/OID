@@ -100,6 +100,11 @@ operators can trend deleted and revoked counts.
 
 The app exposes Prometheus text metrics at `/metrics`.
 
+Restrict `/metrics` to your internal monitoring network (security group,
+ingress rule, or reverse proxy ACL). It is intentionally unauthenticated so
+scrapers need no credentials, which means it must not be reachable from the
+public internet.
+
 Currently exported metrics:
 
 - `internal_id_http_requests_total`: request count by method, normalized route,
