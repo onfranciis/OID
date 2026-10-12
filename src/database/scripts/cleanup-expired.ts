@@ -17,35 +17,50 @@ async function cleanupExpiredState(): Promise<void> {
   await dataSource.initialize();
 
   try {
-    const expiredAuthorizationCodes: unknown = await dataSource.query(
+    const expiredAuthorizationCodes = await runBatched(
+      dataSource,
       `
         DELETE FROM "authorization_codes"
-        WHERE "expires_at" <= NOW()
-           OR "consumed_at" IS NOT NULL
+        WHERE "ctid" IN (
+          SELECT "ctid" FROM "authorization_codes"
+          WHERE "expires_at" <= NOW()
+             OR "consumed_at" IS NOT NULL
+          LIMIT ${CLEANUP_BATCH_SIZE}
+        )
       `,
     );
-    const expiredProviderSessions: unknown = await dataSource.query(
+    const expiredProviderSessions = await runBatched(
+      dataSource,
       `
         UPDATE "provider_sessions"
         SET "revoked_at" = COALESCE("revoked_at", NOW()),
             "revocation_reason" = COALESCE("revocation_reason", 'expired')
-        WHERE "revoked_at" IS NULL
-          AND (
-            "idle_expires_at" <= NOW()
-            OR "absolute_expires_at" <= NOW()
-          )
+        WHERE "ctid" IN (
+          SELECT "ctid" FROM "provider_sessions"
+          WHERE "revoked_at" IS NULL
+            AND (
+              "idle_expires_at" <= NOW()
+              OR "absolute_expires_at" <= NOW()
+            )
+          LIMIT ${CLEANUP_BATCH_SIZE}
+        )
       `,
     );
-    const expiredRefreshTokens: unknown = await dataSource.query(
+    const expiredRefreshTokens = await runBatched(
+      dataSource,
       `
         UPDATE "refresh_tokens"
         SET "revoked_at" = COALESCE("revoked_at", NOW()),
             "revocation_reason" = COALESCE("revocation_reason", 'expired')
-        WHERE "revoked_at" IS NULL
-          AND (
-            "idle_expires_at" <= NOW()
-            OR "absolute_expires_at" <= NOW()
-          )
+        WHERE "ctid" IN (
+          SELECT "ctid" FROM "refresh_tokens"
+          WHERE "revoked_at" IS NULL
+            AND (
+              "idle_expires_at" <= NOW()
+              OR "absolute_expires_at" <= NOW()
+            )
+          LIMIT ${CLEANUP_BATCH_SIZE}
+        )
       `,
     );
 
@@ -53,11 +68,9 @@ async function cleanupExpiredState(): Promise<void> {
       JSON.stringify(
         {
           status: 'ok',
-          expiredAuthorizationCodes: getAffectedCount(
-            expiredAuthorizationCodes,
-          ),
-          expiredProviderSessions: getAffectedCount(expiredProviderSessions),
-          expiredRefreshTokens: getAffectedCount(expiredRefreshTokens),
+          expiredAuthorizationCodes,
+          expiredProviderSessions,
+          expiredRefreshTokens,
         },
         null,
         2,
@@ -66,6 +79,33 @@ async function cleanupExpiredState(): Promise<void> {
   } finally {
     await dataSource.destroy();
   }
+}
+
+const CLEANUP_BATCH_SIZE = 1000;
+
+async function runBatched(
+  dataSource: DataSource,
+  statement: string,
+): Promise<number | null> {
+  let total = 0;
+  let sawUnknownShape = false;
+
+  for (;;) {
+    const affected = getAffectedCount(await dataSource.query(statement));
+
+    if (affected === null) {
+      sawUnknownShape = true;
+      break;
+    }
+
+    total += affected;
+
+    if (affected < CLEANUP_BATCH_SIZE) {
+      break;
+    }
+  }
+
+  return sawUnknownShape && total === 0 ? null : total;
 }
 
 function getAffectedCount(result: unknown): number | null {
