@@ -1,5 +1,6 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import type { Request } from 'express';
+import { parseCookies } from '../common/cookies';
 import { AppConfigService } from '../config/app-config.service';
 import {
   AdminAccessService,
@@ -35,29 +36,4 @@ export class AdminGuard implements CanActivate {
 
     return true;
   }
-}
-
-function parseCookies(headerValue: string | undefined): Record<string, string> {
-  if (!headerValue) {
-    return {};
-  }
-
-  return Object.fromEntries(
-    headerValue
-      .split(';')
-      .map((part) => part.trim())
-      .filter((part) => part.length > 0)
-      .map((part) => {
-        const separatorIndex = part.indexOf('=');
-
-        if (separatorIndex === -1) {
-          return [part, ''];
-        }
-
-        return [
-          part.slice(0, separatorIndex),
-          decodeURIComponent(part.slice(separatorIndex + 1)),
-        ];
-      }),
-  );
 }
