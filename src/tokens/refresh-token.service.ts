@@ -13,7 +13,7 @@ import {
   randomBytes,
 } from 'node:crypto';
 import { ulid } from 'ulid';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, IsNull, Repository } from 'typeorm';
 import { AuditService } from '../audit/audit.service';
 import { AuditEventTypes } from '../audit/audit.types';
 import { AppConfigService } from '../config/app-config.service';
@@ -569,7 +569,11 @@ export class RefreshTokenService {
       }
     }
 
-    await repository.save(familyTokens);
+    await repository.update(
+      { familyId, revokedAt: IsNull() },
+      { revokedAt: now, revocationReason: reason },
+    );
+
     return familyTokens;
   }
 

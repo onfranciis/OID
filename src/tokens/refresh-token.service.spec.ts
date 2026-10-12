@@ -117,12 +117,14 @@ describe('RefreshTokenService', () => {
       }),
     ];
     const auditRecord = vi.fn(() => Promise.resolve('evt_123'));
+    const update = vi.fn(() => Promise.resolve({ affected: 2 }));
     const service = new RefreshTokenService(
       {} as never,
       createDataSourceStub({
         findOne: () => Promise.resolve(replayedToken),
         find: () => Promise.resolve(familyMembers),
         save: (entity) => Promise.resolve(entity),
+        update,
       }) as never,
       {
         record: auditRecord,
@@ -146,6 +148,11 @@ describe('RefreshTokenService', () => {
         (token) => token.revocationReason === 'replay_detected',
       ),
     ).toBe(true);
+    expect(update).toHaveBeenCalledOnce();
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({ familyId: replayedToken.familyId }),
+      expect.objectContaining({ revocationReason: 'replay_detected' }),
+    );
     expect(auditRecord).toHaveBeenCalledWith(
       expect.objectContaining({
         eventType: 'oidc.refresh_token.replay_detected',
@@ -347,6 +354,7 @@ function createDataSourceStub(repositoryBehavior: {
   save?: (
     entity: OidcRefreshTokenEntity | OidcRefreshTokenEntity[],
   ) => Promise<unknown>;
+  update?: (criteria: unknown, partial: unknown) => Promise<unknown>;
 }) {
   return {
     transaction: async (
@@ -369,6 +377,7 @@ function createDataSourceStub(repositoryBehavior: {
           save: (
             entity: OidcRefreshTokenEntity | OidcRefreshTokenEntity[],
           ) => Promise<unknown>;
+          update: (criteria: unknown, partial: unknown) => Promise<unknown>;
         };
       }) => Promise<unknown>,
     ) =>
@@ -398,6 +407,8 @@ function createDataSourceStub(repositoryBehavior: {
               repositoryBehavior.findOne?.(criteria) ?? null,
             find: async (criteria) => repositoryBehavior.find?.(criteria) ?? [],
             save: async (entity) => repositoryBehavior.save?.(entity) ?? entity,
+            update: async (criteria, partial) =>
+              repositoryBehavior.update?.(criteria, partial) ?? { affected: 0 },
           };
         },
       }),
