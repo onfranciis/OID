@@ -536,11 +536,45 @@ function normalizeRedirectUri(uri: string): string {
     throw new BadRequestException('Redirect URI must use http or https.');
   }
 
+  if (
+    parsedUri.protocol === 'http:' &&
+    !isLoopbackHostname(parsedUri.hostname)
+  ) {
+    throw new BadRequestException(
+      'Redirect URI must use https, except for loopback addresses.',
+    );
+  }
+
   if (parsedUri.hash.length > 0) {
     throw new BadRequestException('Redirect URI must not include a fragment.');
   }
 
   return normalizedUri;
+}
+
+function isLoopbackHostname(hostname: string): boolean {
+  const normalized = hostname.toLowerCase().replace(/\.$/, '');
+
+  if (normalized === 'localhost') {
+    return true;
+  }
+
+  if (normalized === '127.0.0.1' || normalized === '::1' || normalized === '[::1]') {
+    return true;
+  }
+
+  const ipv4 = normalized.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+
+  if (ipv4) {
+    const octets = ipv4.slice(1).map(Number);
+
+    return (
+      octets[0] === 127 &&
+      octets.every((octet) => octet >= 0 && octet <= 255)
+    );
+  }
+
+  return false;
 }
 
 function generateClientSecret(): string {

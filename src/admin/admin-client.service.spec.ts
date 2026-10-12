@@ -295,6 +295,27 @@ describe('AdminClientService', () => {
       ),
     ).rejects.toBeInstanceOf(BadRequestException);
 
+    await expect(
+      service.addRedirectUri(
+        'cli_target',
+        {
+          uri: 'http://app.company.com/callback',
+        },
+        context,
+      ),
+    ).rejects.toThrow(/https.*loopback/);
+
+    for (const loopback of [
+      'http://localhost:4000/auth/callback',
+      'http://127.0.0.1:4000/auth/callback',
+      'http://127.0.0.5:4000/auth/callback',
+    ]) {
+      findRedirectUri.mockResolvedValueOnce(null);
+      await expect(
+        service.addRedirectUri('cli_target', { uri: loopback }, context),
+      ).resolves.toBeDefined();
+    }
+
     findRedirectUri.mockResolvedValueOnce({
       id: 'rdu_existing',
     });
