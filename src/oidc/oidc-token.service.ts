@@ -13,6 +13,7 @@ import {
   createVerify,
   generateKeyPairSync,
   randomBytes,
+  timingSafeEqual,
 } from 'node:crypto';
 import { DataSource, Repository } from 'typeorm';
 import { monotonicFactory } from 'ulid';
@@ -426,7 +427,7 @@ function assertClientAuthentication(
     throw new UnauthorizedException('Client authentication required.');
   }
 
-  if (hashSecret(clientSecret) !== client.clientSecretHash) {
+  if (!hashesMatch(hashSecret(clientSecret), client.clientSecretHash)) {
     throw new UnauthorizedException('Client authentication failed.');
   }
 }
@@ -454,6 +455,16 @@ function verifyS256Pkce(verifier: string, challenge: string): boolean {
 
 function hashSecret(secret: string): string {
   return createHash('sha256').update(secret).digest('hex');
+}
+
+function hashesMatch(left: string, right: string): boolean {
+  const leftBuffer = Buffer.from(left);
+  const rightBuffer = Buffer.from(right);
+
+  return (
+    leftBuffer.length === rightBuffer.length &&
+    timingSafeEqual(leftBuffer, rightBuffer)
+  );
 }
 
 function buildUserClaims(

@@ -11,6 +11,7 @@ import {
   createDecipheriv,
   createHash,
   randomBytes,
+  timingSafeEqual,
 } from 'node:crypto';
 import { ulid } from 'ulid';
 import { DataSource, Repository } from 'typeorm';
@@ -626,6 +627,16 @@ function hashRefreshToken(refreshToken: string): string {
   return createHash('sha256').update(refreshToken).digest('hex');
 }
 
+function hashesMatch(left: string, right: string): boolean {
+  const leftBuffer = Buffer.from(left);
+  const rightBuffer = Buffer.from(right);
+
+  return (
+    leftBuffer.length === rightBuffer.length &&
+    timingSafeEqual(leftBuffer, rightBuffer)
+  );
+}
+
 function addSeconds(date: Date, ttlSeconds: number): Date {
   return new Date(date.getTime() + ttlSeconds * 1000);
 }
@@ -658,7 +669,7 @@ function assertClientSecret(
     throw new UnauthorizedException('Client authentication required.');
   }
 
-  if (hashRefreshToken(clientSecret) !== client.clientSecretHash) {
+  if (!hashesMatch(hashRefreshToken(clientSecret), client.clientSecretHash)) {
     throw new UnauthorizedException('Client authentication failed.');
   }
 }
