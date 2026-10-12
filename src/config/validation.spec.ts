@@ -110,4 +110,41 @@ describe('validateEnvironment', () => {
       }),
     ).toThrow(/BOOTSTRAP_CLIENT_SECRET/);
   });
+
+  it('applies production guardrails when NODE_ENV is unset', () => {
+    const { NODE_ENV: _unset, ...withoutNodeEnv } = baseConfig;
+
+    expect(validateEnvironment(withoutNodeEnv)).toBe(withoutNodeEnv);
+    expect(() =>
+      validateEnvironment({
+        ...withoutNodeEnv,
+        APP_BASE_URL: 'http://auth.company.com',
+      }),
+    ).toThrow(/https/);
+    expect(() =>
+      validateEnvironment({
+        ...withoutNodeEnv,
+        BETTER_AUTH_SECRET: 'replace-this-before-production-with-32-plus-chars',
+      }),
+    ).toThrow(/development default/);
+  });
+
+  it('skips production guardrails only for explicit development or test', () => {
+    const { NODE_ENV: _unset, ...withoutNodeEnv } = baseConfig;
+
+    expect(() =>
+      validateEnvironment({
+        ...withoutNodeEnv,
+        NODE_ENV: 'development',
+        APP_BASE_URL: 'http://localhost:3000',
+      }),
+    ).not.toThrow();
+    expect(() =>
+      validateEnvironment({
+        ...withoutNodeEnv,
+        NODE_ENV: 'test',
+        APP_BASE_URL: 'http://localhost:3000',
+      }),
+    ).not.toThrow();
+  });
 });

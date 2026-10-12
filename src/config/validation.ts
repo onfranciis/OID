@@ -63,7 +63,10 @@ export function validateEnvironment(
     throw new Error('BOOTSTRAP_CLIENT_SECRET must be a string when provided.');
   }
 
-  if (nodeEnv === 'production') {
+  if (nodeEnv === 'production' || nodeEnv === undefined) {
+    // An unset NODE_ENV gets the strict checks too. Platforms that never set
+    // it must not silently skip production guardrails; explicit
+    // development/test opt out.
     validateProductionEnvironment({
       appBaseUrl,
       betterAuthSecret,
