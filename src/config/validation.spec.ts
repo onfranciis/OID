@@ -44,6 +44,29 @@ describe('validateEnvironment', () => {
     ).toThrow(/sample development default/);
   });
 
+  it('rejects short bootstrap client secrets in production', () => {
+    expect(() =>
+      validateEnvironment({
+        ...baseConfig,
+        BOOTSTRAP_CLIENT_SECRET: 'short-secret',
+      }),
+    ).toThrow(/at least 32 characters/);
+    expect(() =>
+      validateEnvironment({
+        ...baseConfig,
+        BOOTSTRAP_CLIENT_SECRET:
+          'replace-this-sample-client-secret-with-32-plus-chars',
+      }),
+    ).toThrow(/sample development default/);
+    expect(() =>
+      validateEnvironment({
+        ...baseConfig,
+        BOOTSTRAP_CLIENT_SECRET:
+          'a-long-enough-bootstrap-client-secret-value',
+      }),
+    ).not.toThrow();
+  });
+
   it('requires APP_BASE_URL, DATABASE_URL, and BETTER_AUTH_SECRET even outside production', () => {
     const devConfig = { NODE_ENV: 'development' };
 
