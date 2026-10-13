@@ -21,6 +21,9 @@ import { MailService } from '../mail/mail.service';
 
 const MIN_PASSWORD_LENGTH = 8;
 const GENERIC_RESET_ERROR = 'This reset link is invalid or has expired.';
+// Rough cost match for the hit path's token generation plus outbound mail
+// attempt, so the miss path does not answer measurably faster.
+const MISS_PATH_DELAY_MS = 150;
 
 export interface PasswordResetRequestContext {
   ipAddress: string | null;
@@ -76,6 +79,7 @@ export class PasswordResetService {
     });
 
     if (!user || user.status !== UserStatus.ACTIVE) {
+      await this.burnEquivalentWork();
       return;
     }
 
@@ -209,5 +213,13 @@ export class PasswordResetService {
     }
 
     return reset;
+  }
+
+  // Burns roughly the same cost as the hit path's token generation plus the
+  // outbound mail attempt, so unknown and inactive emails do not answer
+  // measurably faster than real ones.
+  private async burnEquivalentWork(): Promise<void> {
+    hashToken(randomBytes(32).toString('base64url'));
+    await new Promise((resolve) => setTimeout(resolve, MISS_PATH_DELAY_MS));
   }
 }

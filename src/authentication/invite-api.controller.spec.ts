@@ -2,10 +2,14 @@ import { describe, expect, it, vi } from 'vitest';
 import type { Request } from 'express';
 import { InviteApiController } from './invite-api.controller';
 import type { InviteAcceptService } from './invite-accept.service';
+import type { SensitiveActionRateLimitService } from './sensitive-action-rate-limit.service';
 
 describe('InviteApiController', () => {
   function makeController(overrides: Partial<InviteAcceptService>) {
-    return new InviteApiController(overrides as InviteAcceptService);
+    return new InviteApiController(
+      overrides as InviteAcceptService,
+      { assertAllowed: vi.fn() } as unknown as SensitiveActionRateLimitService,
+    );
   }
 
   it('returns the invite summary for GET :token', async () => {
@@ -14,7 +18,12 @@ describe('InviteApiController', () => {
       .mockResolvedValue({ email: 'a@company.com', displayName: 'Ann' });
     const controller = makeController({ getInvite });
 
-    await expect(controller.getInvite('raw-token')).resolves.toEqual({
+    await expect(
+      controller.getInvite('raw-token', {
+        ip: '127.0.0.1',
+        get: () => 'vitest',
+      } as unknown as Request),
+    ).resolves.toEqual({
       email: 'a@company.com',
       displayName: 'Ann',
     });

@@ -101,7 +101,9 @@ describe('PasswordResetService', () => {
     it('is a silent no-op for an unknown email', async () => {
       findUser.mockResolvedValue(null);
 
-      await service.requestReset('nobody@company.com', context);
+      const pending = service.requestReset('nobody@company.com', context);
+      await vi.advanceTimersByTimeAsync(1000);
+      await pending;
 
       expect(sendPasswordResetEmail).not.toHaveBeenCalled();
       expect(saveReset).not.toHaveBeenCalled();
@@ -116,7 +118,9 @@ describe('PasswordResetService', () => {
         status: UserStatus.SUSPENDED,
       });
 
-      await service.requestReset('user@company.com', context);
+      const pending = service.requestReset('user@company.com', context);
+      await vi.advanceTimersByTimeAsync(1000);
+      await pending;
 
       expect(sendPasswordResetEmail).not.toHaveBeenCalled();
     });

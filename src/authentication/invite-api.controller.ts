@@ -4,6 +4,7 @@ import {
   InviteAcceptService,
   type InviteSummary,
 } from './invite-accept.service';
+import { SensitiveActionRateLimitService } from './sensitive-action-rate-limit.service';
 
 interface AcceptInviteBody {
   password?: string;
@@ -13,10 +14,17 @@ interface AcceptInviteBody {
 // secret, same trust model as a password-reset link.
 @Controller('admin/api/invites')
 export class InviteApiController {
-  constructor(private readonly inviteAcceptService: InviteAcceptService) {}
+  constructor(
+    private readonly inviteAcceptService: InviteAcceptService,
+    private readonly rateLimitService: SensitiveActionRateLimitService,
+  ) {}
 
   @Get(':token')
-  getInvite(@Param('token') token: string): Promise<InviteSummary> {
+  getInvite(
+    @Param('token') token: string,
+    @Req() req: Request,
+  ): Promise<InviteSummary> {
+    this.rateLimitService.assertAllowed(req.ip ?? null);
     return this.inviteAcceptService.getInvite(token);
   }
 
@@ -26,6 +34,7 @@ export class InviteApiController {
     @Body() body: AcceptInviteBody,
     @Req() req: Request,
   ): Promise<{ success: true }> {
+    this.rateLimitService.assertAllowed(req.ip ?? null);
     await this.inviteAcceptService.accept(token, body.password ?? '', {
       ipAddress: req.ip ?? null,
       userAgent: req.get('user-agent') ?? null,

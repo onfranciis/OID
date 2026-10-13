@@ -4,6 +4,7 @@ import {
   PasswordResetService,
   type PasswordResetSummary,
 } from './password-reset.service';
+import { SensitiveActionRateLimitService } from './sensitive-action-rate-limit.service';
 
 interface ForgotPasswordBody {
   email?: string;
@@ -17,13 +18,17 @@ interface ResetPasswordBody {
 // secret, same trust model as the invite-accept flow.
 @Controller('admin/api/auth')
 export class PasswordResetApiController {
-  constructor(private readonly passwordResetService: PasswordResetService) {}
+  constructor(
+    private readonly passwordResetService: PasswordResetService,
+    private readonly rateLimitService: SensitiveActionRateLimitService,
+  ) {}
 
   @Post('forgot-password')
   async forgotPassword(
     @Body() body: ForgotPasswordBody,
     @Req() req: Request,
   ): Promise<{ success: true }> {
+    this.rateLimitService.assertAllowed(req.ip ?? null, body.email ?? null);
     await this.passwordResetService.requestReset(body.email ?? '', {
       ipAddress: req.ip ?? null,
       userAgent: req.get('user-agent') ?? null,
@@ -33,7 +38,11 @@ export class PasswordResetApiController {
   }
 
   @Get('password-reset/:token')
-  getReset(@Param('token') token: string): Promise<PasswordResetSummary> {
+  getReset(
+    @Param('token') token: string,
+    @Req() req: Request,
+  ): Promise<PasswordResetSummary> {
+    this.rateLimitService.assertAllowed(req.ip ?? null);
     return this.passwordResetService.getReset(token);
   }
 
@@ -43,6 +52,7 @@ export class PasswordResetApiController {
     @Body() body: ResetPasswordBody,
     @Req() req: Request,
   ): Promise<{ success: true }> {
+    this.rateLimitService.assertAllowed(req.ip ?? null);
     await this.passwordResetService.resetPassword(token, body.password ?? '', {
       ipAddress: req.ip ?? null,
       userAgent: req.get('user-agent') ?? null,

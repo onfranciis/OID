@@ -18,6 +18,7 @@ import { LoginRateLimitService } from './login-rate-limit.service';
 import { PasswordResetApiController } from './password-reset-api.controller';
 import { PasswordResetService } from './password-reset.service';
 import { ProviderSessionService } from './provider-session.service';
+import { SensitiveActionRateLimitService } from './sensitive-action-rate-limit.service';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { ProviderSessionService } from './provider-session.service';
     LoginRateLimitService,
     PasswordResetService,
     ProviderSessionService,
+    SensitiveActionRateLimitService,
   ],
   exports: [AuthenticationService],
 })
