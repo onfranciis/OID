@@ -7,6 +7,7 @@ import {
 } from '../database/entities/oidc-client.entity';
 import { OidcRefreshTokenEntity } from '../database/entities/oidc-refresh-token.entity';
 import { UserStatus } from '../database/entities/user.entity';
+import { OAuthClientAuthenticationException } from '../oidc/oauth-client-authentication.exception';
 import { RefreshTokenService } from './refresh-token.service';
 
 describe('RefreshTokenService', () => {
@@ -274,7 +275,7 @@ describe('RefreshTokenService', () => {
         clientIdentifier: 'internal-web',
         now: new Date('2026-06-11T00:05:00.000Z'),
       }),
-    ).rejects.toBeInstanceOf(UnauthorizedException);
+    ).rejects.toBeInstanceOf(OAuthClientAuthenticationException);
 
     const serviceWithInactiveUser = new RefreshTokenService(
       {} as never,
@@ -319,6 +320,13 @@ describe('RefreshTokenService', () => {
       {} as never,
       createDataSourceStub({
         findOne: () => Promise.resolve(null),
+        findClient: () =>
+          Promise.resolve({
+            id: 'cli_123',
+            clientId: 'internal-web',
+            type: OidcClientType.PUBLIC,
+            status: OidcClientStatus.ACTIVE,
+          }),
       }) as never,
       {
         record: auditRecord,
@@ -331,11 +339,138 @@ describe('RefreshTokenService', () => {
     await expect(
       service.revokePresentedToken({
         refreshToken: 'unknown-token',
+        clientIdentifier: 'internal-web',
         reason: 'client_revocation',
       }),
     ).resolves.toBeUndefined();
 
     expect(auditRecord).not.toHaveBeenCalled();
+  });
+
+  it('rejects revocation from a confidential client with a bad secret', async () => {
+    const auditRecord = vi.fn(() => Promise.resolve('evt_123'));
+    const service = new RefreshTokenService(
+      {} as never,
+      createDataSourceStub({
+        findClient: () =>
+          Promise.resolve({
+            id: 'cli_123',
+            clientId: 'internal-web',
+            type: OidcClientType.CONFIDENTIAL,
+            status: OidcClientStatus.ACTIVE,
+            clientSecretHash:
+              '70c2f26b73e11d02a2e62a9a00ff01bd3f8dc9ac0a3b04e2d3f9d4d3f50d0e1a',
+          }),
+      }) as never,
+      {
+        record: auditRecord,
+      } as never,
+      {
+        get: () => 'test-better-auth-secret',
+      } as never,
+    );
+
+    await expect(
+      service.revokePresentedToken({
+        refreshToken: 'any-token',
+        clientIdentifier: 'internal-web',
+        clientSecret: 'wrong-secret',
+        reason: 'client_revocation',
+      }),
+    ).rejects.toBeInstanceOf(OAuthClientAuthenticationException);
+
+    expect(auditRecord).not.toHaveBeenCalled();
+  });
+
+  it('does not revoke a token issued to a different client', async () => {
+    const auditRecord = vi.fn(() => Promise.resolve('evt_123'));
+    const findFamily = vi.fn(() => Promise.resolve([]));
+    const service = new RefreshTokenService(
+      {} as never,
+      createDataSourceStub({
+        findOne: () =>
+          Promise.resolve(createRefreshTokenEntity({ clientId: 'cli_other' })),
+        find: findFamily,
+        findClient: () =>
+          Promise.resolve({
+            id: 'cli_123',
+            clientId: 'internal-web',
+            type: OidcClientType.PUBLIC,
+            status: OidcClientStatus.ACTIVE,
+          }),
+      }) as never,
+      {
+        record: auditRecord,
+      } as never,
+      {
+        get: () => 'test-better-auth-secret',
+      } as never,
+    );
+
+    await expect(
+      service.revokePresentedToken({
+        refreshToken: 'foreign-token',
+        clientIdentifier: 'internal-web',
+        reason: 'client_revocation',
+      }),
+    ).resolves.toBeUndefined();
+
+    expect(findFamily).not.toHaveBeenCalled();
+    expect(auditRecord).not.toHaveBeenCalled();
+  });
+
+  it('revokes the family and records who revoked it for the owning client', async () => {
+    const auditRecord = vi.fn(() => Promise.resolve('evt_123'));
+    const savedEntities: OidcRefreshTokenEntity[] = [];
+    const service = new RefreshTokenService(
+      {} as never,
+      createDataSourceStub({
+        findOne: () => Promise.resolve(createRefreshTokenEntity()),
+        find: () => Promise.resolve([createRefreshTokenEntity()]),
+        findClient: () =>
+          Promise.resolve({
+            id: 'cli_123',
+            clientId: 'internal-web',
+            type: OidcClientType.PUBLIC,
+            status: OidcClientStatus.ACTIVE,
+          }),
+        save: (entity) => {
+          savedEntities.push(...(Array.isArray(entity) ? entity : [entity]));
+          return Promise.resolve(entity);
+        },
+      }) as never,
+      {
+        record: auditRecord,
+      } as never,
+      {
+        get: () => 'test-better-auth-secret',
+      } as never,
+    );
+
+    await service.revokePresentedToken({
+      refreshToken: 'owned-token',
+      clientIdentifier: 'internal-web',
+      reason: 'client_revocation',
+      now: new Date('2026-06-11T00:30:00.000Z'),
+    });
+
+    expect(savedEntities[0]?.revokedAt).toEqual(
+      new Date('2026-06-11T00:30:00.000Z'),
+    );
+    expect(savedEntities[0]?.revocationReason).toBe('client_revocation');
+    expect(auditRecord).toHaveBeenCalledWith({
+      eventType: 'oidc.refresh_token.revoked',
+      severity: AuditSeverity.INFO,
+      actorUserId: 'usr_123',
+      clientId: 'cli_123',
+      providerSessionId: 'pss_123',
+      metadata: {
+        familyId: 'rtf_family',
+        reason: 'client_revocation',
+        revokedTokenCount: 1,
+        revokedByClientIdentifier: 'internal-web',
+      },
+    });
   });
 });
 

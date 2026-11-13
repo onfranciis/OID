@@ -32,6 +32,7 @@ import {
 } from '../database/entities/signing-key.entity';
 import { UserEntity, UserStatus } from '../database/entities/user.entity';
 import { RefreshTokenService } from '../tokens/refresh-token.service';
+import { OAuthClientAuthenticationException } from './oauth-client-authentication.exception';
 
 const nextUlid = monotonicFactory();
 
@@ -63,6 +64,8 @@ export interface UserInfoInput {
 
 export interface RevokeTokenInput {
   token?: string;
+  clientId?: string;
+  clientSecret?: string;
   now?: Date;
 }
 
@@ -151,7 +154,7 @@ export class OidcTokenService {
       });
 
       if (!client || client.status !== OidcClientStatus.ACTIVE) {
-        throw new UnauthorizedException('Invalid client.');
+        throw new OAuthClientAuthenticationException('Invalid client.');
       }
 
       assertClientAuthentication(client, input.clientSecret);
@@ -284,9 +287,12 @@ export class OidcTokenService {
 
   async revokeToken(input: RevokeTokenInput): Promise<void> {
     const token = normalizeRequired(input.token, 'token');
+    const clientIdentifier = normalizeRequired(input.clientId, 'client_id');
 
     await this.refreshTokenService.revokePresentedToken({
       refreshToken: token,
+      clientIdentifier,
+      clientSecret: input.clientSecret,
       reason: 'client_revocation',
       now: input.now,
     });
@@ -423,11 +429,15 @@ function assertClientAuthentication(
   }
 
   if (!client.clientSecretHash || !clientSecret) {
-    throw new UnauthorizedException('Client authentication required.');
+    throw new OAuthClientAuthenticationException(
+      'Client authentication required.',
+    );
   }
 
   if (hashSecret(clientSecret) !== client.clientSecretHash) {
-    throw new UnauthorizedException('Client authentication failed.');
+    throw new OAuthClientAuthenticationException(
+      'Client authentication failed.',
+    );
   }
 }
 

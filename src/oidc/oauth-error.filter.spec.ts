@@ -6,6 +6,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
+import { OAuthClientAuthenticationException } from './oauth-client-authentication.exception';
 import { OAuthErrorFilter } from './oauth-error.filter';
 
 describe('OAuthErrorFilter', () => {
@@ -24,6 +25,16 @@ describe('OAuthErrorFilter', () => {
       status: 401,
       payload: {
         error: 'invalid_grant',
+      },
+    });
+    expect(
+      catchException(
+        new OAuthClientAuthenticationException('Client authentication failed.'),
+      ),
+    ).toEqual({
+      status: 401,
+      payload: {
+        error: 'invalid_client',
       },
     });
     expect(catchException(new ConflictException('replay detected'))).toEqual({

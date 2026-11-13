@@ -165,6 +165,8 @@ describe('OidcController', () => {
       controller.revoke(
         {
           token: 'refresh-token',
+          client_id: 'internal-web',
+          client_secret: 's3cret',
         },
         {
           ip: '127.0.0.1',
@@ -175,6 +177,8 @@ describe('OidcController', () => {
     expect(assertAllowed).toHaveBeenCalledWith('127.0.0.1');
     expect(revokeToken).toHaveBeenCalledWith({
       token: 'refresh-token',
+      clientId: 'internal-web',
+      clientSecret: 's3cret',
     });
   });
 
