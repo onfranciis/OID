@@ -8,6 +8,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import type { Response } from 'express';
+import { OAuthClientAuthenticationException } from './oauth-client-authentication.exception';
 
 interface OAuthErrorResponse {
   error: string;
@@ -28,6 +29,12 @@ function mapOAuthError(exception: HttpException): OAuthErrorResponse {
   if (exception instanceof BadRequestException) {
     return {
       error: 'invalid_request',
+    };
+  }
+
+  if (exception instanceof OAuthClientAuthenticationException) {
+    return {
+      error: 'invalid_client',
     };
   }
 

@@ -25,6 +25,7 @@ import {
 } from '../database/entities/oidc-client.entity';
 import { OidcRefreshTokenEntity } from '../database/entities/oidc-refresh-token.entity';
 import { UserEntity, UserStatus } from '../database/entities/user.entity';
+import { OAuthClientAuthenticationException } from '../oidc/oauth-client-authentication.exception';
 import type {
   IssueRefreshTokenForClientInput,
   IssueRefreshTokenInput,
@@ -373,9 +374,13 @@ export class RefreshTokenService {
         },
       });
 
+      if (!client || client.status !== OidcClientStatus.ACTIVE) {
+        throw new OAuthClientAuthenticationException(
+          'Invalid refresh token client.',
+        );
+      }
+
       if (
-        !client ||
-        client.status !== OidcClientStatus.ACTIVE ||
         !client.allowRefreshTokens ||
         !client.refreshTokenIdleTtlSeconds ||
         !client.refreshTokenAbsoluteTtlSeconds
@@ -506,6 +511,20 @@ export class RefreshTokenService {
     input: RevokePresentedRefreshTokenInput,
   ): Promise<void> {
     await this.dataSource.transaction(async (manager) => {
+      const client = await manager.getRepository(OidcClientEntity).findOne({
+        where: {
+          clientId: input.clientIdentifier,
+        },
+      });
+
+      if (!client || client.status !== OidcClientStatus.ACTIVE) {
+        throw new OAuthClientAuthenticationException(
+          'Invalid revocation client.',
+        );
+      }
+
+      assertClientSecret(client, input.clientSecret);
+
       const repository = manager.getRepository(OidcRefreshTokenEntity);
       const token = await repository.findOne({
         where: {
@@ -517,6 +536,12 @@ export class RefreshTokenService {
       });
 
       if (!token) {
+        return;
+      }
+
+      // RFC 7009 section 2.1: a client may only revoke tokens issued to it,
+      // and a mismatch must not disclose whether the token exists.
+      if (client.id !== token.clientId) {
         return;
       }
 
@@ -538,6 +563,7 @@ export class RefreshTokenService {
           familyId: token.familyId,
           reason: input.reason,
           revokedTokenCount: tokens.length,
+          revokedByClientIdentifier: client.clientId,
         },
       });
     });
@@ -655,10 +681,14 @@ function assertClientSecret(
   }
 
   if (!client.clientSecretHash || !clientSecret) {
-    throw new UnauthorizedException('Client authentication required.');
+    throw new OAuthClientAuthenticationException(
+      'Client authentication required.',
+    );
   }
 
   if (hashRefreshToken(clientSecret) !== client.clientSecretHash) {
-    throw new UnauthorizedException('Client authentication failed.');
+    throw new OAuthClientAuthenticationException(
+      'Client authentication failed.',
+    );
   }
 }

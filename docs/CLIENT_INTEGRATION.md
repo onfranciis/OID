@@ -60,6 +60,23 @@ validation. Store only the minimum identity attributes the app needs.
 If the client requests `offline_access` and receives a refresh token, store it as
 an application secret and revoke it during app logout.
 
+## Token Revocation
+
+`POST /oauth/revoke` implements RFC 7009. Send the raw refresh token as
+`token`, plus the registered `client_id` and, for confidential clients,
+`client_secret`:
+
+```bash
+curl -i -X POST https://id.company.com/oauth/revoke \
+  -H 'content-type: application/json' \
+  -d '{"token":"...","client_id":"internal-web","client_secret":"..."}'
+```
+
+The endpoint returns `200` for a well-formed request, including when the token
+is unknown or was issued to a different client, so it cannot be used to probe
+token validity. A missing or incorrect client credential returns `401` with
+`{"error":"invalid_client"}`.
+
 ## Logout
 
 App logout:

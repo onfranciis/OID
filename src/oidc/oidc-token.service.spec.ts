@@ -8,6 +8,7 @@ import {
   OidcClientType,
 } from '../database/entities/oidc-client.entity';
 import { UserProfileType, UserStatus } from '../database/entities/user.entity';
+import { OAuthClientAuthenticationException } from './oauth-client-authentication.exception';
 import { OidcTokenService } from './oidc-token.service';
 
 describe('OidcTokenService', () => {
@@ -280,15 +281,29 @@ describe('OidcTokenService', () => {
     await expect(
       service.revokeToken({
         token: 'presented-refresh-token',
+        clientId: 'internal-web',
         now,
       }),
     ).resolves.toBeUndefined();
 
     expect(revokePresentedToken).toHaveBeenCalledWith({
       refreshToken: 'presented-refresh-token',
+      clientIdentifier: 'internal-web',
+      clientSecret: undefined,
       reason: 'client_revocation',
       now,
     });
+  });
+
+  it('rejects revocation requests without a client identity', async () => {
+    await expect(
+      service.revokeToken({
+        token: 'presented-refresh-token',
+        now,
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(revokePresentedToken).not.toHaveBeenCalled();
   });
 
   it('publishes the active signing key as JWKS', async () => {
@@ -340,7 +355,7 @@ describe('OidcTokenService', () => {
     clientRepository.findOne.mockResolvedValueOnce(null);
     await expect(
       service.exchangeAuthorizationCode(validInput()),
-    ).rejects.toBeInstanceOf(UnauthorizedException);
+    ).rejects.toBeInstanceOf(OAuthClientAuthenticationException);
 
     await expect(
       service.exchangeAuthorizationCode({
@@ -364,7 +379,7 @@ describe('OidcTokenService', () => {
     });
     await expect(
       service.exchangeAuthorizationCode(validInput()),
-    ).rejects.toBeInstanceOf(UnauthorizedException);
+    ).rejects.toBeInstanceOf(OAuthClientAuthenticationException);
 
     userRepository.findOne.mockResolvedValueOnce({
       ...validUser(),
@@ -381,7 +396,19 @@ describe('OidcTokenService', () => {
     });
     await expect(
       service.exchangeAuthorizationCode(validInput()),
-    ).rejects.toBeInstanceOf(UnauthorizedException);
+    ).rejects.toBeInstanceOf(OAuthClientAuthenticationException);
+
+    clientRepository.findOne.mockResolvedValueOnce({
+      ...validClient(),
+      type: OidcClientType.CONFIDENTIAL,
+      clientSecretHash: createHash('sha256').update('secret').digest('hex'),
+    });
+    await expect(
+      service.exchangeAuthorizationCode({
+        ...validInput(),
+        clientSecret: 'wrong',
+      }),
+    ).rejects.toBeInstanceOf(OAuthClientAuthenticationException);
   });
 
   it('returns userinfo claims constrained by scope and client allowed claims', async () => {
